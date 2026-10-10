@@ -47,3 +47,14 @@ test('freeze refuses an external symlink that resolves into the tracked reposito
   assert.match(result.stderr,/private reviewer session must be outside tracked repo/i);
  }finally{await rm(temp,{recursive:true,force:true});}
 });
+
+test('freeze protects the entire source checkout when called from a nested working directory',()=>{
+ const result=execSpawnSync(process.execPath,[
+  join(root,'scripts/poc005c1-evaluate.mjs'),'freeze',
+  '--session-id','nested-directory-blocked','--quorum','1',
+  '--out',join(root,'benchmarks','poc005c1','generated','private-review'),
+  '--source-sha','f'.repeat(40)
+ ],{cwd:join(root,'src'),encoding:'utf8',timeout:20000});
+ assert.notEqual(result.status,0);
+ assert.match(result.stderr,/private reviewer session must be outside tracked repo/i);
+});
