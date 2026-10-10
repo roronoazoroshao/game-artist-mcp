@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 import {mkdtemp,mkdir,readFile,readdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {join,resolve,sep} from 'node:path';
+import {join,resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {freezeSourceSession,preflightSession} from '../src/evaluation/preflight.mjs';
 import {buildOfflineReviewKit} from '../src/evaluation/review-kit.mjs';
 import {assertCleanMainCheckout} from '../src/evaluation/source-checkout.mjs';
+import {assertPrivateReviewOutput} from '../src/evaluation/private-output.mjs';
 import {parseEvaluationJson,canonicalBytes,sha256Bytes} from '../src/evaluation/contracts.mjs';
 import {readBoundedFile,writeAtomicFile} from '../src/evaluation/safe-io.mjs';
 import {checkEligibility} from '../src/evaluation/reviewers.mjs';
@@ -46,8 +47,7 @@ async function run(){
  if(command==='freeze'){
   const out=option('out',null);const quorum=Number(option('quorum','0'));
   if(!out||![1,2].includes(quorum))throw new Error('freeze --out ROOT --quorum 1|2');
-  const root=resolve(out),repo=resolve(process.cwd());
-  if(root===repo||root.startsWith(repo+sep))throw new Error('private reviewer session must be outside tracked repo');
+  const root=await assertPrivateReviewOutput({outputRoot:resolve(out),repositoryRoot:process.cwd()});
   const sourceSha=option('source-sha',sha());
   assertCleanMainCheckout({cwd:process.cwd(),expectedSha:sourceSha});
   const r=await runFreeze(root,option('session-id',''),sourceSha,quorum);
