@@ -3,6 +3,7 @@ import {mkdtemp,mkdir,readFile,readdir,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {freezeSourceSession,preflightSession} from '../src/evaluation/preflight.mjs';
 import {buildOfflineReviewKit} from '../src/evaluation/review-kit.mjs';
 import {assertCleanMainCheckout} from '../src/evaluation/source-checkout.mjs';
@@ -47,9 +48,10 @@ async function run(){
  if(command==='freeze'){
   const out=option('out',null);const quorum=Number(option('quorum','0'));
   if(!out||![1,2].includes(quorum))throw new Error('freeze --out ROOT --quorum 1|2');
-  const root=await assertPrivateReviewOutput({outputRoot:resolve(out),repositoryRoot:process.cwd()});
+  const sourceRepo=resolve(fileURLToPath(new URL('..',import.meta.url)));
+  const root=await assertPrivateReviewOutput({outputRoot:resolve(out),repositoryRoot:sourceRepo});
   const sourceSha=option('source-sha',sha());
-  assertCleanMainCheckout({cwd:process.cwd(),expectedSha:sourceSha});
+  assertCleanMainCheckout({cwd:sourceRepo,expectedSha:sourceSha});
   const r=await runFreeze(root,option('session-id',''),sourceSha,quorum);
   const kit=await buildOfflineReviewKit({publicManifest:r.publicManifest,publicAssetRoot:join(root,'review'),outputDir:join(root,'reviewer-kit')});
   console.log(JSON.stringify({sessionId:r.session.sessionId,technicalStatus:'TECHNICAL_PASS',visualStatus:'REVIEW_PENDING',kitRoot:kit.kitRoot,kitDigest:kit.kitDigest}));return;
