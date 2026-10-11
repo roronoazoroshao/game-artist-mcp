@@ -44,3 +44,9 @@ test('untrusted producer cannot forge host model-image-delivery or model tool de
   assert.equal(auditEventChain({challenge:challengeFixture,events:forged}).ok,false,kind+' must fail producer role');
  }
 });
+
+test('rejects reused toolCallId for a second supposedly independent invocation',()=>{
+ const prior=chain();
+ const replay=make([...prior.slice(0,-1),...prior.slice(1,4),prior.at(-1)]);
+ assert.equal(auditEventChain({challenge:challengeFixture,events:replay}).ok,false);
+});

@@ -10,7 +10,7 @@ export function auditEventChain({challenge,events}={}){
  if(!Array.isArray(events)||events.length<2||events.length>400)return {ok:false,errors:['events missing or outside budget'],toolCalls,renderCount,imagesDelivered,correctionRounds,eventsDigest:sha256Bytes(Buffer.from(''))};
  let manifest;
  try{manifest=validateChallenge(challenge);}catch{errors.push('challenge contract invalid');}
- let prev=null,pending=null,finished=false,delivered=new Set(),rendered=new Set(),started=false;
+ let prev=null,pending=null,finished=false,delivered=new Set(),rendered=new Set(),seenToolCallIds=new Set(),started=false;
  for(let i=0;i<events.length;i++){
   let e;
   try{e=validateInvocationEvent(events[i]);}catch{errors.push('event contract invalid at index '+i);continue;}
@@ -26,6 +26,8 @@ export function auditEventChain({challenge,events}={}){
    case 'CHALLENGE_DELIVERED':
     if(i!==0||started)errors.push('CHALLENGE_DELIVERED must be first');started=true;break;
    case 'MODEL_TOOL_DECISION':
+    if(seenToolCallIds.has(e.toolCallId))errors.push('reused toolCallId');
+    seenToolCallIds.add(e.toolCallId);
     if(!started||pending)errors.push('decision before challenge or pending dispatch');
     if(manifest&&!manifest.allowedToolNames.includes(e.toolName))errors.push('tool decision not allowed');
     pending={id:e.toolCallId,name:e.toolName,args:e.argumentDigest,stage:'decision'};toolCalls++;break;
