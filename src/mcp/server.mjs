@@ -10,6 +10,12 @@ import { validateDocument } from "../core/validate.mjs";
 import { loadStyleProfile } from "../style/profile.mjs";
 import { inspectStyle } from "../style/inspect.mjs";
 import { exportGodotCutout } from "../export/godot-cutout.mjs";
+import { compileCutout } from "../cutout/compile.mjs";
+import { renderCutoutFrames } from "../cutout/raster.mjs";
+import { packAtlas } from "../cutout/atlas.mjs";
+import { auditLoop } from "../cutout/animation.mjs";
+import { buildGodotV2Project } from "../export/godot-cutout-v2.mjs";
+import { publishGodotPackage } from "../export/atomic-package.mjs";
 import { AssetStore } from "./store.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
@@ -337,6 +343,22 @@ async function callTool(name, args) {
 
     case "export_godot_cutout": {
       const state = await store.load(args.asset_id);
+      if(args.cutout?.version===2){
+        const compiled=compileCutout(state.document,args.cutout,{revision:state.revision});
+        const frames=await renderCutoutFrames(compiled,{});
+        const atlas=packAtlas(frames,compiled.manifest.rendering);
+        const animationReports=compiled.clipIds.map(clip=>auditLoop(compiled,clip));
+        for(const report of animationReports)if(!report.ok)throw new Error("ANIMATION_QA_FAILED: "+report.errors.join('; '));
+        const files=buildGodotV2Project(compiled,atlas,animationReports[0]);
+        const pkg=await publishGodotPackage({store,assetId:args.asset_id,expectedRevision:state.revision,sourceSha256:compiled.sourceSha256,files});
+        return textResult({
+          asset_id:args.asset_id,revision:state.revision,version:2,
+          parts:compiled.parts.length,animations:compiled.clipIds.length,
+          source_sha256:compiled.sourceSha256,atlas_sha256:atlas.atlasSha256,
+          package_sha256:pkg.packageSha256,
+          project:`assets/${args.asset_id}/godot-versions/${pkg.packageSha256}`
+        });
+      }
       if(state.document.nodes.some(node=>node.appearance!==undefined))throw new Error("UNSUPPORTED_GODOT_APPEARANCE");
       const outputDir = join(store.assetDir(args.asset_id), "godot");
       await rm(outputDir, { recursive: true, force: true });
