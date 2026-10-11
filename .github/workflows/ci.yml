@@ -184,3 +184,18 @@ jobs:
             examples/spirit-lantern/generated/godot/
             examples/spirit-lantern/generated/godot-import.log
             examples/spirit-lantern/generated/godot-run.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase3-spirit-lantern-visual-UNSCORED
+          path: examples/spirit-lantern/generated/phase3-review/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase3-spirit-lantern-Godot-runtime
+          path: |
+            examples/spirit-lantern/generated/phase3-godot/
+            examples/spirit-lantern/generated/phase3-import.log
+            examples/spirit-lantern/generated/phase3-run.log
+          if-no-files-found: error
