@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from "node:child_process";
-import { lstat, mkdir, mkdtemp, open, readFile, rm, stat, writeFile } from "node:fs/promises";
-import { constants } from "node:fs";
+import { lstat, mkdir, mkdtemp, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -109,11 +109,17 @@ async function assertSafeLegacyExportOutput(outputDir) {
 }
 
 async function writeLegacyExportFile(path, bytes) {
-  // O_NOFOLLOW rejects symlink substitutions of the destination after preflight.
-  const handle = await open(path,
-    constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW, 0o600);
-  try { await handle.writeFile(bytes); }
-  finally { await handle.close(); }
+  // Replace an existing file's directory entry, never truncate its inode:
+  // pre-existing hardlinks must not change files outside this export.
+  const temp = path + "." + process.pid + "." + randomBytes(12).toString("hex") + ".tmp";
+  try {
+    const handle = await open(temp, "wx", 0o600);
+    try { await handle.writeFile(bytes); await handle.sync(); }
+    finally { await handle.close(); }
+    await rename(temp, path);
+  } finally {
+    await rm(temp, { force: true });
+  }
 }
 
 const tools = [
