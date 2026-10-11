@@ -66,3 +66,17 @@ test('legacy exporter rejects v2 without writing v1 SVG output',async()=>{
  const {doc,cut}=await fixture();
  await assert.rejects(exportGodotCutout({document:doc,cutout:cut,outputDir:'/tmp/this-must-not-be-created'}),/v2|compiled|unsupported|outputDir|manifest/i);
 });
+
+
+test('animated position is additive to the authored pivot, never an origin override',async()=>{
+ const {doc,cut,atlas}=await fixture();
+ cut.animations[0].tracks.push({part:'talisman_left',property:'position',
+  keys:[{time:0,value:[0,0]},{time:1,value:[3,-2]},{time:2,value:[0,0]}]});
+ const compiled=compileCutout(doc,cut,{revision:5});
+ const scene=String(buildGodotV2Project(compiled,atlas,auditLoop(compiled,'idle')).get('assets/spirit_lantern/spirit_lantern.tscn'));
+ const from=scene.indexOf('NodePath("body/talisman_left:position")');
+ assert.ok(from>0);
+ const keys=scene.slice(from,scene.indexOf('}',from)+1);
+ assert.match(keys,/Vector2\(-48, -18\)/);
+ assert.match(keys,/Vector2\(-45, -20\)/);
+});
