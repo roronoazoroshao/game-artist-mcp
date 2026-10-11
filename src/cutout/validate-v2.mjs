@@ -31,6 +31,11 @@ export function validateCutoutV2(document,manifest){
    nodeIds.add(node.id);
    // v2 does not allow free-form SVG transform grammar, external resources or shaders.
    if(node.transform!==undefined)push(errors,'v2 unsupported unsafe SVG transform');
+   for(const prop of ['fill','stroke']){
+    const paint=node[prop];
+    if(paint!==undefined&&paint!=='none'&&(typeof paint!=='string'||!HEX.test(paint)))
+     push(errors,'v2 unsafe '+prop+' paint on node '+node.id);
+   }
   }
   const partIds=new Set(),byPart=new Map();
   for(const part of manifest.parts){

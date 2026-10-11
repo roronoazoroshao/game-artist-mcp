@@ -52,6 +52,5 @@ test('per-part and per-pose material-aware renders remain independent',async()=>
 test('v2 raster rejects external paint URL instead of asking librsvg to fetch',async()=>{
  const {d,c}=cutout();
  d.nodes.find(n=>n.id==='roof').fill='url(https://example.com/attacker.svg)';
- const compiled=compileCutout(d,c,{revision:7});
- await assert.rejects(()=>renderCutoutFrames(compiled,{}),/unsafe|paint|external|url/i);
+ assert.throws(()=>compileCutout(d,c,{revision:7}),/unsafe|paint|external|url/i);
 });
