@@ -22,5 +22,8 @@
     "poc:005c1:dry": "node scripts/poc005c1-evaluate.mjs dry",
     "poc:005c2:capabilities": "node scripts/poc005c2-capabilities.mjs",
     "poc:005c2:audit:dry": "node scripts/poc005c2-audit-dry.mjs"
+  },
+  "dependencies": {
+    "pngjs": "7.0.0"
   }
 }
