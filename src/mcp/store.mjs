@@ -7,6 +7,7 @@ import { createAssetState } from "../core/engine.mjs";
 import { validateDocument } from "../core/validate.mjs";
 
 const ASSET_ID = /^[a-z0-9][a-z0-9_-]{0,63}$/;
+const MAX_STATE_BYTES = 16 * 1024 * 1024;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -20,13 +21,15 @@ export function assertAssetId(assetId) {
 }
 
 async function writeJsonAtomic(path, value) {
+  const bytes = Buffer.from(JSON.stringify(value, null, 2) + "\n", "utf8");
+  if (bytes.length > MAX_STATE_BYTES) throw new Error("STATE_SIZE_LIMIT");
   // Randomized, exclusive creation defeats planted PID-named symlinks.
   // Sync the file and containing directory before reporting a committed state.
   const tmp = `${path}.${process.pid}.${randomBytes(12).toString("hex")}.tmp`;
   try {
     const handle = await open(tmp, "wx", 0o600);
     try {
-      await handle.writeFile(JSON.stringify(value, null, 2) + "\n", "utf8");
+      await handle.writeFile(bytes);
       await handle.sync();
     } finally {
       await handle.close();
@@ -45,7 +48,22 @@ export class AssetStore {
   }
 
   async init() {
-    await mkdir(join(this.root, "assets"), { recursive: true, mode: 0o700 });
+    // Refuse existing symlinks before creating any asset beneath the root.
+    await mkdir(this.root, { recursive: true, mode: 0o700 });
+    const rootInfo = await lstat(this.root);
+    if (!rootInfo.isDirectory() || rootInfo.isSymbolicLink()) {
+      throw new Error("unsafe symlink or workspace directory");
+    }
+    const assetsPath = join(this.root, "assets");
+    try {
+      await mkdir(assetsPath, { mode: 0o700 });
+    } catch (error) {
+      if (error?.code !== "EEXIST") throw error;
+    }
+    const assetsInfo = await lstat(assetsPath);
+    if (!assetsInfo.isDirectory() || assetsInfo.isSymbolicLink()) {
+      throw new Error("unsafe symlink or assets directory");
+    }
   }
 
   assetDir(assetId) {
@@ -127,8 +145,22 @@ export class AssetStore {
         throw new Error("unsafe state file symlink");
       }
       const handle = await open(statePath, constants.O_RDONLY | constants.O_NOFOLLOW);
-      try { text = await handle.readFile({encoding: "utf8"}); }
-      finally { await handle.close(); }
+      try {
+        const info = await handle.stat();
+        if (!info.isFile() || info.size > MAX_STATE_BYTES) throw new Error("STATE_SIZE_LIMIT");
+        // Bounded reads protect against growth after stat() as well.
+        const parts = [];
+        const chunk = Buffer.allocUnsafe(64 * 1024);
+        let used = 0;
+        for (;;) {
+          const { bytesRead } = await handle.read(chunk, 0, chunk.length, null);
+          if (bytesRead === 0) break;
+          used += bytesRead;
+          if (used > MAX_STATE_BYTES) throw new Error("STATE_SIZE_LIMIT");
+          parts.push(Buffer.from(chunk.subarray(0, bytesRead)));
+        }
+        text = Buffer.concat(parts, used).toString("utf8");
+      } finally { await handle.close(); }
     } catch (error) {
       if (error?.code === "ENOENT") throw new Error(`asset not found: ${assetId}`);
       if (error?.code === "ELOOP") throw new Error("unsafe state file symlink");
