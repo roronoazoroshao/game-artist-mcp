@@ -19,3 +19,28 @@ export const exportFixture=Object.freeze({
  initialMcpPngSha256:'1'.repeat(64),revisedMcpPngSha256:'2'.repeat(64),finalDocumentSha256:'5'.repeat(64),exportAssetSha256:'6'.repeat(64),
  initialRevision:1,finalRevision:2,exportRevision:2,assetId:challengeFixture.assetId
 });
+
+// Deliberate SYNTHETIC_TEST-only proof of deterministic verifier arithmetic.
+// This is NOT independently model-authored art or a provider-issued transcript.
+import {computeEventDigest} from '../../src/provenance/event-audit.mjs';
+export function buildSyntheticWorkflow(){
+ const hash=c=>c.repeat(64);
+ const pair=(name,id,revision,extra={})=>[
+  {eventKind:'MODEL_TOOL_DECISION',producer:'PROVIDER',toolCallId:id,toolName:name,argumentDigest:hash('a'),sourceKind:'AGENT_DECISION'},
+  {eventKind:'TOOL_DISPATCH',producer:'HOST',toolCallId:id,toolName:name,argumentDigest:hash('a')},
+  {eventKind:'TOOL_RESULT',producer:'MCP',toolCallId:id,toolName:name,resultDigest:hash('b'),assetId:challengeFixture.assetId,assetRevision:revision,success:true,...extra}
+ ];
+ const raw=[
+  {eventKind:'CHALLENGE_DELIVERED'},
+  ...pair('style_profile_get','style',0),...pair('asset_create','create',0),
+  ...pair('document_apply_ops','ops1',1),...pair('render_preview','preview1',1,{imageSha256:exportFixture.initialPngSha256,responseFormat:'image/png'}),
+  {eventKind:'MODEL_IMAGE_DELIVERED',producer:'HOST',imageSha256:exportFixture.initialPngSha256,responseFormat:'image/png'},
+  {eventKind:'MODEL_CRITIQUE',producer:'HOST',imageSha256:exportFixture.initialPngSha256,critiqueDigest:hash('9')},
+  ...pair('document_apply_ops','ops2',2),...pair('render_preview','preview2',2,{imageSha256:exportFixture.revisedPngSha256,responseFormat:'image/png'}),
+  {eventKind:'MODEL_IMAGE_DELIVERED',producer:'HOST',imageSha256:exportFixture.revisedPngSha256,responseFormat:'image/png'},
+  ...pair('validate_asset','validate',2),...pair('style_validate','stylecheck',2),...pair('export_asset','export',2),
+  {eventKind:'RUN_FINISHED',producer:'HOST'}
+ ];
+ let prev=null;
+ return raw.map((v,i)=>{const e={...eventFixture,...v,eventSequence:i,prevEventDigest:prev,eventDigest:hash('0'),issuedAt:new Date(Date.parse(eventFixture.issuedAt)+i*1000).toISOString()};e.eventDigest=computeEventDigest(e);prev=e.eventDigest;return e;});
+}

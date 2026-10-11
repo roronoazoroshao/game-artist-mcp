@@ -6,3 +6,6 @@ coverage/
 examples/**/generated/
 benchmarks/poc005b/generated/
 benchmarks/poc005c1/generated/
+benchmarks/poc005c2/generated/
+benchmarks/poc005c2/private/
+private-reviews/
