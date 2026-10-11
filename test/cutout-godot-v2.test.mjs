@@ -99,6 +99,6 @@ test('smoothstep author curves are baked into Godot linear tracks at 30Hz for pr
  assert.equal(ticks.length,angles.length);
  const index=ticks.findIndex(t=>Math.abs(t-(1/6))<1e-5);
  assert.ok(index>0,'expected 30Hz tick 1/6 second');
- const expected=-0.035+(0.025+0.035)*(3*(1/3)**2-2*(1/3)**3);
+ const expected=-0.035+(0.055+0.035)*(3*(1/6)**2-2*(1/6)**3);
  assert.ok(Math.abs(angles[index]-expected)<0.0001,JSON.stringify({actual:angles[index],expected}));
 });
