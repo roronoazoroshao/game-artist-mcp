@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,rm,symlink} from 'node:fs/promises';
+import {mkdtemp,rm,symlink,writeFile,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {AssetStore} from '../src/mcp/store.mjs';
@@ -74,5 +74,33 @@ test('a symlinked asset root cannot redirect state writes outside the workspace'
  }finally{
   await rm(s.root,{recursive:true,force:true});
   await rm(outer.root,{recursive:true,force:true});
+ }
+});
+
+test('state JSON symlink must never be read as workspace state',async()=>{
+ const s=await fixture(),external=await fixture();
+ try{
+  await rm(s.left.statePath('asset_one'));
+  await symlink(external.left.statePath('asset_one'),s.left.statePath('asset_one'));
+  await assert.rejects(s.left.load('asset_one'),/symlink|unsafe|file/i);
+ }finally{
+  await rm(s.root,{recursive:true,force:true});
+  await rm(external.root,{recursive:true,force:true});
+ }
+});
+
+test('predictable state tmp-file symlink cannot overwrite an external sentinel',async()=>{
+ const s=await fixture();
+ const outside=await mkdtemp(join(tmpdir(),'ga-external-sentinel-'));
+ const target=join(outside,'sentinel.txt');
+ try{
+  await writeFile(target,'DO_NOT_TOUCH','utf8');
+  await symlink(target,s.left.statePath('asset_one')+'.'+process.pid+'.tmp');
+  await s.left.save('asset_one',modified(s.state,'ok'));
+  assert.equal(await readFile(target,'utf8'),'DO_NOT_TOUCH');
+  assert.equal((await s.left.load('asset_one')).revision,1);
+ }finally{
+  await rm(s.root,{recursive:true,force:true});
+  await rm(outside,{recursive:true,force:true});
  }
 });
