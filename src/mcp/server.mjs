@@ -16,6 +16,7 @@ import { packAtlas } from "../cutout/atlas.mjs";
 import { auditLoop } from "../cutout/animation.mjs";
 import { buildGodotV2Project } from "../export/godot-cutout-v2.mjs";
 import { publishGodotPackage } from "../export/atomic-package.mjs";
+import { renderCutoutPreview } from "../cutout/preview.mjs";
 import { AssetStore } from "./store.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
@@ -153,6 +154,21 @@ const tools = [
       type: "object",
       properties: { asset_id: { type: "string" } },
       required: ["asset_id"],
+      additionalProperties: false
+    }
+  },
+  {
+    name: "render_cutout_preview",
+    description: "Render one validated Cutout v2 animation frame at the specified local clip time into a bounded PNG image block.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        asset_id: { type: "string", pattern: "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        cutout: { type: "object" },
+        clip_id: { type: "string", pattern: "^[a-z][a-z0-9_]{0,63}$" },
+        time_seconds: { type: "number", minimum: 0, maximum: 60 }
+      },
+      required: ["asset_id","cutout","clip_id","time_seconds"],
       additionalProperties: false
     }
   },
@@ -296,6 +312,26 @@ async function callTool(name, args) {
           bytes: png.byteLength
         }
       };
+    }
+
+    case "render_cutout_preview": {
+      if(!args.cutout||args.cutout.version!==2)throw new Error("cutout preview requires version 2");
+      if(!Number.isFinite(args.time_seconds)||args.time_seconds<0||
+        typeof args.clip_id!=="string")throw new Error("invalid preview time or clip");
+      const state=await store.load(args.asset_id);
+      const compiled=compileCutout(state.document,args.cutout,{revision:state.revision});
+      const frameData=await renderCutoutPreview({compiled,clipId:args.clip_id,timeSeconds:args.time_seconds});
+      const latest=await store.load(args.asset_id);
+      if(latest.revision!==state.revision)throw new Error("STALE_SOURCE_REVISION");
+      const meta={
+        asset_id:args.asset_id,revision:state.revision,source_sha256:compiled.sourceSha256,
+        clip_id:args.clip_id,time_seconds:args.time_seconds,
+        pose_ids:Object.fromEntries(Object.entries(frameData.frame.parts).map(([id,p])=>[id,p.poseId])),
+        sha256:frameData.digest,bytes:frameData.png.length,mime_type:"image/png"
+      };
+      return {content:[{type:"text",text:JSON.stringify(meta)},
+        {type:"image",data:frameData.png.toString("base64"),mimeType:"image/png"}],
+        structuredContent:meta};
     }
 
     case "validate_asset": {
