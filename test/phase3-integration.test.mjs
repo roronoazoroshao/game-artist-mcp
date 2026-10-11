@@ -8,7 +8,7 @@ test('Phase 3 real child MCP builds valid immutable atlas-backed Godot project',
   encoding:'utf8',timeout:100000,maxBuffer:8*1024*1024
  });
  assert.equal(process.status,0,'Phase3 MCP export failed '+process.stderr+' '+process.stdout);
- assert.match(process.stdout,/"ok":true/);
+ assert.equal(JSON.parse(process.stdout).ok,true);
  const root='examples/spirit-lantern/generated/phase3-godot';
  for(const path of ['project.godot','main.tscn','validation.gd',
    'assets/spirit_lantern/atlas.png','assets/spirit_lantern/atlas.json',
