@@ -213,3 +213,14 @@ This implementation introduces strictly opt-in original Art IR appearance for di
 Technical A/B script `npm run poc:005b` uses **only a generic synthetic shape** to verify PNG at true 64px and 128px, controlled same-geometry variants, reproducible hashes and reviewer template. The fixture is not actual artistic proof. Before any production-quality or autonomy conclusion, still require independent blind 64/128 review of sword/pouch/censer and real provider-origin vision-agent provenance on unfamiliar asset briefs.
 
 Statuses: `TECHNICAL_ONLY` for CI fixtures, `VISUAL_REVIEW_PENDING` and `AGENT_PROVENANCE_PENDING` until separate external gates are satisfied. Do not conflate a green CI with art quality.
+
+## POC-005C2 — provider-attested autonomous artist benchmark (2026-10-11)
+
+**Offline Tasks 1–7: IMPLEMENTED / TECHNICALLY_VERIFIED in synthetic scope only** by [PR #25](https://github.com/roronoazoroshao/game-artist-mcp/pull/25). Exact product head `8238573b92aaea45599f65086679c3554697b0c8`; main product merge `346b526e22ad53be92235b1267c0509261f99ec4`; exact PR [CI 38105151880](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38105151880) SUCCESS, post-merge main [CI 38105216121](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38105216121) SUCCESS, [cleanup 38105281569](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38105281569) SUCCESS.
+
+Evidence delivered: host/provider capability assessment, versioned contracts, verifier-controlled issuer-policy scaffold that **never invents signed receipts**, anti-replay event-chain audit, image-delivery / render-revision / tool-budget checks, redacted read-only offline CLI, synthetic adversarial suite and CI runbook. Task 8 is **BLOCKED: PROVIDER_ATTESTATION_UNAVAILABLE**; provider-signature format and independent verification root are not established. A trace generated locally is not provider proof. Strict GO, full visual artistic quality, and production release remain unestablished.
+
+Next separately gated objectives:
+1. Independently obtain and verify genuine provider-issued model decision + image delivery receipts, **or** record that this model/provider tier is unavailable and propose a distinctly scoped host-attested research milestone for written approval. No paid model calls without authorization.
+2. Complete POC-005C1 independent non-author human artistic blind reviews (Issue #21) using genuine reviewers; CI dry kits are not human scores.
+3. Start **Phase 3 Spirit Lantern game-ready vertical slice discovery/spec** according to the earlier roadmap, with new design and implementation plan approval gates. C2 approvals do not authorize expanded cutout/Godot/3D code.
