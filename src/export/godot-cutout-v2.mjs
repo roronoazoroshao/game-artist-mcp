@@ -16,6 +16,32 @@ const pathOf=(id,byId)=>{
 };
 const depth=(part,byId)=>{let n=0,c=part;while(c.parent){n++;c=byId.get(c.parent)}return n};
 const color=value=>{const s=(value??'#72f5ec').slice(1);return 'Color('+[0,2,4].map(k=>parseInt(s.slice(k,k+2),16)/255).join(', ')+', 1)'};
+// Godot Animation value tracks interpolate linearly, but the source IR can specify
+// smoothstep. Bake curves into bounded 30 Hz keys to preserve authored timing.
+function bakedKeys(track,length){
+ if(track.interpolation!=='smoothstep')return track.keys;
+ const count=Math.ceil(length*30);
+ if(count>1800)throw new Error('ANIMATION_KEYFRAME_BUDGET_EXCEEDED: clip duration');
+ const times=[...new Set([
+  ...track.keys.map(k=>k.time),
+  ...Array.from({length:count+1},(_,i)=>Math.min(length,i/30)),
+  length
+ ])].sort((a,b)=>a-b);
+ if(times.length>1866)throw new Error('ANIMATION_KEYFRAME_BUDGET_EXCEEDED: smoothstep sampling');
+ return times.map(time=>{
+  let left=track.keys[0],right=track.keys.at(-1);
+  for(let i=1;i<track.keys.length;i++){
+   if(time<=track.keys[i].time){right=track.keys[i];left=track.keys[i-1];break}
+  }
+  let u=right.time===left.time?0:(time-left.time)/(right.time-left.time);
+  u=Math.max(0,Math.min(1,u));const t=u*u*(3-2*u);
+  const value=Array.isArray(left.value)
+   ?left.value.map((v,i)=>v+(right.value[i]-v)*t)
+   :left.value+(right.value-left.value)*t;
+  return {time,value};
+ });
+}
+
 function putTracks(lines,tracks){
  tracks.forEach((track,i)=>{
   const times=track.keys.map(k=>k.time);
@@ -113,9 +139,13 @@ export function buildGodotV2Project(compiled,atlas,qa){
  };
  for(const clip of manifest.animations){
   const tracks=[];
+  let bakedBudget=0;
   for(const track of clip.tracks){
    const basePath=pathOf(track.part,byId);
-   const mapped=track.keys.map(k=>{
+   const animationKeys=bakedKeys(track,clip.length);
+   bakedBudget+=animationKeys.length;
+   if(bakedBudget>8192)throw new Error('ANIMATION_KEYFRAME_BUDGET_EXCEEDED: aggregate tracks');
+   const mapped=animationKeys.map(k=>{
     if(track.property==='position'){
      const target=byId.get(track.part);
      const parentPivot=target.parent?byId.get(target.parent).pivot:[0,0];
@@ -128,7 +158,7 @@ export function buildGodotV2Project(compiled,atlas,qa){
     return String(k.value);
    });
    tracks.push({path:track.property==='light_energy'?basePath+'/SpiritLight:energy':basePath+':'+track.property,
-    keys:track.keys.map((k,i)=>({time:k.time,value:mapped[i]})),discrete:false});
+    keys:animationKeys.map((k,i)=>({time:k.time,value:mapped[i]})),discrete:false});
   }
   const seq=manifest.frameSequence;
   if(seq&&seq.frames.length){
