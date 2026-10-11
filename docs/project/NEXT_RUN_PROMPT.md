@@ -1,43 +1,45 @@
-# GAME ARTIST MCP — PHASE 3 / R4 SECURITY QUALIFICATION HANDOFF
+# GAME ARTIST MCP — PHASE 3 / R5 INDEPENDENT SECURITY REVIEW HANDOFF
 
-**Repository:** `roronoazoroshao/game-artist-mcp` · **PR:** [#29](https://github.com/roronoazoroshao/game-artist-mcp/pull/29) · **Product branch:** `product/phase3-spirit-lantern-v2`.
+**Repo:** `roronoazoroshao/game-artist-mcp` · **PR:** [#29](https://github.com/roronoazoroshao/game-artist-mcp/pull/29) · **Branch:** `product/phase3-spirit-lantern-v2` · **Communication:** Vietnamese.
 
-Language: Vietnamese. **Source of truth: GitHub LIVE.** Reconfirm HEADs, PR, reviews and CI before all actions. **Do not restart Phase 3.** Keep PR Draft unless every technical merge gate is proved. Technical-only merge and production art release remain separate decisions.
+**State:** `DRAFT / NO MERGE / EXTERNAL_REVIEW_PENDING`. GitHub LIVE is the source of truth. Do not restart Phase 3 or overwrite `main`. The project owner approved advancing to an independent AppSec code review, fixing any P0/P1 by TDD, re-running exact-HEAD CI and conditional technical-only merge **only if the mandatory independent gate is truly satisfied**.
 
-## Already owner-approved
+## Previously completed and still relevant
 
-- PR #27 Phase 3 written spec and PR #28 TDD plan are merged; Native execution approved.
-- Owner approved R4 focused security and concurrency qualification on 2026-10-11. No unrelated POC or repo replacement.
-- Original Phase 3 v2 build consists of CutoutManifest v2, 4 flame poses, optimized atlas, bounded raster, MCP image previews and pinned Godot runtime; original v1 stays compatible.
+- Phase 3 written spec PR #27 and implementation plan PR #28 were merged. Product PR #29 implements opt-in deterministic Cutout v2, 64/128 preview, Godot atlas/animation/light, last-good immutable v2 package publisher and preserves legacy POC004.
+- R4 bounded cross-process safety: [Security contract + crash recovery](R4_SECURITY_CONCURRENCY.md), [CI #38144736859](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38144736859) PASS 193/193 Node +13/13 synthetic, original and Phase3 pinned Godot4 runtime PASS, FolderForge PASS.
+- Supported filesystem model: **one trusted host, local filesystem and cooperative processes**. No guarantee for NFS/SMB/multi-host/uncooperative same-UID actor, whole-host power-loss durability or arbitrary ancestor symlink TOCTOU. Do not quietly widen this contract.
 
-## R3 checkpoint / baseline
+## R5 code review and TDD evidence
 
-- Previous R3 product HEAD: `a11c6a7ec8553a9cd234f596ddab0d1bf1a639fc`.
-- R3 full [CI #38140987073](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38140987073): 186/186 Node, 13/13 synthetic, original POC004 and Phase3 real Godot PASS, FolderForge integration PASS.
-- R3 found and corrected stale revision overwrites, inter-process lost updates, exported pointer mutation concurrent with writes, state symlink reads, predictable symlinkable tmp files. Existing shared `.asset-write-lock` is fail-closed and requires controlled recovery after a killed writer.
+Actual **AI_SELF_REVIEW** of changed files, NOT independent security review. It identified a concrete legacy `src/mcp/server.mjs` export risk:
 
-## R4 executed and evidence
+1. `export_asset` accepted symlinked `output/` directory and `asset.svg` destination and could write outside the asset workspace. Two targeted failing tests in `test/r5-legacy-export-boundary.test.mjs` at [RED CI #38147040443](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38147040443).
+2. Added directory and file preflight `lstat` checks and no-follow file opens: [GREEN CI #38147152424](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38147152424) SUCCESS.
+3. Adversarial hardlink regression proved that truncating an existing regular output file mutates a linked file outside the workspace: [RED CI #38147247614](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38147247614), one real failing case.
+4. Fixed by creating exclusive random temporary files and atomically `rename`ing their directory entries rather than truncating existing inodes. Fix commit `5222ba788eeb4e181389ec5a5d8be2c33241e10e`; [CI #38147327418](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38147327418) **SUCCESS**: 196/196 Node, 13/13 synthetic, `npm audit` reported zero detected vulnerabilities; POC004 and Phase3 Godot runtime markers PASS; FolderForge integration PASS.
+5. These patches keep the v1 MCP tool name and output layout; do not mistake mechanical verification for a human-reviewed security certification. The trusted-host model remains. The three sequential v1 output files are individually atomically replaced, **not** an atomic multi-file transaction.
 
-- RED commit `a59ee8f38801b6779d08fb9810abda9db136ccef`, [CI #38144147784](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38144147784): four reproducible failures — asset creation through symlinked root, asset creation through symlinked assets directory, oversized state read and oversized state save.
-- GREEN `e5d4fe9202781fcb5acbce040738c3d0b2807560`, [CI #38144231621](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38144231621): full workflow SUCCESS. `AssetStore.init` rejects checked symlink root/assets; state read and serialized writes enforce a 16 MiB cap.
-- Multi-process cross-check `6bb3f90b397e125560c9535a09312c2ad62a1f78`, [CI #38144362650](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38144362650): SUCCESS, 192/192 Node and 13/13 synthetic; real two-OS-process CAS and SIGKILL stale-lock recovery simulations passed; original POC004 and Phase3 Godot runtime markers PASSED; FolderForge child plugin PASSED.
-- Security contract and manual recovery documentation added: `docs/project/R4_SECURITY_CONCURRENCY.md`. **That document itself must be checked under the latest HEAD CI.**
-- Test suites: `test/r4-workspace-boundary.test.mjs` and `test/r4-cross-process.test.mjs`. Do not confuse synthetic or AI self-review with external independent security evidence.
+## Independent AppSec reviewer gate (still OPEN)
 
-## Residual scope and gate status
+Created [Issue #30 — Independent AppSec review of exact PR #29 HEAD](https://github.com/roronoazoroshao/game-artist-mcp/issues/30) with an independently executable reviewer packet, threat model, scope, evidence and deliverable rubric.
 
-1. **Trusted local host/filesystem only:** Test-covered cooperative Node processes on one host. This does not certify distributed/NFS/SMB, hostile same-UID path-swap TOCTOU or generalized sandbox escapes.
-2. **Crash/power:** A killed writer leaves an intentional orphan lock and fails closed. Only verified operator-exclusive recovery is supported. Full-host sudden power loss and nested directory durability are **not** qualified.
-3. **Independent review:** No genuine independent PR code/security review submission was present at prior verified HEAD. Obtain an eligible non-author review or document an explicitly permitted technical exception only if repository rules allow it; no fabricated review.
-4. **Visual:** [Issue #21](https://github.com/roronoazoroshao/game-artist-mcp/issues/21) remains open for **two authentic non-author human** blind art reviews. No `VISUAL_GO`/production art claim.
-5. **Provider:** POC005C2 provider-origin attestation unavailable; no autonomous artist full-pass claim.
+- PR author is `roronoazoroshao369`; the author (or any assistant acting on their credentials) MUST NOT count as an independent reviewer.
+- At latest verified R5 review inquiry, PR had **zero review submissions**, **zero review threads** and no requested reviewer, and the repo has no `.github/CODEOWNERS`. No eligible reviewer username had been supplied. Do not invent an identity, approval or review artifact.
+- A qualified non-author reviewer must submit a genuine attributable GitHub review of the **current exact HEAD** across the entire PR diff, including core v1/v2 workflows, and explicitly assess whether P0/P1 are closed **within the declared threat model**.
+- If P0/P1 is reported, reproduce it with a failing test → fix → full exact-head CI → request another review on the new HEAD. A green workflow alone does not satisfy reviewer independence.
+- All branch protection and exact-HEAD CI requirements must also pass before technical-only merge. If reviewer gate is not met, remain **NO MERGE**, keep product branch and PR Draft; do not delete work.
 
-## Next action after this handoff
+## Independent production/art gates remain unchanged
 
-1. Verify live PR #29 exact latest HEAD, review submissions/threads/branch protection and exact HEAD CI.
-2. Perform bounded AI_ROLE_BASED adversarial re-review of the R4 product diff; seek a genuine independent security code-review submission when available. Evaluate whether all applicable P0/P1 technical findings are closed **under the documented supported filesystem contract**.
-3. If any P0/P1 appears, do TDD RED→GREEN on the same product branch, then full exact-HEAD Node/synthetic/npm/POC004/Phase3 Godot/FolderForge CI.
-4. Technical merge only if all mandatory gates have genuine evidence and GitHub rules allow. Otherwise: **NO MERGE**, preserve Draft branch/PR and log unresolved blockers.
-5. Never auto-release stable/production, fake human art review/provider proof, delete unfinished work or weaken acceptance thresholds.
+- [Issue #21](https://github.com/roronoazoroshao/game-artist-mcp/issues/21): two actual independent, non-author human blind 64/128px art reviews, pending.
+- POC005C2 authentic provider-origin attestation, unavailable. Neither can be replaced by agent simulation, self-review or synthetic artifacts.
+- No stable/production release, no ART-GO claim. A technical-only merge (after eligible gates) is distinct from production release.
 
-**Last evidence snapshot:** R4 functional tests were green at `6bb3f90b`. This handoff file is subsequently committed on the product branch; **reverify its exact current HEAD and CI**, do not assume it is already green.
+## Next execution
+
+1. Re-check live PR #29 HEAD, requested/actual reviewers, GitHub Actions, open threads and [Issue #30](https://github.com/roronoazoroshao/game-artist-mcp/issues/30).
+2. Identify and **actually request** a distinct eligible GitHub reviewer when the real identity and repo permission are known; do not guess a username. Send the Issue #30 packet and bind review to exact HEAD.
+3. Close only independently supported P0/P1 with reproducible TDD and exact-head verification. Keep the PR Draft / NO MERGE until independent AppSec gate is fulfilled. Leave art/provenance as separate downstream gates.
+
+**This handoff file is committed after the R5 green commit. Run and inspect GitHub Actions for the **new resulting exact HEAD** before reporting it green.**
