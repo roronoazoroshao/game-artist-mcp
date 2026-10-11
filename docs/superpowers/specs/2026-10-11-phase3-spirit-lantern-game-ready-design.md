@@ -133,7 +133,7 @@ Proposed *illustrative* v2 fields (exact JSON Schema and resource limits must be
 
 Example is **not** a complete Lantern manifest; it illustrates extension points, not valid production fixtures.
 
-**Resolve pose ownership explicitly:** The normalized compiler treats a pose as an alternate set of source nodes for its designated part. Every alternate node ID is unique globally and may belong to exactly one pose/part; base nodes remain assigned to exactly one part. At render time **only one pose of a part is visible**. Variants do not accidentally render simultaneously or inflate the body. The planner must define and test pose override semantics. Required five active logical parts remain body/flame/talisman_left/talisman_right/tassel regardless of frame count.
+**Resolve pose ownership explicitly:** The normalized compiler treats a pose as an alternate set of source nodes for its designated part. Every alternate node ID is unique globally and may belong to exactly one pose/part; base nodes remain assigned to exactly one part. At **v2 compiled preview/export time**, **only one pose of a part is visible**. This distinction matters: the unchanged generic v1 render_preview would render every source node, including all variant nodes, and must NOT be treated as a valid v2 animation preview. Add a new narrowly scoped render_cutout_preview tool that validates a v2 manifest, selects an exact animation clip and time, filters inactive pose nodes, composes the five active parts and returns an actual PNG image content block with source revision, clip/time and digest. It never mutates the source. Invalid/missing pose references or unowned nodes fail closed. The implementation plan must test no duplicate flame geometry, no frame leakage and reproducible preview bytes. Required five active logical parts remain body/flame/talisman_left/talisman_right/tassel regardless of frame count.
 
 **Hard v2 invariants:**
 - At least one root; all parents exist, no cycles, unique IDs/roles, finite pivots inside bounded source canvas; every visible source node and variant node assigned exactly once. No warnings for unowned visible source nodes in v2.
@@ -143,7 +143,7 @@ Example is **not** a complete Lantern manifest; it illustrates extension points,
 - All cyclic transform clips have start/end equivalent states at loop seam within declared epsilon; repeating a frame sequence must be mathematically continuous at its wrap in timing (visual shape change may still be visible and requires pixel QA). Clip keys are monotonic and bounded; duplicate times or conflicts on one part/property are errors.
 - v2 must bind to exact source revision and canonical source document SHA-256. A stale document or changed material after compile must invalidate the package; source content is never silently rewritten.
 
-**MCP contract:** Keep export_godot_cutout with current asset_id and cutout payload; dispatch selects v1 or v2 from manifest version, no additional cross-host permissions. Existing render_preview/export_asset, validation and provenance interfaces remain unchanged. New capabilities should be discoverable via an added strictly bounded tool description/metadata, without silently changing existing tool arguments.
+**MCP contract:** Keep export_godot_cutout with current asset_id and cutout payload; dispatch selects v1 or v2 from manifest version, no additional cross-host permissions. Existing render_preview/export_asset, validation and provenance interfaces remain unchanged. **Add render_cutout_preview(asset_id,cutout,clip_id,time_seconds)** for v2 only with time in the validated clip's range; return MCP image content plus bound revision/digest, no arbitrary file paths, no mutation, and enforce existing render/output budgets. New capability appears in tools/list as a bounded art-domain tool; it must not claim provider-attested image delivery merely because MCP returned image bytes.
 
 ## 5. Texture, atlas and pixel-space design
 
@@ -207,7 +207,7 @@ No new FolderForge daemon, authentication layer, generic file editing tool, exte
 | SVG/PNG per-part rendering and alpha bounds | src/cutout/raster.mjs (new) using existing src/core/render-svg.mjs | renderCutoutFrames(normalized,renderer) |
 | deterministic packing and manifest | src/cutout/atlas.mjs (new) | packAtlas(frames,{paddingPx,maxAtlasSize}), verifyAtlas(...) |
 | Godot generator | src/export/godot-cutout.mjs refactor with internal isolated v1/v2 branches | exportGodotCutout({document,cutout,outputDir,...}) |
-| governed MCP dispatch | src/mcp/server.mjs and src/mcp/store.mjs as needed | preserve export_godot_cutout arguments and existing seven core tools |
+| governed MCP dispatch | src/mcp/server.mjs and src/mcp/store.mjs as needed | preserve export_godot_cutout arguments and existing core tools; add opt-in render_cutout_preview |
 | quality and integrity report | src/cutout/qa.mjs (new) | buildCutoutQaReport(normalized,atlas,animation) |
 | test harness | scripts/poc004-godot.mjs preserved; new scripts/phase3-godot.mjs and targeted test files | actual MCP call, generated Godot import, controlled runtime samples, technical report |
 | frozen Lantern art testbed | examples/spirit-lantern/v2/* (new), not destructive replacement of old fixture | source, pose variants, animations, exported preview |
@@ -227,7 +227,7 @@ These are **design proposals**, not a commitment to exact filenames or a complet
 
 **G4 — Actual game import:** through raw MCP and, where available, FolderForge child plugin; generated project imports, instantiates, animates and runs under pinned Godot. Fail closed on missing texture, invalid resource path or script warnings. Test in an isolated workspace and verify returned manifest/asset SHA.
 
-**G5 — Qualitative game feel gate:** save side-by-side **actual** exported Lantern frames/short loop plus at-size 64/128px views; log focused critique on silhouette, readability, handmade texture, flame movement, tassel and light feel; perform at least one image-grounded correction of the **same source asset** when a real image-visible editing loop is available. Evidence labeled AI_SELF_REVIEW unless a genuine independent non-author reviewer scores it. CI tests do not certify art direction.
+**G5 — Qualitative game feel gate:** capture multiple time-selected frames via the new v2 render_cutout_preview image result and save side-by-side **actual** exported Lantern frames/short loop plus at-size 64/128px views; log focused critique on silhouette, readability, handmade texture, flame movement, tassel and light feel; perform at least one image-grounded correction of the **same source asset** when a real image-visible editing loop is available. Evidence labeled AI_SELF_REVIEW unless a genuine independent non-author reviewer scores it. CI tests do not certify art direction.
 
 **G6 — Delivery:** full exact-head PR CI SUCCESS, review and verified merge, post-merge main CI SUCCESS, safe branch cleanup to only main, artifact/runbook handoff. This is contingent on later separately approved execution. No product merge in the spec-writing phase.
 
@@ -262,7 +262,7 @@ After the written spec is approved, write a separately reviewed task-level plan 
 3. Implement bounded per-part/pose raster and material-aware alpha crop.
 4. Deterministic packer + atlas metadata, pivot reconstruction and corruption tests.
 5. Godot v2 scene/animation/light emission export, staged atomic publishing.
-6. Finish authentic MCP/Godot headless integration tests and visual review bundle.
+6. Implement/read-test the bounded v2 render_cutout_preview tool (pose/time selection, actual PNG model-visible content), then finish authentic MCP/Godot headless integration tests and visual review bundle.
 7. Run security/compatibility review, exact-head PR CI, merge and cleanup after distinct execution approval.
 
 Task scheduling must protect the user from a half-shipped change: v1 continues passing throughout. If material-aware raster/atlas cannot pass security or reproducibility gates, **stop and report the blocker** rather than downgrade acceptance silently.
