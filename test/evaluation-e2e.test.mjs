@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {execFileSync,spawnSync as execSpawnSync} from 'node:child_process';
-import {readFile,readdir} from 'node:fs/promises';
+import {readFile,readdir,mkdtemp,symlink,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
 import {resolve,join} from 'node:path';
 const root=resolve(new URL('..',import.meta.url).pathname);
 test('dry end-to-end creates only UNSCORED offline review kit and cannot certify live quality',async()=>{
@@ -30,4 +31,30 @@ test('CI only uploads safe review subtree',async()=>{
  assert.doesNotMatch(yml,/path:\s*benchmarks\/poc005c1\/generated\/\s*$/m);
  const ignore=await readFile(join(root,'.gitignore'),'utf8');
  assert.match(ignore,/benchmarks\/poc005c1\/generated\//);
+});
+
+test('freeze refuses an external symlink that resolves into the tracked repository before source checks',async()=>{
+ const temp=await mkdtemp(join(tmpdir(),'c1-private-path-'));
+ try{
+  const alias=join(temp,'outside-alias');
+  await symlink(root,alias,'dir');
+  const out=join(alias,'private-human-review');
+  const result=execSpawnSync(process.execPath,[
+   'scripts/poc005c1-evaluate.mjs','freeze','--session-id','symlink-blocked',
+   '--quorum','1','--out',out,'--source-sha','f'.repeat(40)
+  ],{cwd:root,encoding:'utf8',timeout:20000});
+  assert.notEqual(result.status,0);
+  assert.match(result.stderr,/private reviewer session must be outside tracked repo/i);
+ }finally{await rm(temp,{recursive:true,force:true});}
+});
+
+test('freeze protects the entire source checkout when called from a nested working directory',()=>{
+ const result=execSpawnSync(process.execPath,[
+  join(root,'scripts/poc005c1-evaluate.mjs'),'freeze',
+  '--session-id','nested-directory-blocked','--quorum','1',
+  '--out',join(root,'benchmarks','poc005c1','generated','private-review'),
+  '--source-sha','f'.repeat(40)
+ ],{cwd:join(root,'src'),encoding:'utf8',timeout:20000});
+ assert.notEqual(result.status,0);
+ assert.match(result.stderr,/private reviewer session must be outside tracked repo/i);
 });
