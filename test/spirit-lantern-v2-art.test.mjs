@@ -47,3 +47,14 @@ test('four flame poses have genuinely different rendered PNG and time-selected m
  const ids=source.nodes.map(n=>n.id);
  assert.equal(new Set(ids).size,ids.length);
 });
+
+
+test('full-size preview never clips red tassel at canvas bottom',async()=>{
+ const {PNG}=await import('pngjs').then(module=>module.default);
+ const compiled=compileCutout(source,cutout,{revision:1});
+ const rendered=await renderCutoutPreview({compiled,clipId:'idle',timeSeconds:0});
+ const p=PNG.sync.read(rendered.png);
+ let bottomVisible=0;
+ for(let x=0;x<p.width;x++)if(p.data[((p.height-1)*p.width+x)*4+3]>0)bottomVisible++;
+ assert.equal(bottomVisible,0,'bottom-most PNG row contains '+bottomVisible+' clipped tassel/outline pixels');
+});
