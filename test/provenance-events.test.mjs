@@ -36,3 +36,11 @@ test('rejects altered digest, nonce and duplicate event sequence',()=>{
  const seq=chain();seq[3].eventSequence=2;assert.equal(auditEventChain({challenge:challengeFixture,events:seq}).ok,false);
  const mismatched=make(chain().map(e=>({...e,nonce:sha('f')})));assert.equal(auditEventChain({challenge:challengeFixture,events:mismatched}).ok,false);
 });
+
+test('untrusted producer cannot forge host model-image-delivery or model tool decision',()=>{
+ const valid=chain();
+ for(const kind of ['MODEL_IMAGE_DELIVERED','TOOL_DISPATCH','TOOL_RESULT','MODEL_TOOL_DECISION']){
+  const forged=make(valid.map(e=>e.eventKind===kind?{...e,producer:'MODEL_TEXT'}:e));
+  assert.equal(auditEventChain({challenge:challengeFixture,events:forged}).ok,false,kind+' must fail producer role');
+ }
+});

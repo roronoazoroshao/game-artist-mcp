@@ -19,6 +19,8 @@ export function auditEventChain({challenge,events}={}){
   if(e.prevEventDigest!==prev)errors.push('prevEventDigest mismatch at index '+i);
   if(e.eventDigest!==computeEventDigest(e))errors.push('eventDigest mismatch at index '+i);
   prev=e.eventDigest;
+  const producerPolicy={CHALLENGE_DELIVERED:['HOST'],MODEL_TOOL_DECISION:['PROVIDER','HOST'],TOOL_DISPATCH:['HOST'],TOOL_RESULT:['MCP'],MODEL_IMAGE_DELIVERED:['HOST'],MODEL_CRITIQUE:['HOST'],RUN_FINISHED:['HOST']};
+  if(!producerPolicy[e.eventKind]?.includes(e.producer))errors.push('untrusted producer at index '+i);
   if(finished){errors.push('trailing event after RUN_FINISHED');continue;}
   switch(e.eventKind){
    case 'CHALLENGE_DELIVERED':

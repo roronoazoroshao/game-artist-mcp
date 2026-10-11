@@ -53,3 +53,13 @@ test('no best-of-N selection, all attempts have identity and failures counted',(
  assert.equal(run(make(es)).status,'WORKFLOW_NO_GO');
  assert.equal(run().metrics.toolCalls,9);
 });
+
+test('malformed non-array events fail closed instead of throwing',()=>{
+ const r=run({hacked:true});
+ assert.equal(r.status,'WORKFLOW_NO_GO');
+ assert.equal(r.technicalStatus,'TECHNICAL_NO_GO');
+});
+test('second real preview must be dispatched to model, not duplicated first image',()=>{
+ const e=validWorkflow().map(e=>e.eventKind==='MODEL_IMAGE_DELIVERED'&&e.imageSha256===exportFixture.revisedPngSha256?{...e,imageSha256:exportFixture.initialPngSha256}:e);
+ assert.equal(run(make(e)).status,'WORKFLOW_NO_GO');
+});

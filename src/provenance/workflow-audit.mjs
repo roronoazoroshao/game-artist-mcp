@@ -8,6 +8,7 @@ export function auditArtWorkflow({challenge,events,exports}={}){
  try{m=validateChallenge(challenge);x=validateExportEvidence(exports);}catch{reasons.push('challenge or export contract invalid');}
  const chain=auditEventChain({challenge,events});
  metrics.toolCalls=chain.toolCalls;metrics.renderCount=chain.renderCount;metrics.correctionRounds=chain.correctionRounds;
+ if(!Array.isArray(events))return {status:'WORKFLOW_NO_GO',technicalStatus:'TECHNICAL_NO_GO',reasons:['events must be an array'],metrics};
  if(!chain.ok)reasons.push(...chain.errors.map(e=>'event: '+e));
  if(!m||!x)return {status:'WORKFLOW_NO_GO',technicalStatus:'TECHNICAL_NO_GO',reasons,metrics};
  if(x.challengeDigest!==m.challengeDigest||x.sourceCommitSha!==m.projectSha||x.assetId!==m.assetId)reasons.push('export challenge/source/asset lineage mismatch');
@@ -49,6 +50,7 @@ export function auditArtWorkflow({challenge,events,exports}={}){
  const critiques=(events??[]).filter(e=>e.eventKind==='MODEL_CRITIQUE');
  const deliveries=(events??[]).filter(e=>e.eventKind==='MODEL_IMAGE_DELIVERED');
  const edited=(events??[]).filter(e=>e.eventKind==='MODEL_TOOL_DECISION'&&e.toolName==='document_apply_ops');
+ if(!deliveries.some(e=>e.imageSha256===x.revisedMcpPngSha256&&events.indexOf(e)>events.indexOf(rev)))reasons.push('revised PNG never delivered to model');
  if(critiques.length!==1||deliveries.length<2||edited.length!==2||
    critiques[0]?.imageSha256!==x.initialMcpPngSha256||
    events.indexOf(critiques[0])<=events.findIndex(e=>e.eventKind==='MODEL_IMAGE_DELIVERED')||
