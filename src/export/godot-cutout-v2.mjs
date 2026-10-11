@@ -116,7 +116,15 @@ export function buildGodotV2Project(compiled,atlas,qa){
   for(const track of clip.tracks){
    const basePath=pathOf(track.part,byId);
    const mapped=track.keys.map(k=>{
-    if(track.property==='position'||track.property==='scale')return v2(k.value);
+    if(track.property==='position'){
+     const target=byId.get(track.part);
+     const parentPivot=target.parent?byId.get(target.parent).pivot:[0,0];
+     return v2([
+      target.pivot[0]-parentPivot[0]+k.value[0],
+      target.pivot[1]-parentPivot[1]+k.value[1]
+     ]);
+    }
+    if(track.property==='scale')return v2(k.value);
     return String(k.value);
    });
    tracks.push({path:track.property==='light_energy'?basePath+'/SpiritLight:energy':basePath+':'+track.property,
