@@ -113,6 +113,6 @@ export async function publishGodotPackage(args){
  const next=new Promise(resolve=>{release=resolve});
  locks.set(key,next);
  await previous;
- try{return await publishInner(args)}
+ try{return await args.store.withAssetWriteLock(args.assetId,()=>publishInner(args))}
  finally{release();if(locks.get(key)===next)locks.delete(key)}
 }
