@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdtemp,rm,rmdir} from 'node:fs/promises';
+import {mkdtemp,rm,rmdir,readFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {AssetStore} from '../src/mcp/store.mjs';
 import {applyOperations} from '../src/core/engine.mjs';
+import {canonicalBytes,sha256Bytes} from '../src/evaluation/contracts.mjs';
+import {publishGodotPackage} from '../src/export/atomic-package.mjs';
 
 const writerCode = `
 import {AssetStore} from './src/mcp/store.mjs';
@@ -97,4 +99,40 @@ test('crashed lock holder leaves fail-closed state and manual recovery preserves
   await s.store.save('asset_one',modified(s.state));
   assert.equal((await s.store.load('asset_one')).revision,1);
  }finally{holder?.kill();await rm(s.root,{recursive:true,force:true})}
+});
+
+const exportCode = [
+ "import {AssetStore} from './src/mcp/store.mjs';",
+ "import {publishGodotPackage} from './src/export/atomic-package.mjs';",
+ "import {canonicalBytes,sha256Bytes} from './src/evaluation/contracts.mjs';",
+ "const store = new AssetStore(process.argv[1]);",
+ "const state = await store.load('asset_one');",
+ "const files = new Map([['project.godot','config_version=5'],['main.tscn','[gd_scene format=3']]);",
+ "process.send('READY');",
+ "process.on('message',async m=>{",
+ " if(m!=='GO')return;",
+ " try {await publishGodotPackage({store,assetId:'asset_one',expectedRevision:state.revision,sourceSha256:sha256Bytes(canonicalBytes(state.document)),files});process.send({kind:'DONE',status:'ok'},()=>process.exit(0))}",
+ " catch(error){process.send({kind:'DONE',status:'reject',error:String(error.message)},()=>process.exit(0))}",
+ "});",
+].join('\n');
+
+test('separate exporter cannot replace last-good pointer during a competing process lock',async()=>{
+ const s=await setup();let holder,exporter;
+ try{
+  const sourceSha256=sha256Bytes(canonicalBytes(s.state.document));
+  const files=new Map([['project.godot','config_version=5'],['main.tscn','[gd_scene format=3']]);
+  await publishGodotPackage({store:s.store,assetId:'asset_one',expectedRevision:0,sourceSha256,files});
+  const pointer=join(s.store.assetDir('asset_one'),'godot-v2-current.json');
+  const lastGood=await readFile(pointer);
+  holder=await startReady(lockCode,[s.root]);
+  exporter=await startReady(exportCode,[s.root]);
+  const resultPromise=resultOf(exporter);
+  exporter.send('GO');
+  const result=await resultPromise;
+  assert.equal(result.status,'reject',JSON.stringify(result));
+  assert.match(result.error,/ASSET_BUSY/);
+  assert.deepEqual(await readFile(pointer),lastGood);
+  const exit=once(holder,'exit');holder.kill('SIGKILL');await exit;
+  assert.deepEqual(await readFile(pointer),lastGood);
+ }finally{holder?.kill();exporter?.kill();await rm(s.root,{recursive:true,force:true})}
 });
