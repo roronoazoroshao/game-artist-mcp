@@ -1,4 +1,4 @@
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile, lstat, rmdir } from "node:fs/promises";
 import { resolve, join } from "node:path";
 
 import { createAssetState } from "../core/engine.mjs";
@@ -39,6 +39,34 @@ export class AssetStore {
 
   statePath(assetId) {
     return join(this.assetDir(assetId), "state.json");
+  }
+
+  // Shared between all AssetStore processes using the same local filesystem.
+  // A crashed writer intentionally leaves the lock behind (fail closed):
+  // recovery requires verifying no process is using this asset first.
+  async withAssetWriteLock(assetId, operation) {
+    assertAssetId(assetId);
+    if (typeof operation !== "function") throw new Error("invalid locked operation");
+    const dir = this.assetDir(assetId);
+    for (const path of [this.root, join(this.root, "assets"), dir]) {
+      const st = await lstat(path);
+      if (!st.isDirectory() || st.isSymbolicLink()) {
+        throw new Error("unsafe symlink or asset directory: " + path);
+      }
+    }
+    const lockPath = join(dir, ".asset-write-lock");
+    try {
+      await mkdir(lockPath, {mode: 0o700});
+    } catch (error) {
+      if (error?.code === "EEXIST") throw new Error("ASSET_BUSY");
+      throw error;
+    }
+    try {
+      return await operation();
+    } finally {
+      // Do not silently remove somebody else's lock after a filesystem anomaly.
+      await rmdir(lockPath);
+    }
   }
 
   async create(assetId, width, height) {
@@ -92,7 +120,16 @@ export class AssetStore {
     assertAssetId(assetId);
     const validation = validateDocument(state.document);
     if (!validation.ok) throw new Error(validation.errors.join("; "));
-    await writeJsonAtomic(this.statePath(assetId), state);
-    return clone(state);
+    if (!Number.isSafeInteger(state.revision) || !Array.isArray(state.history)) {
+      throw new Error("invalid asset state revision or history");
+    }
+    return this.withAssetWriteLock(assetId, async () => {
+      const latest = await this.load(assetId);
+      if (state.revision !== latest.revision + 1) {
+        throw new Error(`revision conflict: expected next ${latest.revision + 1}, got ${state.revision}`);
+      }
+      await writeJsonAtomic(this.statePath(assetId), state);
+      return clone(state);
+    });
   }
 }
