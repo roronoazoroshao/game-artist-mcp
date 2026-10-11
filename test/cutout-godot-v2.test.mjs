@@ -80,3 +80,25 @@ test('animated position is additive to the authored pivot, never an origin overr
  assert.match(keys,/Vector2\(-48, -18\)/);
  assert.match(keys,/Vector2\(-45, -20\)/);
 });
+
+
+test('smoothstep author curves are baked into Godot linear tracks at 30Hz for preview parity',async()=>{
+ const {doc,cut,atlas}=await fixture();
+ const track=cut.animations[0].tracks.find(t=>t.part==='talisman_left'&&t.property==='rotation');
+ track.interpolation='smoothstep';
+ const c=compileCutout(doc,cut,{revision:5});
+ const scene=String(buildGodotV2Project(c,atlas,auditLoop(c,'idle')).get('assets/spirit_lantern/spirit_lantern.tscn'));
+ const offset=scene.indexOf('NodePath("body/talisman_left:rotation")');
+ assert.ok(offset>=0,'Godot rotation track absent');
+ const block=scene.slice(offset,scene.indexOf('}',offset));
+ const sample=block.match(/"times": PackedFloat32Array\(([^)]+)\)/);
+ const values=block.match(/"values": \[([^\]]+)\]/);
+ assert.ok(sample&&values);
+ const ticks=sample[1].split(', ').map(Number),angles=values[1].split(', ').map(Number);
+ assert.ok(ticks.length>=59,'smoothstep requires >=30Hz curve samples, got '+ticks.length);
+ assert.equal(ticks.length,angles.length);
+ const index=ticks.findIndex(t=>Math.abs(t-(1/6))<1e-5);
+ assert.ok(index>0,'expected 30Hz tick 1/6 second');
+ const expected=-0.035+(0.025+0.035)*(3*(1/3)**2-2*(1/3)**3);
+ assert.ok(Math.abs(angles[index]-expected)<0.0001,JSON.stringify({actual:angles[index],expected}));
+});
