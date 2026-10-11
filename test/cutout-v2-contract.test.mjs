@@ -62,3 +62,14 @@ test('v2 rejects unknown schema version, while legacy warnings remain',()=>{
  assert.equal(legacy.ok,true);
  assert.ok(legacy.warnings.some(w=>w.includes('not assigned')));
 });
+
+
+test('v2 compilation rejects external file/http SVG paints before any preview rasterizer',()=>{
+ for(const payload of ['url(file:///etc/passwd)','url(https://example.org/tile.svg)','url(#arbitrary)','rgb(23,44,55)']){
+  const {doc,cut}=fixture();
+  doc.nodes.find(node=>node.id==='roof').fill=payload;
+  const validation=validateCutout(doc,cut);
+  assert.equal(validation.ok,false,'unexpected acceptance of SVG paint '+payload);
+  assert.match(validation.errors.join('; '),/paint|url|fill|stroke/i);
+ }
+});
