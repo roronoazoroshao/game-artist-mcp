@@ -43,6 +43,19 @@ func _ready() -> void:
     if second == null or second.region == first_rect:
         fail_gate("authored flame frame did not advance")
         return
+    var left_paper: Node2D = lantern.get_node_or_null("body/talisman_left") as Node2D
+    var right_paper: Node2D = lantern.get_node_or_null("body/talisman_right") as Node2D
+    if left_paper == null or right_paper == null:
+        fail_gate("missing paper motion nodes")
+        return
+    # Authored IR smoothstep at t=0.125 over the first 0.5s segment:
+    # smoothstep(0.25) = 0.15625. Godot must reproduce it after 30Hz baking.
+    if abs(left_paper.rotation - (-0.025625)) > 0.002:
+        fail_gate("Godot left paper motion deviates from authored smoothstep")
+        return
+    if abs(right_paper.rotation - 0.0340625) > 0.002:
+        fail_gate("Godot right paper motion deviates from authored smoothstep")
+        return
     player.seek(0.375, true)
     var fourth: AtlasTexture = sprite.texture as AtlasTexture
     if fourth == null or fourth.region == first_rect:
