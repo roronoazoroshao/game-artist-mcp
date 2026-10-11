@@ -35,7 +35,7 @@ import {AssetStore} from './src/mcp/store.mjs';
 const store = new AssetStore(process.argv[1]);
 await store.withAssetWriteLock('asset_one',async()=>{
  process.send('READY');
- await new Promise(()=>{});
+ await new Promise(()=>{setInterval(()=>{},1000)});
 });
 `;
 function startReady(source,args){
