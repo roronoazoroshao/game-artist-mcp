@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, open, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -79,6 +80,40 @@ function errorResult(error) {
     isError: true,
     content: [{ type: "text", text: message }]
   };
+}
+
+async function assertSafeLegacyExportOutput(outputDir) {
+  // The legacy renderer may overwrite its three named output files.
+  // Preflight all destinations before truncating any of them.
+  try {
+    await mkdir(outputDir, { mode: 0o700 });
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+  }
+  const directory = await lstat(outputDir);
+  if (!directory.isDirectory() || directory.isSymbolicLink()) {
+    throw new Error("unsafe symlink or legacy export output directory");
+  }
+  for (const name of ["asset.svg", "asset.png", "report.json"]) {
+    const path = join(outputDir, name);
+    let entry;
+    try { entry = await lstat(path); }
+    catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+    if (!entry.isFile() || entry.isSymbolicLink()) {
+      throw new Error("unsafe symlink or legacy export file: " + name);
+    }
+  }
+}
+
+async function writeLegacyExportFile(path, bytes) {
+  // O_NOFOLLOW rejects symlink substitutions of the destination after preflight.
+  const handle = await open(path,
+    constants.O_WRONLY | constants.O_CREAT | constants.O_TRUNC | constants.O_NOFOLLOW, 0o600);
+  try { await handle.writeFile(bytes); }
+  finally { await handle.close(); }
 }
 
 const tools = [
@@ -350,22 +385,22 @@ async function callTool(name, args) {
       if (!validation.ok) throw new Error(validation.errors.join("; "));
 
       const outputDir = join(store.assetDir(args.asset_id), "output");
-      await mkdir(outputDir, { recursive: true, mode: 0o700 });
+      await assertSafeLegacyExportOutput(outputDir);
       const svg = renderSvg(state.document);
       checkRenderBudget(svg);
       const svgPath = join(outputDir, "asset.svg");
       const pngPath = join(outputDir, "asset.png");
       const reportPath = join(outputDir, "report.json");
-      await writeFile(svgPath, svg, "utf8");
+      await writeLegacyExportFile(svgPath, svg);
       const png = await renderPng(state.document);
-      await writeFile(pngPath, png);
+      await writeLegacyExportFile(pngPath, png);
       const report = {
         asset_id: args.asset_id,
         revision: state.revision,
         node_count: state.document.nodes.length,
         validation
       };
-      await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+      await writeLegacyExportFile(reportPath, JSON.stringify(report, null, 2) + "\n");
       return textResult({
         asset_id: args.asset_id,
         revision: state.revision,
