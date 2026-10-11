@@ -1,5 +1,7 @@
-import { mkdir, readFile, rename, writeFile, lstat, rmdir } from "node:fs/promises";
-import { resolve, join } from "node:path";
+import { mkdir, rename, lstat, rmdir, open, rm } from "node:fs/promises";
+import { constants } from "node:fs";
+import { randomBytes } from "node:crypto";
+import { resolve, join, dirname } from "node:path";
 
 import { createAssetState } from "../core/engine.mjs";
 import { validateDocument } from "../core/validate.mjs";
@@ -18,9 +20,23 @@ export function assertAssetId(assetId) {
 }
 
 async function writeJsonAtomic(path, value) {
-  const tmp = `${path}.${process.pid}.tmp`;
-  await writeFile(tmp, JSON.stringify(value, null, 2) + "\n", { encoding: "utf8", mode: 0o600 });
-  await rename(tmp, path);
+  // Randomized, exclusive creation defeats planted PID-named symlinks.
+  // Sync the file and containing directory before reporting a committed state.
+  const tmp = `${path}.${process.pid}.${randomBytes(12).toString("hex")}.tmp`;
+  try {
+    const handle = await open(tmp, "wx", 0o600);
+    try {
+      await handle.writeFile(JSON.stringify(value, null, 2) + "\n", "utf8");
+      await handle.sync();
+    } finally {
+      await handle.close();
+    }
+    await rename(tmp, path);
+    const parent = await open(dirname(path), "r");
+    try { await parent.sync(); } finally { await parent.close(); }
+  } finally {
+    await rm(tmp, {force: true});
+  }
 }
 
 export class AssetStore {
@@ -99,9 +115,23 @@ export class AssetStore {
     assertAssetId(assetId);
     let text;
     try {
-      text = await readFile(this.statePath(assetId), "utf8");
+      for (const path of [this.root, join(this.root, "assets"), this.assetDir(assetId)]) {
+        const directory = await lstat(path);
+        if (!directory.isDirectory() || directory.isSymbolicLink()) {
+          throw new Error("unsafe symlink or asset directory: " + path);
+        }
+      }
+      const statePath = this.statePath(assetId);
+      const entry = await lstat(statePath);
+      if (!entry.isFile() || entry.isSymbolicLink()) {
+        throw new Error("unsafe state file symlink");
+      }
+      const handle = await open(statePath, constants.O_RDONLY | constants.O_NOFOLLOW);
+      try { text = await handle.readFile({encoding: "utf8"}); }
+      finally { await handle.close(); }
     } catch (error) {
       if (error?.code === "ENOENT") throw new Error(`asset not found: ${assetId}`);
+      if (error?.code === "ELOOP") throw new Error("unsafe state file symlink");
       throw error;
     }
 
