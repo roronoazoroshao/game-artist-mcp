@@ -43,6 +43,12 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Check POC-005C2 provider capability (fail-closed)
+        run: npm run poc:005c2:capabilities
+
+      - name: Run POC-005C2 synthetic provenance rehearsal (not live evidence)
+        run: npm run poc:005c2:audit:dry
+
       - name: Audit synthetic POC-005A evidence (NOT agent-origin proof)
         run: npm run audit:poc005a
 
