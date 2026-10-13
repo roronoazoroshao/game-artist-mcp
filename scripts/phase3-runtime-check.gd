@@ -72,5 +72,43 @@ func _ready() -> void:
     if player.current_animation_length < 1.9:
         fail_gate("idle clip duration too short")
         return
+    # R6 gameplay-scale behavior: verify real AnimationPlayer properties, not
+    # only generated scene text or deterministic JavaScript preview curves.
+    var body: Node2D = lantern.get_node_or_null("body") as Node2D
+    var flame_part: Node2D = lantern.get_node_or_null("body/flame") as Node2D
+    var tassel_part: Node2D = lantern.get_node_or_null("body/tassel") as Node2D
+    if body == null or flame_part == null or tassel_part == null:
+        fail_gate("R6 motion nodes missing")
+        return
+    player.seek(0.0, true)
+    var body_rest_y: float = body.position.y
+    var left_rest: Vector2 = left_paper.position
+    var right_rest: Vector2 = right_paper.position
+    player.seek(0.25, true)
+    var flame_right_x: float = flame_part.position.x
+    player.seek(0.5, true)
+    if left_paper.position.distance_to(left_rest) < 0.2:
+        fail_gate("R6 left paper lacks secondary position motion")
+        return
+    if right_paper.position.distance_to(right_rest) < 0.2:
+        fail_gate("R6 right paper lacks secondary position motion")
+        return
+    player.seek(0.6, true)
+    if abs(flame_part.position.x - flame_right_x) < 1.2:
+        fail_gate("R6 flame lacks independent lateral drift")
+        return
+    player.seek(1.0, true)
+    if body.position.y > body_rest_y - 0.7:
+        fail_gate("R6 floating lantern body remains static")
+        return
+    if tassel_part.position.y < 104.5:
+        fail_gate("R6 tassel lacks lagged settling motion")
+        return
+    player.seek(0.32, true)
+    var low_energy: float = light.energy
+    player.seek(0.86, true)
+    if light.energy - low_energy < 0.12:
+        fail_gate("R6 spirit light micro-beat not visible in Godot")
+        return
     print("GAME_ARTIST_PHASE3_OK")
     get_tree().quit(0)
