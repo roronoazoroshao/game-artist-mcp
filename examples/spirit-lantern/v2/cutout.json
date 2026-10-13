@@ -1,0 +1,330 @@
+{
+  "version": 2,
+  "assetId": "spirit_lantern",
+  "parts": [
+    {
+      "id": "body",
+      "nodes": [
+        "handle",
+        "handle_inner",
+        "roof",
+        "roof_highlight",
+        "frame_body",
+        "glass",
+        "glass_glow",
+        "base",
+        "left_hook",
+        "right_hook",
+        "frame_edge_left",
+        "frame_edge_right",
+        "roof_rivet",
+        "roof_crest",
+        "cage_crossbar",
+        "metal_pin_left",
+        "metal_pin_right"
+      ],
+      "pivot": [
+        128,
+        160
+      ],
+      "parent": null,
+      "zIndex": 0,
+      "role": "body"
+    },
+    {
+      "id": "flame",
+      "nodes": [
+        "flame",
+        "flame_core"
+      ],
+      "pivot": [
+        128,
+        180
+      ],
+      "parent": "body",
+      "zIndex": 4,
+      "role": "emission"
+    },
+    {
+      "id": "talisman_left",
+      "nodes": [
+        "talisman_left",
+        "seal_left",
+        "glyph_left",
+        "paper_ink_left"
+      ],
+      "pivot": [
+        80,
+        142
+      ],
+      "parent": "body",
+      "zIndex": 3,
+      "role": "secondary_motion"
+    },
+    {
+      "id": "talisman_right",
+      "nodes": [
+        "talisman_right",
+        "seal_right",
+        "glyph_right",
+        "paper_ink_right"
+      ],
+      "pivot": [
+        176,
+        142
+      ],
+      "parent": "body",
+      "zIndex": 3,
+      "role": "secondary_motion"
+    },
+    {
+      "id": "tassel",
+      "nodes": [
+        "tassel_cord",
+        "tassel",
+        "tassel_fringe_left",
+        "tassel_fringe_center",
+        "tassel_fringe_right",
+        "tassel_thread"
+      ],
+      "pivot": [
+        128,
+        264
+      ],
+      "parent": "body",
+      "zIndex": 2,
+      "role": "secondary_motion"
+    }
+  ],
+  "animations": [
+    {
+      "id": "idle",
+      "length": 2,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "talisman_left",
+          "property": "rotation",
+          "keys": [
+            {
+              "time": 0,
+              "value": -0.035
+            },
+            {
+              "time": 0.5,
+              "value": 0.025
+            },
+            {
+              "time": 1,
+              "value": 0.055
+            },
+            {
+              "time": 1.5,
+              "value": 0.012
+            },
+            {
+              "time": 2,
+              "value": -0.035
+            }
+          ],
+          "interpolation": "smoothstep"
+        },
+        {
+          "part": "talisman_right",
+          "property": "rotation",
+          "keys": [
+            {
+              "time": 0,
+              "value": 0.045
+            },
+            {
+              "time": 0.5,
+              "value": -0.025
+            },
+            {
+              "time": 1,
+              "value": -0.04
+            },
+            {
+              "time": 1.5,
+              "value": 0.005
+            },
+            {
+              "time": 2,
+              "value": 0.045
+            }
+          ],
+          "interpolation": "smoothstep"
+        },
+        {
+          "part": "tassel",
+          "property": "rotation",
+          "keys": [
+            {
+              "time": 0,
+              "value": 0.025
+            },
+            {
+              "time": 0.25,
+              "value": 0.04
+            },
+            {
+              "time": 0.75,
+              "value": -0.015
+            },
+            {
+              "time": 1.25,
+              "value": -0.06
+            },
+            {
+              "time": 1.75,
+              "value": -0.005
+            },
+            {
+              "time": 2,
+              "value": 0.025
+            }
+          ],
+          "interpolation": "smoothstep"
+        },
+        {
+          "part": "flame",
+          "property": "scale",
+          "keys": [
+            {
+              "time": 0,
+              "value": [
+                1,
+                0.98
+              ]
+            },
+            {
+              "time": 1,
+              "value": [
+                0.96,
+                1.06
+              ]
+            },
+            {
+              "time": 2,
+              "value": [
+                1,
+                0.98
+              ]
+            }
+          ]
+        },
+        {
+          "part": "flame",
+          "property": "light_energy",
+          "interpolation": "smoothstep",
+          "keys": [
+            {
+              "time": 0,
+              "value": 0.85
+            },
+            {
+              "time": 0.5,
+              "value": 0.98
+            },
+            {
+              "time": 1,
+              "value": 1.1
+            },
+            {
+              "time": 1.5,
+              "value": 0.92
+            },
+            {
+              "time": 2,
+              "value": 0.85
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "light": {
+    "part": "flame",
+    "position": [
+      128,
+      174
+    ],
+    "color": "#72f5ec",
+    "energy": 0.85,
+    "textureScale": 2.2
+  },
+  "collision": {
+    "position": [
+      128,
+      170
+    ],
+    "size": [
+      86,
+      176
+    ]
+  },
+  "rendering": {
+    "format": "atlas_png",
+    "paddingPx": 4,
+    "maxAtlasSize": 2048,
+    "scale": 1
+  },
+  "poseVariants": [
+    {
+      "id": "flame_a",
+      "part": "flame",
+      "nodes": [
+        "flame_a_contour",
+        "flame_a_heart"
+      ]
+    },
+    {
+      "id": "flame_b",
+      "part": "flame",
+      "nodes": [
+        "flame_b_contour",
+        "flame_b_heart"
+      ]
+    },
+    {
+      "id": "flame_c",
+      "part": "flame",
+      "nodes": [
+        "flame_c_contour",
+        "flame_c_heart"
+      ]
+    },
+    {
+      "id": "flame_d",
+      "part": "flame",
+      "nodes": [
+        "flame_d_contour",
+        "flame_d_heart"
+      ]
+    }
+  ],
+  "frameSequence": {
+    "part": "flame",
+    "fps": 8,
+    "frames": [
+      "flame_a",
+      "flame_b",
+      "flame_c",
+      "flame_d",
+      "flame_b",
+      "flame_c",
+      "flame_d",
+      "flame_a",
+      "flame_c",
+      "flame_d",
+      "flame_a",
+      "flame_b",
+      "flame_d",
+      "flame_a",
+      "flame_b",
+      "flame_c"
+    ],
+    "loop": true
+  }
+}

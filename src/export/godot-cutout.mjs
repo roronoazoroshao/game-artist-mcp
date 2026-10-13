@@ -150,6 +150,7 @@ function makeValidationScript(cutout, byId) {
 
 export async function exportGodotCutout({ document, cutout, outputDir }) {
   if(document?.nodes?.some(node=>node.appearance!==undefined))throw new Error('UNSUPPORTED_GODOT_APPEARANCE');
+  if(cutout?.version!==1)throw new Error('Cutout v2 requires compiled atlas package; legacy exporter accepts v1 only');
   const validation = validateCutout(document, cutout);
   if (!validation.ok) throw new Error("invalid cutout asset: " + validation.errors.join("; "));
 

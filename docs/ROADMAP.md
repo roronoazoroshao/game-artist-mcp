@@ -224,3 +224,11 @@ Next separately gated objectives:
 1. Independently obtain and verify genuine provider-issued model decision + image delivery receipts, **or** record that this model/provider tier is unavailable and propose a distinctly scoped host-attested research milestone for written approval. No paid model calls without authorization.
 2. Complete POC-005C1 independent non-author human artistic blind reviews (Issue #21) using genuine reviewers; CI dry kits are not human scores.
 3. Start **Phase 3 Spirit Lantern game-ready vertical slice discovery/spec** according to the earlier roadmap, with new design and implementation plan approval gates. C2 approvals do not authorize expanded cutout/Godot/3D code.
+
+## Phase 3 — Game-ready Lantern Cutout v2 — PRODUCT PR IN REVIEW (2026-10-11)
+
+Design PR #27 and Native TDD plan PR #28 were approved and merged; implementation is isolated in [product PR #29](https://github.com/roronoazoroshao/game-artist-mcp/pull/29). It is NOT on main yet. Tasks 1–11 have source and test implementations: backward-compatible opt-in Cutout v2; strict pose/node ownership; revision and SHA256 compiler; two-cycle animation QA; material-aware SVG-to-PNG crop, atlas/pivots; Godot AtlasTexture/AnimationPlayer; immutable exports with atomic pointer; real MCP time-selected PNG; four original flame poses, visual preview at 64px/128px; actual pinned Godot 4.7.2 runtime.
+
+Earlier technical checkpoint [CI 38114061635](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38114061635) SUCCESS included Phase 3 Godot runtime. A further RED→GREEN regression fixes offset-inheritance for animated Node2D position; use latest exact-head CI, not that older run, for any integration decision. Image artifacts remain **UNSCORED/AI_SELF_REVIEW**, not production-quality proof. Issue #21 still needs genuine independent humans; POC-005C2 provider attestation is unavailable.
+
+**Release hold:** PR #29 must pass latest exact-head full CI, security/code review, visual inspection with evidence if available and owner merge authorization; only then can main CI/branch-cleanup follow. Never self-merge from plan execution approval.

@@ -38,7 +38,10 @@ jobs:
           test "$(rsvg-convert --version)" = "rsvg-convert version 2.58.0"
 
       - name: Install package metadata
-        run: npm install --ignore-scripts
+        run: npm ci --ignore-scripts
+
+      - name: Audit PNG codec dependencies
+        run: npm audit --omit=dev
 
       - name: Run unit tests
         run: npm test
@@ -106,6 +109,16 @@ jobs:
           "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/godot 2>&1 | tee examples/spirit-lantern/generated/godot-run.log
           grep -q "GAME_ARTIST_POC004_OK" examples/spirit-lantern/generated/godot-run.log
 
+      - name: Generate Phase 3 actual preview and Godot project
+        run: npm run poc:phase3
+
+      - name: Verify Phase 3 animated atlas in pinned Godot
+        run: |
+          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot --editor --quit 2>&1 | tee examples/spirit-lantern/generated/phase3-import.log
+          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot 2>&1 | tee examples/spirit-lantern/generated/phase3-run.log
+          grep -q "GAME_ARTIST_PHASE3_OK" examples/spirit-lantern/generated/phase3-run.log
+          ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/phase3-import.log examples/spirit-lantern/generated/phase3-run.log
+
       - name: Build exact FolderForge integration fixture
         run: |
           git clone --filter=blob:none --no-checkout https://github.com/roronoazoroshao369/FolderForge.git ../FolderForge
@@ -171,3 +184,18 @@ jobs:
             examples/spirit-lantern/generated/godot/
             examples/spirit-lantern/generated/godot-import.log
             examples/spirit-lantern/generated/godot-run.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase3-spirit-lantern-visual-UNSCORED
+          path: examples/spirit-lantern/generated/phase3-review/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: phase3-spirit-lantern-Godot-runtime
+          path: |
+            examples/spirit-lantern/generated/phase3-godot/
+            examples/spirit-lantern/generated/phase3-import.log
+            examples/spirit-lantern/generated/phase3-run.log
+          if-no-files-found: error

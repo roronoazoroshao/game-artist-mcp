@@ -1,3 +1,5 @@
+import {validateCutoutV2} from './validate-v2.mjs';
+
 const ID = /^[a-z][a-z0-9_]{0,63}$/;
 const TRACK_PROPERTIES = new Set(["rotation", "position", "scale"]);
 
@@ -10,6 +12,7 @@ function vec2(value) {
 }
 
 export function validateCutout(document, cutout) {
+  if(cutout?.version===2)return validateCutoutV2(document,cutout);
   const errors = [];
   const warnings = [];
 

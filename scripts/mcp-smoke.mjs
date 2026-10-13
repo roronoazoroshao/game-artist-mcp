@@ -77,6 +77,7 @@ try {
     "document_query",
     "document_apply_ops",
     "render_preview",
+    "render_cutout_preview",
     "validate_asset",
     "export_asset",
     "export_godot_cutout",

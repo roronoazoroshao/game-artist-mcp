@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
+import { lstat, mkdir, mkdtemp, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -10,6 +11,13 @@ import { validateDocument } from "../core/validate.mjs";
 import { loadStyleProfile } from "../style/profile.mjs";
 import { inspectStyle } from "../style/inspect.mjs";
 import { exportGodotCutout } from "../export/godot-cutout.mjs";
+import { compileCutout } from "../cutout/compile.mjs";
+import { renderCutoutFrames } from "../cutout/raster.mjs";
+import { packAtlas } from "../cutout/atlas.mjs";
+import { auditLoop } from "../cutout/animation.mjs";
+import { buildGodotV2Project } from "../export/godot-cutout-v2.mjs";
+import { publishGodotPackage } from "../export/atomic-package.mjs";
+import { renderCutoutPreview } from "../cutout/preview.mjs";
 import { AssetStore } from "./store.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
@@ -72,6 +80,46 @@ function errorResult(error) {
     isError: true,
     content: [{ type: "text", text: message }]
   };
+}
+
+async function assertSafeLegacyExportOutput(outputDir) {
+  // The legacy renderer may overwrite its three named output files.
+  // Preflight all destinations before truncating any of them.
+  try {
+    await mkdir(outputDir, { mode: 0o700 });
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+  }
+  const directory = await lstat(outputDir);
+  if (!directory.isDirectory() || directory.isSymbolicLink()) {
+    throw new Error("unsafe symlink or legacy export output directory");
+  }
+  for (const name of ["asset.svg", "asset.png", "report.json"]) {
+    const path = join(outputDir, name);
+    let entry;
+    try { entry = await lstat(path); }
+    catch (error) {
+      if (error?.code === "ENOENT") continue;
+      throw error;
+    }
+    if (!entry.isFile() || entry.isSymbolicLink()) {
+      throw new Error("unsafe symlink or legacy export file: " + name);
+    }
+  }
+}
+
+async function writeLegacyExportFile(path, bytes) {
+  // Replace an existing file's directory entry, never truncate its inode:
+  // pre-existing hardlinks must not change files outside this export.
+  const temp = path + "." + process.pid + "." + randomBytes(12).toString("hex") + ".tmp";
+  try {
+    const handle = await open(temp, "wx", 0o600);
+    try { await handle.writeFile(bytes); await handle.sync(); }
+    finally { await handle.close(); }
+    await rename(temp, path);
+  } finally {
+    await rm(temp, { force: true });
+  }
 }
 
 const tools = [
@@ -147,6 +195,21 @@ const tools = [
       type: "object",
       properties: { asset_id: { type: "string" } },
       required: ["asset_id"],
+      additionalProperties: false
+    }
+  },
+  {
+    name: "render_cutout_preview",
+    description: "Render one validated Cutout v2 animation frame at the specified local clip time into a bounded PNG image block.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        asset_id: { type: "string", pattern: "^[a-z0-9][a-z0-9_-]{0,63}$" },
+        cutout: { type: "object" },
+        clip_id: { type: "string", pattern: "^[a-z][a-z0-9_]{0,63}$" },
+        time_seconds: { type: "number", minimum: 0, maximum: 60 }
+      },
+      required: ["asset_id","cutout","clip_id","time_seconds"],
       additionalProperties: false
     }
   },
@@ -292,6 +355,26 @@ async function callTool(name, args) {
       };
     }
 
+    case "render_cutout_preview": {
+      if(!args.cutout||args.cutout.version!==2)throw new Error("cutout preview requires version 2");
+      if(!Number.isFinite(args.time_seconds)||args.time_seconds<0||
+        typeof args.clip_id!=="string")throw new Error("invalid preview time or clip");
+      const state=await store.load(args.asset_id);
+      const compiled=compileCutout(state.document,args.cutout,{revision:state.revision});
+      const frameData=await renderCutoutPreview({compiled,clipId:args.clip_id,timeSeconds:args.time_seconds});
+      const latest=await store.load(args.asset_id);
+      if(latest.revision!==state.revision)throw new Error("STALE_SOURCE_REVISION");
+      const meta={
+        asset_id:args.asset_id,revision:state.revision,source_sha256:compiled.sourceSha256,
+        clip_id:args.clip_id,time_seconds:args.time_seconds,
+        pose_ids:Object.fromEntries(Object.entries(frameData.frame.parts).map(([id,p])=>[id,p.poseId])),
+        sha256:frameData.digest,bytes:frameData.png.length,mime_type:"image/png"
+      };
+      return {content:[{type:"text",text:JSON.stringify(meta)},
+        {type:"image",data:frameData.png.toString("base64"),mimeType:"image/png"}],
+        structuredContent:meta};
+    }
+
     case "validate_asset": {
       const state = await store.load(args.asset_id);
       const result = validateDocument(state.document);
@@ -308,22 +391,22 @@ async function callTool(name, args) {
       if (!validation.ok) throw new Error(validation.errors.join("; "));
 
       const outputDir = join(store.assetDir(args.asset_id), "output");
-      await mkdir(outputDir, { recursive: true, mode: 0o700 });
+      await assertSafeLegacyExportOutput(outputDir);
       const svg = renderSvg(state.document);
       checkRenderBudget(svg);
       const svgPath = join(outputDir, "asset.svg");
       const pngPath = join(outputDir, "asset.png");
       const reportPath = join(outputDir, "report.json");
-      await writeFile(svgPath, svg, "utf8");
+      await writeLegacyExportFile(svgPath, svg);
       const png = await renderPng(state.document);
-      await writeFile(pngPath, png);
+      await writeLegacyExportFile(pngPath, png);
       const report = {
         asset_id: args.asset_id,
         revision: state.revision,
         node_count: state.document.nodes.length,
         validation
       };
-      await writeFile(reportPath, JSON.stringify(report, null, 2) + "\n", "utf8");
+      await writeLegacyExportFile(reportPath, JSON.stringify(report, null, 2) + "\n");
       return textResult({
         asset_id: args.asset_id,
         revision: state.revision,
@@ -337,6 +420,22 @@ async function callTool(name, args) {
 
     case "export_godot_cutout": {
       const state = await store.load(args.asset_id);
+      if(args.cutout?.version===2){
+        const compiled=compileCutout(state.document,args.cutout,{revision:state.revision});
+        const frames=await renderCutoutFrames(compiled,{});
+        const atlas=packAtlas(frames,compiled.manifest.rendering);
+        const animationReports=compiled.clipIds.map(clip=>auditLoop(compiled,clip));
+        for(const report of animationReports)if(!report.ok)throw new Error("ANIMATION_QA_FAILED: "+report.errors.join('; '));
+        const files=buildGodotV2Project(compiled,atlas,animationReports[0]);
+        const pkg=await publishGodotPackage({store,assetId:args.asset_id,expectedRevision:state.revision,sourceSha256:compiled.sourceSha256,files});
+        return textResult({
+          asset_id:args.asset_id,revision:state.revision,version:2,
+          parts:compiled.parts.length,animations:compiled.clipIds.length,
+          source_sha256:compiled.sourceSha256,atlas_sha256:atlas.atlasSha256,
+          package_sha256:pkg.packageSha256,
+          project:`assets/${args.asset_id}/godot-versions/${pkg.packageSha256}`
+        });
+      }
       if(state.document.nodes.some(node=>node.appearance!==undefined))throw new Error("UNSUPPORTED_GODOT_APPEARANCE");
       const outputDir = join(store.assetDir(args.asset_id), "godot");
       await rm(outputDir, { recursive: true, force: true });

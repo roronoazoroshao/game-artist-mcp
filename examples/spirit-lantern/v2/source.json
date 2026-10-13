@@ -1,0 +1,878 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 256,
+    "height": 320,
+    "background": "transparent"
+  },
+  "nodes": [
+    {
+      "id": "handle",
+      "type": "path",
+      "d": "M76 78 C80 30 176 26 184 78",
+      "fill": "none",
+      "stroke": "#211c1a",
+      "strokeWidth": 12
+    },
+    {
+      "id": "handle_inner",
+      "type": "path",
+      "d": "M82 77 C87 40 166 37 178 77",
+      "fill": "none",
+      "stroke": "#725342",
+      "strokeWidth": 5
+    },
+    {
+      "id": "roof",
+      "type": "polygon",
+      "points": [
+        [
+          84,
+          74
+        ],
+        [
+          128,
+          45
+        ],
+        [
+          175,
+          69
+        ],
+        [
+          160,
+          92
+        ],
+        [
+          98,
+          89
+        ]
+      ],
+      "fill": "#4d392f",
+      "stroke": "#211c1a",
+      "strokeWidth": 9,
+      "appearance": {
+        "material": "metal",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#725342",
+              "opacity": 1
+            },
+            {
+              "at": 0.5,
+              "color": "#4d392f",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#211c1a",
+              "opacity": 1
+            }
+          ]
+        },
+        "surfaceMarks": [
+          {
+            "kind": "quadratic",
+            "from": [
+              0.39,
+              0.22
+            ],
+            "control": [
+              0.5,
+              0.2
+            ],
+            "to": [
+              0.59,
+              0.22
+            ],
+            "color": "#a0785f",
+            "width": 2,
+            "opacity": 0.7
+          }
+        ]
+      }
+    },
+    {
+      "id": "roof_highlight",
+      "type": "path",
+      "d": "M98 73 Q126 54 159 70",
+      "fill": "none",
+      "stroke": "#a0785f",
+      "strokeWidth": 3
+    },
+    {
+      "id": "frame_body",
+      "type": "path",
+      "d": "M91 87 L101 238 Q126 263 155 240 L166 84 Z",
+      "fill": "#332820",
+      "stroke": "#211c1a",
+      "strokeWidth": 9
+    },
+    {
+      "id": "glass",
+      "type": "path",
+      "d": "M108 102 Q128 91 150 103 L144 223 Q126 240 110 220 Z",
+      "fill": "#438f8d",
+      "stroke": "#211c1a",
+      "strokeWidth": 5,
+      "opacity": 0.95,
+      "appearance": {
+        "material": "spirit",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#438f8d",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#69d7cf",
+              "opacity": 1
+            }
+          ]
+        },
+        "outerGlow": {
+          "color": "#72f5ec",
+          "opacity": 0.24,
+          "radius": 3
+        }
+      }
+    },
+    {
+      "id": "glass_glow",
+      "type": "path",
+      "d": "M116 108 Q128 101 141 109 L138 216 Q128 226 118 216 Z",
+      "fill": "#69d7cf",
+      "stroke": "none",
+      "strokeWidth": 0,
+      "opacity": 0.55
+    },
+    {
+      "id": "flame",
+      "type": "path",
+      "d": "M125 207 C105 193 108 174 123 158 C134 146 137 133 133 118 C154 131 162 151 150 170 C142 182 139 191 149 201 C143 220 131 229 125 207 Z",
+      "fill": "#b9fff4",
+      "stroke": "#b9fff4",
+      "strokeWidth": 3
+    },
+    {
+      "id": "flame_core",
+      "type": "path",
+      "d": "M128 200 C118 190 119 179 128 169 C136 160 138 152 135 144 C147 154 148 168 140 180 C135 187 135 194 140 199 C137 207 131 209 128 200 Z",
+      "fill": "#69d7cf",
+      "stroke": "none",
+      "strokeWidth": 0
+    },
+    {
+      "id": "base",
+      "type": "polygon",
+      "points": [
+        [
+          98,
+          233
+        ],
+        [
+          158,
+          233
+        ],
+        [
+          170,
+          251
+        ],
+        [
+          151,
+          267
+        ],
+        [
+          105,
+          267
+        ],
+        [
+          88,
+          251
+        ]
+      ],
+      "fill": "#4d392f",
+      "stroke": "#211c1a",
+      "strokeWidth": 8
+    },
+    {
+      "id": "left_hook",
+      "type": "path",
+      "d": "M98 116 C82 116 76 126 75 142",
+      "fill": "none",
+      "stroke": "#211c1a",
+      "strokeWidth": 6
+    },
+    {
+      "id": "right_hook",
+      "type": "path",
+      "d": "M158 116 C174 116 180 126 181 142",
+      "fill": "none",
+      "stroke": "#211c1a",
+      "strokeWidth": 6
+    },
+    {
+      "id": "talisman_left",
+      "type": "polygon",
+      "points": [
+        [
+          54,
+          136
+        ],
+        [
+          82,
+          141
+        ],
+        [
+          78,
+          197
+        ],
+        [
+          72,
+          207
+        ],
+        [
+          64,
+          205
+        ],
+        [
+          58,
+          215
+        ],
+        [
+          61,
+          186
+        ]
+      ],
+      "fill": "#d8c59d",
+      "stroke": "#332820",
+      "strokeWidth": 4,
+      "appearance": {
+        "material": "fabric",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#d8c59d",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#a0785f",
+              "opacity": 1
+            }
+          ]
+        },
+        "surfaceMarks": [
+          {
+            "kind": "line",
+            "from": [
+              0.19,
+              0.51
+            ],
+            "to": [
+              0.3,
+              0.54
+            ],
+            "color": "#8c332e",
+            "width": 2,
+            "opacity": 0.65
+          }
+        ]
+      }
+    },
+    {
+      "id": "talisman_right",
+      "type": "polygon",
+      "points": [
+        [
+          173,
+          141
+        ],
+        [
+          201,
+          135
+        ],
+        [
+          199,
+          190
+        ],
+        [
+          203,
+          212
+        ],
+        [
+          190,
+          204
+        ],
+        [
+          177,
+          207
+        ],
+        [
+          181,
+          181
+        ]
+      ],
+      "fill": "#d8c59d",
+      "stroke": "#332820",
+      "strokeWidth": 4,
+      "appearance": {
+        "material": "fabric",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#d8c59d",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#a0785f",
+              "opacity": 1
+            }
+          ]
+        },
+        "surfaceMarks": [
+          {
+            "kind": "line",
+            "from": [
+              0.19,
+              0.51
+            ],
+            "to": [
+              0.3,
+              0.54
+            ],
+            "color": "#8c332e",
+            "width": 2,
+            "opacity": 0.65
+          }
+        ]
+      }
+    },
+    {
+      "id": "seal_left",
+      "type": "ellipse",
+      "cx": 68,
+      "cy": 171,
+      "rx": 5,
+      "ry": 6,
+      "fill": "#8c332e",
+      "stroke": "none",
+      "strokeWidth": 0
+    },
+    {
+      "id": "seal_right",
+      "type": "ellipse",
+      "cx": 188,
+      "cy": 169,
+      "rx": 5,
+      "ry": 6,
+      "fill": "#8c332e",
+      "stroke": "none",
+      "strokeWidth": 0
+    },
+    {
+      "id": "tassel_cord",
+      "type": "path",
+      "d": "M128 252 C126 266 130 274 128 282",
+      "fill": "none",
+      "stroke": "#8c332e",
+      "strokeWidth": 5
+    },
+    {
+      "id": "tassel",
+      "type": "polygon",
+      "points": [
+        [
+          118,
+          275
+        ],
+        [
+          138,
+          275
+        ],
+        [
+          142,
+          285
+        ],
+        [
+          128,
+          291
+        ],
+        [
+          114,
+          285
+        ]
+      ],
+      "fill": "#8c332e",
+      "stroke": "#211c1a",
+      "strokeWidth": 4,
+      "appearance": {
+        "material": "fabric",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#8c332e",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#211c1a",
+              "opacity": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "glyph_left",
+      "type": "path",
+      "d": "M64 153 L73 159 L65 166 L74 174 L64 184",
+      "fill": "none",
+      "stroke": "#8c332e",
+      "strokeWidth": 3
+    },
+    {
+      "id": "glyph_right",
+      "type": "path",
+      "d": "M184 152 Q193 159 185 166 Q178 173 190 181",
+      "fill": "none",
+      "stroke": "#8c332e",
+      "strokeWidth": 3
+    },
+    {
+      "id": "frame_edge_left",
+      "type": "path",
+      "d": "M99 96 C98 135 100 193 106 229",
+      "fill": "none",
+      "stroke": "#725342",
+      "strokeWidth": 3,
+      "opacity": 0.75
+    },
+    {
+      "id": "frame_edge_right",
+      "type": "path",
+      "d": "M157 94 C158 141 155 196 149 228",
+      "fill": "none",
+      "stroke": "#211c1a",
+      "strokeWidth": 4,
+      "opacity": 0.9
+    },
+    {
+      "id": "tassel_fringe_left",
+      "type": "polygon",
+      "points": [
+        [
+          119,
+          287
+        ],
+        [
+          125,
+          289
+        ],
+        [
+          121,
+          305
+        ],
+        [
+          113,
+          301
+        ]
+      ],
+      "fill": "#8c332e",
+      "stroke": "#211c1a",
+      "strokeWidth": 3
+    },
+    {
+      "id": "tassel_fringe_center",
+      "type": "polygon",
+      "points": [
+        [
+          125,
+          288
+        ],
+        [
+          132,
+          288
+        ],
+        [
+          132,
+          307
+        ],
+        [
+          124,
+          307
+        ]
+      ],
+      "fill": "#8c332e",
+      "stroke": "#211c1a",
+      "strokeWidth": 3
+    },
+    {
+      "id": "tassel_fringe_right",
+      "type": "polygon",
+      "points": [
+        [
+          132,
+          289
+        ],
+        [
+          138,
+          287
+        ],
+        [
+          145,
+          301
+        ],
+        [
+          135,
+          306
+        ]
+      ],
+      "fill": "#8c332e",
+      "stroke": "#211c1a",
+      "strokeWidth": 3
+    },
+    {
+      "id": "roof_rivet",
+      "type": "ellipse",
+      "cx": 151,
+      "cy": 77,
+      "rx": 3,
+      "ry": 3,
+      "fill": "#b28a62",
+      "stroke": "#211c1a",
+      "strokeWidth": 1
+    },
+    {
+      "id": "roof_crest",
+      "type": "path",
+      "d": "M108 67 Q126 54 147 66",
+      "fill": "none",
+      "stroke": "#b28a62",
+      "strokeWidth": 2,
+      "opacity": 0.7
+    },
+    {
+      "id": "cage_crossbar",
+      "type": "path",
+      "d": "M103 123 Q126 130 153 123",
+      "fill": "none",
+      "stroke": "#725342",
+      "strokeWidth": 2,
+      "opacity": 0.7
+    },
+    {
+      "id": "paper_ink_left",
+      "type": "path",
+      "d": "M65 189 Q70 192 72 188",
+      "fill": "none",
+      "stroke": "#8c332e",
+      "strokeWidth": 2,
+      "opacity": 0.7
+    },
+    {
+      "id": "paper_ink_right",
+      "type": "path",
+      "d": "M182 186 Q187 188 191 184",
+      "fill": "none",
+      "stroke": "#8c332e",
+      "strokeWidth": 2,
+      "opacity": 0.7
+    },
+    {
+      "id": "tassel_thread",
+      "type": "path",
+      "d": "M128 280 Q125 291 128 302",
+      "fill": "none",
+      "stroke": "#a0785f",
+      "strokeWidth": 2,
+      "opacity": 0.7
+    },
+    {
+      "id": "metal_pin_left",
+      "type": "ellipse",
+      "cx": 105,
+      "cy": 247,
+      "rx": 3,
+      "ry": 3,
+      "fill": "#b28a62",
+      "stroke": "#332820",
+      "strokeWidth": 1
+    },
+    {
+      "id": "metal_pin_right",
+      "type": "ellipse",
+      "cx": 152,
+      "cy": 246,
+      "rx": 3,
+      "ry": 3,
+      "fill": "#b28a62",
+      "stroke": "#332820",
+      "strokeWidth": 1
+    },
+    {
+      "id": "flame_a_contour",
+      "type": "path",
+      "d": "M124 206 C111 194 108 181 119 165 C130 152 135 138 132 125 C146 136 155 154 146 169 C139 182 140 193 148 201 C143 214 132 221 124 206 Z",
+      "fill": "#69d7cf",
+      "stroke": "#b9fff4",
+      "strokeWidth": 2,
+      "appearance": {
+        "material": "spirit",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#b9fff4",
+              "opacity": 1
+            },
+            {
+              "at": 0.5,
+              "color": "#72f5ec",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#69d7cf",
+              "opacity": 1
+            }
+          ]
+        },
+        "outerGlow": {
+          "color": "#72f5ec",
+          "opacity": 0.28,
+          "radius": 3
+        }
+      }
+    },
+    {
+      "id": "flame_a_heart",
+      "type": "path",
+      "d": "M129 198 C122 189 122 176 131 165 C139 154 140 149 138 143 C150 158 144 177 139 187 C137 193 139 199 136 204 Z",
+      "fill": "#b9fff4",
+      "stroke": "none",
+      "strokeWidth": 0,
+      "opacity": 0.8
+    },
+    {
+      "id": "flame_b_contour",
+      "type": "path",
+      "d": "M119 205 C112 195 113 180 123 169 C127 151 146 149 138 113 C153 141 156 159 144 177 C136 184 147 196 141 205 C136 216 124 220 119 205 Z",
+      "fill": "#69d7cf",
+      "stroke": "#b9fff4",
+      "strokeWidth": 2,
+      "appearance": {
+        "material": "spirit",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#b9fff4",
+              "opacity": 1
+            },
+            {
+              "at": 0.5,
+              "color": "#72f5ec",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#69d7cf",
+              "opacity": 1
+            }
+          ]
+        },
+        "outerGlow": {
+          "color": "#72f5ec",
+          "opacity": 0.28,
+          "radius": 3
+        }
+      }
+    },
+    {
+      "id": "flame_b_heart",
+      "type": "path",
+      "d": "M127 201 C117 191 122 180 132 169 C141 159 141 155 141 149 C148 162 140 179 138 185 C140 191 139 203 134 205 Z",
+      "fill": "#b9fff4",
+      "stroke": "none",
+      "strokeWidth": 0,
+      "opacity": 0.8
+    },
+    {
+      "id": "flame_c_contour",
+      "type": "path",
+      "d": "M125 206 C108 197 114 183 118 173 C120 164 129 154 127 143 C143 149 150 158 145 170 C154 177 154 192 146 206 C139 218 132 220 125 206 Z",
+      "fill": "#69d7cf",
+      "stroke": "#b9fff4",
+      "strokeWidth": 2,
+      "appearance": {
+        "material": "spirit",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#b9fff4",
+              "opacity": 1
+            },
+            {
+              "at": 0.5,
+              "color": "#72f5ec",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#69d7cf",
+              "opacity": 1
+            }
+          ]
+        },
+        "outerGlow": {
+          "color": "#72f5ec",
+          "opacity": 0.28,
+          "radius": 3
+        }
+      }
+    },
+    {
+      "id": "flame_c_heart",
+      "type": "path",
+      "d": "M128 200 C121 188 127 178 131 171 C133 167 132 163 130 157 C143 166 145 180 140 187 C136 193 142 200 134 206 Z",
+      "fill": "#b9fff4",
+      "stroke": "none",
+      "strokeWidth": 0,
+      "opacity": 0.8
+    },
+    {
+      "id": "flame_d_contour",
+      "type": "path",
+      "d": "M123 206 C112 194 110 179 122 162 C135 151 133 138 136 126 C155 143 150 161 142 173 C133 181 143 192 149 199 C143 216 128 225 123 206 Z",
+      "fill": "#69d7cf",
+      "stroke": "#b9fff4",
+      "strokeWidth": 2,
+      "appearance": {
+        "material": "spirit",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.15,
+            0.1
+          ],
+          "end": [
+            0.85,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#b9fff4",
+              "opacity": 1
+            },
+            {
+              "at": 0.5,
+              "color": "#72f5ec",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#69d7cf",
+              "opacity": 1
+            }
+          ]
+        },
+        "outerGlow": {
+          "color": "#72f5ec",
+          "opacity": 0.28,
+          "radius": 3
+        }
+      }
+    },
+    {
+      "id": "flame_d_heart",
+      "type": "path",
+      "d": "M131 203 C124 197 120 183 130 169 C138 156 141 153 137 145 C149 160 147 175 139 186 C138 195 141 204 131 203 Z",
+      "fill": "#b9fff4",
+      "stroke": "none",
+      "strokeWidth": 0,
+      "opacity": 0.8
+    }
+  ]
+}
