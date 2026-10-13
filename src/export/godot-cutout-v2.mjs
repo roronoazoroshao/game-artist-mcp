@@ -61,11 +61,25 @@ function putTracks(lines,tracks){
  });
 }
 function lightSvg(hex){
+ // A soft outer falloff keeps the environment readable; a tight white-cyan
+ // core adds a focal spark without baking neon light into every atlas frame.
+ // Both layers are authored SVG primitives and imported by pinned Godot.
  return ['<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">',
- '<defs><radialGradient id="l"><stop offset="0" stop-color="'+hex+'" stop-opacity="0.9"/>',
- '<stop offset="0.5" stop-color="'+hex+'" stop-opacity="0.35"/>',
- '<stop offset="1" stop-color="'+hex+'" stop-opacity="0"/></radialGradient></defs>',
- '<rect width="64" height="64" fill="url(#l)"/></svg>'].join('\n');
+ '<defs>',
+ '<radialGradient id="outer" cx="50%" cy="50%" r="50%">',
+ '<stop offset="0" stop-color="'+hex+'" stop-opacity="0.50"/>',
+ '<stop offset="0.25" stop-color="'+hex+'" stop-opacity="0.36"/>',
+ '<stop offset="0.57" stop-color="'+hex+'" stop-opacity="0.13"/>',
+ '<stop offset="1" stop-color="'+hex+'" stop-opacity="0"/>',
+ '</radialGradient>',
+ '<radialGradient id="core" cx="50%" cy="50%" r="50%">',
+ '<stop offset="0" stop-color="#e5fffb" stop-opacity="0.92"/>',
+ '<stop offset="0.42" stop-color="'+hex+'" stop-opacity="0.30"/>',
+ '<stop offset="1" stop-color="'+hex+'" stop-opacity="0"/>',
+ '</radialGradient></defs>',
+ '<rect width="64" height="64" fill="url(#outer)"/>',
+ '<circle cx="32" cy="32" r="14" fill="url(#core)"/>',
+ '</svg>'].join('\n');
 }
 function validationScript(parts,byId,hasLight,hasCollision){
  const lines=['extends Node2D','','func _ready() -> void:',
