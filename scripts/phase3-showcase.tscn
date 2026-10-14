@@ -1,13 +1,17 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://showcase_world.gd" id="World"]
 [ext_resource type="Script" path="res://showcase_capture.gd" id="Capture"]
 [ext_resource type="PackedScene" path="res://assets/spirit_lantern/spirit_lantern.tscn" id="LanternScene"]
 [ext_resource type="Texture2D" path="res://assets/spirit_lantern/light.svg" id="SpiritLight"]
 [ext_resource type="Shader" path="res://showcase_atmosphere.gdshader" id="AtmosShader"]
+[ext_resource type="Shader" path="res://showcase_surface.gdshader" id="SurfaceShader"]
 
 [sub_resource type="ShaderMaterial" id="AtmosMat"]
 shader = ExtResource("AtmosShader")
+
+[sub_resource type="ShaderMaterial" id="SurfaceMat"]
+shader = ExtResource("SurfaceShader")
 
 [node name="SpiritLanternShowcase" type="Node2D"]
 script = ExtResource("Capture")
@@ -19,6 +23,7 @@ offset_bottom = 512.0
 mouse_filter = 2
 
 [node name="Ground" type="Node2D" parent="."]
+material = SubResource("SurfaceMat")
 script = ExtResource("World")
 
 [node name="Lantern" parent="." instance=ExtResource("LanternScene")]
