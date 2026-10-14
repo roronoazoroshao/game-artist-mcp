@@ -1,0 +1,42 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://showcase_world.gd" id="World"]
+[ext_resource type="Script" path="res://showcase_capture.gd" id="Capture"]
+[ext_resource type="PackedScene" path="res://assets/spirit_lantern/spirit_lantern.tscn" id="LanternScene"]
+[ext_resource type="Texture2D" path="res://assets/spirit_lantern/light.svg" id="SpiritLight"]
+[ext_resource type="Shader" path="res://showcase_atmosphere.gdshader" id="AtmosShader"]
+[ext_resource type="Shader" path="res://showcase_surface.gdshader" id="SurfaceShader"]
+
+[sub_resource type="ShaderMaterial" id="AtmosMat"]
+shader = ExtResource("AtmosShader")
+
+[sub_resource type="ShaderMaterial" id="SurfaceMat"]
+shader = ExtResource("SurfaceShader")
+
+[node name="SpiritLanternShowcase" type="Node2D"]
+script = ExtResource("Capture")
+
+[node name="Atmosphere" type="ColorRect" parent="."]
+material = SubResource("AtmosMat")
+offset_right = 512.0
+offset_bottom = 512.0
+mouse_filter = 2
+
+[node name="Ground" type="Node2D" parent="."]
+material = SubResource("SurfaceMat")
+script = ExtResource("World")
+
+[node name="Lantern" parent="." instance=ExtResource("LanternScene")]
+position = Vector2(151, 65)
+scale = Vector2(0.82, 0.82)
+
+[node name="GroundBounce" type="PointLight2D" parent="."]
+position = Vector2(256, 382)
+texture = ExtResource("SpiritLight")
+color = Color(0.47, 0.96, 0.85, 1)
+energy = 0.44
+texture_scale = 4.0
+
+[node name="Foreground" type="Node2D" parent="."]
+script = ExtResource("World")
+front_layer = true
