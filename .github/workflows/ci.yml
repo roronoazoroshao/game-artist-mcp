@@ -115,7 +115,7 @@ jobs:
       - name: Verify Phase 3 animated atlas in pinned Godot
         run: |
           "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot --editor --quit 2>&1 | tee examples/spirit-lantern/generated/phase3-import.log
-          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot 2>&1 | tee examples/spirit-lantern/generated/phase3-run.log
+          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot --scene res://main.tscn 2>&1 | tee examples/spirit-lantern/generated/phase3-run.log
           grep -q "GAME_ARTIST_PHASE3_OK" examples/spirit-lantern/generated/phase3-run.log
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/phase3-import.log examples/spirit-lantern/generated/phase3-run.log
 
