@@ -69,7 +69,8 @@ try{
   ['phase3-showcase.tscn','showcase.tscn'],
   ['phase3-showcase-world.gd','showcase_world.gd'],
   ['phase3-showcase-capture.gd','showcase_capture.gd'],
-  ['phase3-showcase-atmosphere.gdshader','showcase_atmosphere.gdshader']
+  ['phase3-showcase-atmosphere.gdshader','showcase_atmosphere.gdshader'],
+  ['phase3-showcase-surface.gdshader','showcase_surface.gdshader']
  ]){
   await writeFile(join(generated,exportFile),await readFile(join(root,'scripts',sourceFile)));
  }
