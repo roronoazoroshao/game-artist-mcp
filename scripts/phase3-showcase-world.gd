@@ -53,10 +53,13 @@ func _grass(anchor: Vector2, direction: float, scale_factor: float) -> void:
 
 func _sky() -> void:
     # Background pixels and atmospheric grain are provided by Atmosphere.
+    # Close the distant ridge *below* its silhouette. The former polygon
+    # started at y=0 and hid the entire sky shader despite valid compilation.
     _polygon(PackedVector2Array([
-        Vector2(0, 0), Vector2(512, 0), Vector2(512, 250),
-        Vector2(448, 236), Vector2(360, 254), Vector2(296, 233),
-        Vector2(222, 264), Vector2(135, 222), Vector2(75, 254), Vector2(0, 228)
+        Vector2(0, 228), Vector2(75, 254), Vector2(135, 222),
+        Vector2(222, 264), Vector2(296, 233), Vector2(360, 254),
+        Vector2(448, 236), Vector2(512, 250), Vector2(512, 352),
+        Vector2(0, 352)
     ]), Color("#111c2b"))
     _polygon(PackedVector2Array([
         Vector2(0, 264), Vector2(55, 210), Vector2(116, 249),
