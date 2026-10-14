@@ -74,6 +74,15 @@ try{
  ]){
   await writeFile(join(generated,exportFile),await readFile(join(root,'scripts',sourceFile)));
  }
+ // Override only the extracted, user-facing demo project. The immutable
+ // content-addressed MCP package and CI-only validation scene remain intact.
+ const demoConfigPath=join(generated,'project.godot');
+ const demoConfig=await readFile(demoConfigPath,'utf8');
+ assert.ok(demoConfig.includes('run/main_scene="res://main.tscn"'));
+ await writeFile(demoConfigPath,demoConfig.replace(
+  'run/main_scene="res://main.tscn"',
+  'run/main_scene="res://showcase.tscn"'
+ ));
  for(const file of ['project.godot','main.tscn','validation.gd',
   'showcase.tscn','showcase_world.gd','showcase_capture.gd',
   'assets/spirit_lantern/atlas.png','assets/spirit_lantern/atlas.json',
