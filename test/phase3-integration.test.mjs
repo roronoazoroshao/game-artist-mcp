@@ -40,4 +40,12 @@ test('Phase 3 real child MCP builds valid immutable atlas-backed Godot project',
  assert.match(capture,/--capture-showcase/);
  assert.match(capture,/get_viewport\(\).get_texture\(\).get_image\(\)/);
  assert.match(capture,/GAME_ARTIST_R7_SHOWCASE_OK/);
+ // R7.1: the cinematic background must be a real imported Godot shader
+ // so fog/noise/vignette are rendered by the engine, not post-processed PNGs.
+ const atmosphere=await readFile(join(root,'showcase_atmosphere.gdshader'),'utf8');
+ assert.match(atmosphere,/shader_type canvas_item;/);
+ assert.match(atmosphere,/float fbm\(/);
+ assert.match(atmosphere,/COLOR = vec4/);
+ assert.match(showcase,/type="ShaderMaterial"/);
+ assert.match(showcase,/name="Atmosphere"/);
 });
