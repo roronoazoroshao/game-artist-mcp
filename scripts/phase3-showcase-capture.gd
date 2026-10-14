@@ -4,7 +4,6 @@ extends Node2D
 var seconds: float = 0.0
 
 func _ready() -> void:
-    print("R7_DIAG_READY argv=", OS.get_cmdline_user_args())
     if OS.get_cmdline_user_args().has("--capture-showcase"):
         call_deferred("_capture_frames")
 
@@ -16,7 +15,6 @@ func _process(delta: float) -> void:
         bounce.energy = clampf(light.energy * 0.48, 0.25, 0.62)
 
 func _capture_frames() -> void:
-    print("R7_DIAG_CAPTURE_ENTER")
     var player: AnimationPlayer = get_node_or_null("Lantern/AnimationPlayer") as AnimationPlayer
     var world: Node2D = get_node_or_null("Ground") as Node2D
     var front: Node2D = get_node_or_null("Foreground") as Node2D
@@ -39,10 +37,8 @@ func _capture_frames() -> void:
         front.set("elapsed", moment)
         world.queue_redraw()
         front.queue_redraw()
-        print("R7_DIAG_FRAME_WAIT ", index)
         await get_tree().process_frame
         await RenderingServer.frame_post_draw
-        print("R7_DIAG_FRAME_RECEIVED ", index)
         var image: Image = get_viewport().get_texture().get_image()
         if image.is_empty() or image.get_width() != 512 or image.get_height() != 512:
             push_error("R7 Godot framebuffer missing or unexpected size")
