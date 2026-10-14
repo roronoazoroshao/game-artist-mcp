@@ -114,6 +114,17 @@ func _shrine() -> void:
     _ellipse_line(Vector2(256, 391), 126.0, 35.0, Color("#2a555a"), 1.5)
     _ellipse_line(Vector2(256, 391), 96.0, 25.0, Color("#325d62"), 1.0)
     _ellipse(Vector2(256, 388), 78.0, 20.0, Color(0.0, 0.05, 0.08, 0.70))
+    # A restrained magical tether makes the hovering spirit lantern feel
+    # rooted in the ritual altar without obscuring the red tassel silhouette.
+    # This is hand-authored vector VFX, sharing the 2-second lantern pulse.
+    var tether_pulse: float = 0.82 + 0.18 * sin(elapsed * TAU + 0.35)
+    var start: Vector2 = Vector2(256.0 + sin(elapsed * TAU) * 1.1, 319.0)
+    var finish: Vector2 = Vector2(256.0, 357.0)
+    draw_line(start, finish, Color(0.05, 0.66, 0.60, 0.08 * tether_pulse), 15.0, true)
+    draw_line(start, finish, Color(0.22, 0.90, 0.77, 0.17 * tether_pulse), 8.0, true)
+    draw_line(start, finish, Color(0.51, 1.0, 0.91, 0.69 * tether_pulse), 3.3, true)
+    _ellipse(finish, 14.0, 5.0, Color(0.22, 0.89, 0.76, 0.20 * tether_pulse))
+    _ellipse_line(finish, 17.0, 6.4, Color(0.42, 0.98, 0.86, 0.50 * tether_pulse), 1.1)
     # Low-energy cyan bounce from the spirit fire; no fake full-scene bloom.
     var pulse: float = 0.88 + 0.12 * sin(elapsed * TAU)
     for i in range(8, 0, -1):
