@@ -36,7 +36,7 @@ test('Phase 3 real child MCP builds valid immutable atlas-backed Godot project',
  assert.match(showcase,/name="Foreground"/);
  assert.match(world,/func _draw\(\) -> void:/);
  assert.match(world,/draw_colored_polygon/);
- assert.match(world,/draw_arc/);
+ assert.match(world,/draw_polyline/);
  assert.match(capture,/--capture-showcase/);
  assert.match(capture,/get_viewport\(\).get_texture\(\).get_image\(\)/);
  assert.match(capture,/GAME_ARTIST_R7_SHOWCASE_OK/);
