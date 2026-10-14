@@ -63,7 +63,17 @@ try{
  await rm(generated,{recursive:true,force:true});
  await cp(output,generated,{recursive:true});
  await writeFile(join(generated,'validation.gd'),await readFile(join(root,'scripts/phase3-runtime-check.gd')));
+ // The immutable MCP package stays deterministic and reusable. An authored
+ // 2.5D gameplay scene is added only to this human-inspectable demo project.
+ for(const [sourceFile,exportFile] of [
+  ['phase3-showcase.tscn','showcase.tscn'],
+  ['phase3-showcase-world.gd','showcase_world.gd'],
+  ['phase3-showcase-capture.gd','showcase_capture.gd']
+ ]){
+  await writeFile(join(generated,exportFile),await readFile(join(root,'scripts',sourceFile)));
+ }
  for(const file of ['project.godot','main.tscn','validation.gd',
+  'showcase.tscn','showcase_world.gd','showcase_capture.gd',
   'assets/spirit_lantern/atlas.png','assets/spirit_lantern/atlas.json',
   'assets/spirit_lantern/spirit_lantern.tscn']){
   assert.ok((await stat(join(generated,file))).size>0,file);
