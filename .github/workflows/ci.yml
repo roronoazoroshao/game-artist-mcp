@@ -121,7 +121,7 @@ jobs:
 
       - name: Capture actual R7 in-game Godot screenshots and verify rendered pixels
         run: |
-          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot res://showcase.tscn -- --capture-showcase 2>&1 | tee examples/spirit-lantern/generated/r7-showcase-run.log
+          timeout 50s "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot res://showcase.tscn -- --capture-showcase 2>&1 | tee examples/spirit-lantern/generated/r7-showcase-run.log
           grep -q "GAME_ARTIST_R7_SHOWCASE_OK" examples/spirit-lantern/generated/r7-showcase-run.log
           R7_CAPTURE_VERIFICATION=1 node --test test/r7-showcase-framebuffer.test.mjs
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r7-showcase-run.log
