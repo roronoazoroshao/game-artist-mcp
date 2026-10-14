@@ -34,6 +34,10 @@ test('Phase 3 real child MCP builds valid immutable atlas-backed Godot project',
  assert.match(showcase,/name="Lantern"/);
  assert.match(showcase,/name="Ground"/);
  assert.match(showcase,/name="Foreground"/);
+ // The generated demo is intended for artists to open and press F6/F5;
+ // project default must be playable, not the validation scene that quits.
+ const project=await readFile(join(root,'project.godot'),'utf8');
+ assert.match(project,/run\/main_scene="res:\/\/showcase.tscn"/);
  assert.match(world,/func _draw\(\) -> void:/);
  assert.match(world,/draw_colored_polygon/);
  assert.match(world,/draw_polyline/);
