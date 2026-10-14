@@ -68,7 +68,8 @@ try{
  for(const [sourceFile,exportFile] of [
   ['phase3-showcase.tscn','showcase.tscn'],
   ['phase3-showcase-world.gd','showcase_world.gd'],
-  ['phase3-showcase-capture.gd','showcase_capture.gd']
+  ['phase3-showcase-capture.gd','showcase_capture.gd'],
+  ['phase3-showcase-atmosphere.gdshader','showcase_atmosphere.gdshader']
  ]){
   await writeFile(join(generated,exportFile),await readFile(join(root,'scripts',sourceFile)));
  }
