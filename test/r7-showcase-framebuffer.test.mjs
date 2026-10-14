@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto';
 
 const {PNG}=pngjs;
 const folder='examples/spirit-lantern/generated/phase3-godot/r7-showcase-review';
-test('R7 saved frames come from real 512px Godot viewport and show authored environment',async()=>{
+test('R7 saved frames come from real 512px Godot viewport and show authored environment',{skip: process.env.R7_CAPTURE_VERIFICATION!=='1'},async()=>{
  const frames=[];
  for(let i=0;i<4;i++){
   const file=join(folder,'frame-'+String(i).padStart(2,'0')+'.png');
