@@ -119,6 +119,13 @@ jobs:
           grep -q "GAME_ARTIST_PHASE3_OK" examples/spirit-lantern/generated/phase3-run.log
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/phase3-import.log examples/spirit-lantern/generated/phase3-run.log
 
+      - name: Capture actual R7 in-game Godot screenshots and verify rendered pixels
+        run: |
+          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/phase3-godot res://showcase.tscn -- --capture-showcase 2>&1 | tee examples/spirit-lantern/generated/r7-showcase-run.log
+          grep -q "GAME_ARTIST_R7_SHOWCASE_OK" examples/spirit-lantern/generated/r7-showcase-run.log
+          R7_CAPTURE_VERIFICATION=1 node --test test/r7-showcase-framebuffer.test.mjs
+          ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r7-showcase-run.log
+
       - name: Build exact FolderForge integration fixture
         run: |
           git clone --filter=blob:none --no-checkout https://github.com/roronoazoroshao369/FolderForge.git ../FolderForge
@@ -189,6 +196,14 @@ jobs:
         with:
           name: phase3-spirit-lantern-visual-UNSCORED
           path: examples/spirit-lantern/generated/phase3-review/
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r7-spirit-lantern-Godot-gameplay-UNSCORED
+          path: |
+            examples/spirit-lantern/generated/phase3-godot/r7-showcase-review/
+            examples/spirit-lantern/generated/r7-showcase-run.log
           if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
