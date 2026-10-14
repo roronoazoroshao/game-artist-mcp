@@ -52,7 +52,7 @@ func _grass(anchor: Vector2, direction: float, scale_factor: float) -> void:
     draw_line(anchor, anchor + Vector2(direction * 13, -13) * scale_factor, Color("#507465"), 1.3, true)
 
 func _sky() -> void:
-    draw_rect(Rect2(Vector2.ZERO, Vector2(512, 512)), Color("#080d1b"))
+    # Background pixels and atmospheric grain are provided by Atmosphere.
     _polygon(PackedVector2Array([
         Vector2(0, 0), Vector2(512, 0), Vector2(512, 250),
         Vector2(448, 236), Vector2(360, 254), Vector2(296, 233),
