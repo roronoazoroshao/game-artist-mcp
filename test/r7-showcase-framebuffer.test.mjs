@@ -27,6 +27,14 @@ test('R7 saved frames come from real 512px Godot viewport and show authored envi
    if(r>10||g>10||b>10)visible++;
   }
   assert.ok(palette.size>28,'R7 screenshot lacks color variety: '+palette.size);
+  // A shader that is imported but hidden beneath an opaque vector background
+  // must not count as cinematic atmosphere. This area is outside the lantern.
+  const skyPalette=new Set();
+  for(let y=10;y<125;y+=5)for(let x=28;x<148;x+=5){
+   const o=(y*png.width+x)*4;
+   skyPalette.add([png.data[o],png.data[o+1],png.data[o+2]].join(','));
+  }
+  assert.ok(skyPalette.size>=12,'R7 visible night sky is flat/occluding the atmosphere shader: '+skyPalette.size);
   assert.ok(illuminated>30,'R7 missing cyan spirit/environment accent: '+illuminated);
   assert.ok(ink>400,'R7 lacks dark atmospheric areas: '+ink);
   assert.ok(visible>2000,'R7 is mostly blank: '+visible);
