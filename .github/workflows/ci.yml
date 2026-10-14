@@ -125,7 +125,11 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/phase3-godot --scene res://showcase.tscn -- --capture-showcase 2>&1 | tee examples/spirit-lantern/generated/r7-showcase-run.log
           grep -q "GAME_ARTIST_R7_SHOWCASE_OK" examples/spirit-lantern/generated/r7-showcase-run.log
           R7_CAPTURE_VERIFICATION=1 node --test test/r7-showcase-framebuffer.test.mjs
-          ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r7-showcase-run.log
+          # Mesa llvmpipe on Xvfb lacks VSync controls; this exact driver notice
+          # does not indicate a rendering failure. All other warnings/errors fail.
+          if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r7-showcase-run.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then
+            exit 1
+          fi
 
       - name: Build exact FolderForge integration fixture
         run: |
