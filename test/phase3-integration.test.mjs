@@ -21,4 +21,23 @@ test('Phase 3 real child MCP builds valid immutable atlas-backed Godot project',
  const gd=await readFile(join(root,'assets/spirit_lantern/spirit_lantern.tscn'),'utf8');
  assert.match(gd,/Sprite2D:texture/);
  assert.match(gd,/SpiritLight:energy/);
+ // R7: the exported bundle must include an *inspectable and playable* world,
+ // not just the CI-only scene that exits after checking the atlas.
+ for(const extra of ['showcase.tscn','showcase_world.gd','showcase_capture.gd']){
+  const file=await stat(join(root,extra));
+  assert.ok(file.isFile()&&file.size>300,'missing authored R7 scene resource '+extra);
+ }
+ const showcase=await readFile(join(root,'showcase.tscn'),'utf8');
+ const world=await readFile(join(root,'showcase_world.gd'),'utf8');
+ const capture=await readFile(join(root,'showcase_capture.gd'),'utf8');
+ assert.match(showcase,/res:\/\/assets\/spirit_lantern\/spirit_lantern.tscn/);
+ assert.match(showcase,/name="Lantern"/);
+ assert.match(showcase,/name="Ground"/);
+ assert.match(showcase,/name="Foreground"/);
+ assert.match(world,/func _draw\(\) -> void:/);
+ assert.match(world,/draw_colored_polygon/);
+ assert.match(world,/draw_arc/);
+ assert.match(capture,/--capture-showcase/);
+ assert.match(capture,/get_viewport\(\).get_texture\(\).get_image\(\)/);
+ assert.match(capture,/GAME_ARTIST_R7_SHOWCASE_OK/);
 });
