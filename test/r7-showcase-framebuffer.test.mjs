@@ -35,6 +35,14 @@ test('R7 saved frames come from real 512px Godot viewport and show authored envi
    skyPalette.add([png.data[o],png.data[o+1],png.data[o+2]].join(','));
   }
   assert.ok(skyPalette.size>=12,'R7 visible night sky is flat/occluding the atmosphere shader: '+skyPalette.size);
+  // A stone side facet should exhibit fine material grain instead of an
+  // uninterrupted two-tone rectangle; compare a stable area away from glyphs.
+  const patina=new Set();
+  for(let y=456;y<461;y++)for(let x=220;x<290;x+=2){
+   const o=(y*png.width+x)*4;
+   patina.add([png.data[o],png.data[o+1],png.data[o+2]].join(','));
+  }
+  assert.ok(patina.size>=10,'R7 stone base has no visible authored surface texture: '+patina.size);
   assert.ok(illuminated>30,'R7 missing cyan spirit/environment accent: '+illuminated);
   assert.ok(ink>400,'R7 lacks dark atmospheric areas: '+ink);
   assert.ok(visible>2000,'R7 is mostly blank: '+visible);
