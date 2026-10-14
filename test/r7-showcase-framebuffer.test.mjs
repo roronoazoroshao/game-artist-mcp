@@ -43,6 +43,15 @@ test('R7 saved frames come from real 512px Godot viewport and show authored envi
    patina.add([png.data[o],png.data[o+1],png.data[o+2]].join(','));
   }
   assert.ok(patina.size>=10,'R7 stone base has no visible authored surface texture: '+patina.size);
+  // Spirit Lantern levitates above the altar. A legible luminous thread
+  // should connect the two rather than leave an unexplained dark gap.
+  let tetherLuma=0;
+  for(let y=326;y<=336;y++)for(let x=250;x<=262;x++){
+   const o=(y*png.width+x)*4;
+   const r=png.data[o],g=png.data[o+1],b=png.data[o+2];
+   if(g>=70 && g>r*1.20 && b>=g*.65)tetherLuma++;
+  }
+  assert.ok(tetherLuma>=18,'R7 levitating lantern lacks a readable cyan magical tether: '+tetherLuma);
   assert.ok(illuminated>30,'R7 missing cyan spirit/environment accent: '+illuminated);
   assert.ok(ink>400,'R7 lacks dark atmospheric areas: '+ink);
   assert.ok(visible>2000,'R7 is mostly blank: '+visible);
