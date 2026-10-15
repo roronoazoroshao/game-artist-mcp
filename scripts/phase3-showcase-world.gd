@@ -44,6 +44,14 @@ func _rock(origin: Vector2, scale_factor: float) -> void:
         origin + Vector2(20, -9) * s, origin + Vector2(0, -8) * s
     ]), Color("#354455"))
     draw_line(origin + Vector2(-4, -19) * s, origin + Vector2(0, -8) * s, Color("#6a7874"), 1.1, true)
+    # Two offset facets break the former single plane without adding noise.
+    _polygon(PackedVector2Array([
+        origin + Vector2(2, -22) * s, origin + Vector2(20, -9) * s,
+        origin + Vector2(27, 4) * s, origin + Vector2(11, 2) * s
+    ]), Color(0.10, 0.17, 0.22, 0.54))
+    draw_line(origin + Vector2(11, 2) * s, origin + Vector2(20, -9) * s,
+        Color(0.34, 0.57, 0.53, 0.27), 1.2, true)
+
 
 func _grass(anchor: Vector2, direction: float, scale_factor: float) -> void:
     var c := Color("#38564c")
@@ -137,10 +145,30 @@ func _shrine() -> void:
         draw_line(origin, tip, Color(0.45, 0.87, 0.81, 0.45), 1.2, true)
     draw_line(Vector2(174, 397), Vector2(141, 409), Color("#60756d"), 1.4, true)
     draw_line(Vector2(332, 374), Vector2(379, 385), Color("#60756d"), 1.3, true)
+    _engrave_stone()
     _rock(Vector2(89, 372), 0.78)
     _rock(Vector2(436, 374), 0.86)
     _rock(Vector2(154, 459), 0.63)
     _rock(Vector2(402, 457), 0.59)
+
+func _engrave_stone() -> void:
+    # Deliberate raised chisel marks; bounded 12 strokes instead of noisy
+    # full-screen particles. Perspective follows the same elliptical altar rim.
+    for i in range(12):
+        var a: float = TAU * (float(i) + 0.5) / 12.0
+        var point: Vector2 = Vector2(256.0 + cos(a) * 114.0, 391.0 + sin(a) * 31.0)
+        var tangent: Vector2 = Vector2(-sin(a) * 6.0, cos(a) * 1.8)
+        draw_line(point - tangent, point, Color(0.60, 0.71, 0.62, 0.33), 1.0, true)
+        draw_line(point, point + tangent * 0.75, Color(0.23, 0.69, 0.63, 0.24), 1.4, true)
+    # Hairline stone fissures beneath the central pool; no silhouette overlap.
+    draw_polyline(PackedVector2Array([
+        Vector2(121, 403), Vector2(151, 414), Vector2(166, 409),
+        Vector2(182, 418)
+    ]), Color(0.13, 0.31, 0.34, 0.34), 1.0, true)
+    draw_polyline(PackedVector2Array([
+        Vector2(330, 418), Vector2(353, 407), Vector2(378, 412),
+        Vector2(397, 399)
+    ]), Color(0.13, 0.31, 0.34, 0.34), 1.0, true)
 
 func _motes() -> void:
     # Deterministic motes move independently of flame pose and do not read OS RNG.
