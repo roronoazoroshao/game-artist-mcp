@@ -48,3 +48,15 @@ test('R8e oblique roof and window project visible depth while preserving cyan fl
  }
  assert.ok(cyan>12&&red>=3&&paper>8,JSON.stringify({cyan,red,paper}));
 });
+
+test('R8e volumetric metal planes have bounded hand-authored gradient materials',()=>{
+ for(const id of ['roof_side_shadow','body_side_plane','base_side_plane']){
+  const n=get(id);
+  assert.equal(n.appearance?.material,'metal',id+' lacks material classification');
+  const paint=n.appearance?.basePaint;
+  assert.equal(paint?.kind,'linearGradient',id+' has a single flat color');
+  assert.ok(Array.isArray(paint.stops)&&paint.stops.length>=2);
+  assert.notEqual(paint.stops[0].color,paint.stops.at(-1).color,id+' needs light-to-shadow variation');
+  for(const stop of paint.stops)assert.ok(stop.at>=0&&stop.at<=1);
+ }
+});
