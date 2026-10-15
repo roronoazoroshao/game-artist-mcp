@@ -21,7 +21,9 @@
         "roof_crest",
         "cage_crossbar",
         "metal_pin_left",
-        "metal_pin_right"
+        "metal_pin_right",
+        "roof_rim_lit",
+        "cage_rim_lit"
       ],
       "pivot": [
         128,
@@ -51,7 +53,8 @@
         "talisman_left",
         "seal_left",
         "glyph_left",
-        "paper_ink_left"
+        "paper_ink_left",
+        "paper_fold_left"
       ],
       "pivot": [
         80,
@@ -67,7 +70,8 @@
         "talisman_right",
         "seal_right",
         "glyph_right",
-        "paper_ink_right"
+        "paper_ink_right",
+        "paper_fold_right"
       ],
       "pivot": [
         176,
@@ -85,7 +89,8 @@
         "tassel_fringe_left",
         "tassel_fringe_center",
         "tassel_fringe_right",
-        "tassel_thread"
+        "tassel_thread",
+        "tassel_sheen"
       ],
       "pivot": [
         128,
