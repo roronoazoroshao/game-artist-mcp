@@ -4,7 +4,9 @@ extends Node2D
 var seconds: float = 0.0
 
 func _ready() -> void:
-    if OS.get_cmdline_user_args().has("--capture-showcase"):
+    if OS.get_cmdline_user_args().has("--capture-r8-light-probe"):
+        call_deferred("_capture_r8_light_probe")
+    elif OS.get_cmdline_user_args().has("--capture-showcase"):
         call_deferred("_capture_frames")
 
 func _process(delta: float) -> void:
@@ -51,4 +53,56 @@ func _capture_frames() -> void:
             get_tree().quit(1)
             return
     print("GAME_ARTIST_R7_SHOWCASE_OK")
+    get_tree().quit(0)
+
+func _capture_r8_light_probe() -> void:
+    # Capture two real engine frames on the SAME 0.875s authored keyframe.
+    # Only toggle Light2D instances, never art layers, palette or camera.
+    var player: AnimationPlayer = get_node_or_null("Lantern/AnimationPlayer") as AnimationPlayer
+    var world: Node2D = get_node_or_null("Ground") as Node2D
+    var front: Node2D = get_node_or_null("Foreground") as Node2D
+    var lamp: PointLight2D = get_node_or_null("Lantern/body/flame/SpiritLight") as PointLight2D
+    var bounce: PointLight2D = get_node_or_null("GroundBounce") as PointLight2D
+    if player == null or world == null or front == null or lamp == null or bounce == null:
+        push_error("R8 light probe scene incomplete")
+        get_tree().quit(1)
+        return
+    var dest: String = "res://r8-light-probe"
+    var err: Error = DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dest))
+    if err != OK:
+        push_error("R8 light probe cannot make directory " + str(err))
+        get_tree().quit(1)
+        return
+    player.play("idle")
+    player.seek(0.875, true)
+    player.pause()
+    world.set_process(false)
+    front.set_process(false)
+    world.set("elapsed", 0.875)
+    front.set("elapsed", 0.875)
+    # Warm both the framebuffers and imported Light2D atlas texture.
+    lamp.visible = true
+    bounce.visible = true
+    for index in range(2):
+        if index == 1:
+            lamp.visible = false
+            bounce.visible = false
+        world.queue_redraw()
+        front.queue_redraw()
+        await get_tree().process_frame
+        await RenderingServer.frame_post_draw
+        var image: Image = get_viewport().get_texture().get_image()
+        if image.is_empty() or image.get_width() != 512 or image.get_height() != 512:
+            push_error("R8 light probe invalid viewport")
+            get_tree().quit(1)
+            return
+        var file: String = dest + ("/lit.png" if index == 0 else "/unlit.png")
+        err = image.save_png(file)
+        if err != OK:
+            push_error("R8 light probe could not save " + file)
+            get_tree().quit(1)
+            return
+    lamp.visible = true
+    bounce.visible = true
+    print("GAME_ARTIST_R8_LIGHT_PROBE_OK")
     get_tree().quit(0)
