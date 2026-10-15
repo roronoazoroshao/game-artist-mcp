@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   poc:
@@ -125,11 +126,42 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/phase3-godot --scene res://showcase.tscn -- --capture-showcase 2>&1 | tee examples/spirit-lantern/generated/r7-showcase-run.log
           grep -q "GAME_ARTIST_R7_SHOWCASE_OK" examples/spirit-lantern/generated/r7-showcase-run.log
           R7_CAPTURE_VERIFICATION=1 node --test test/r7-showcase-framebuffer.test.mjs
+          R8_CAPTURE_VERIFICATION=1 node --test test/r8-showcase-temporal.test.mjs
           # Mesa llvmpipe on Xvfb lacks VSync controls; this exact driver notice
           # does not indicate a rendering failure. All other warnings/errors fail.
           if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r7-showcase-run.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then
             exit 1
           fi
+
+      - name: Capture R8 real Godot light-on/off and assert local environment response
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/phase3-godot --scene res://showcase.tscn -- --capture-r8-light-probe 2>&1 | tee examples/spirit-lantern/generated/r8-light-run.log
+          grep -q "GAME_ARTIST_R8_LIGHT_PROBE_OK" examples/spirit-lantern/generated/r8-light-run.log
+          R8_CAPTURE_VERIFICATION=1 node --test test/r8-showcase-light-response.test.mjs
+          if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r8-light-run.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then
+            exit 1
+          fi
+
+      - name: Freeze actual R7 baseline and build unscored R8 candidate A-B review packet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R8_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          R8_BASELINE_SHA: 2efb6eeb502eaa0fa7def55face68d355c463931
+        run: |
+          baseline_head="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/38607190380" --jq .head_sha)"
+          test "$baseline_head" = "$R8_BASELINE_SHA"
+          mkdir -p "$RUNNER_TEMP/r8-actual-r7"
+          gh run download 38607190380 --repo "$GITHUB_REPOSITORY" --name r7-spirit-lantern-Godot-gameplay-UNSCORED --dir "$RUNNER_TEMP/r8-actual-r7"
+          node scripts/r8-review-packet.mjs \
+            --baseline-dir "$RUNNER_TEMP/r8-actual-r7/phase3-godot/r7-showcase-review" \
+            --candidate-dir examples/spirit-lantern/generated/phase3-godot/r7-showcase-review \
+            --baseline-sha "$R8_BASELINE_SHA" \
+            --candidate-sha "$R8_CANDIDATE_SHA" \
+            --output examples/spirit-lantern/generated/r8-review
+          test -s examples/spirit-lantern/generated/r8-review/review.json
+          test -s examples/spirit-lantern/generated/r8-review/contact-512.png
+          test -s examples/spirit-lantern/generated/r8-review/contact-128.png
+          test -s examples/spirit-lantern/generated/r8-review/contact-64.png
 
       - name: Build exact FolderForge integration fixture
         run: |
@@ -210,6 +242,22 @@ jobs:
             examples/spirit-lantern/generated/phase3-godot/r7-showcase-review/
             examples/spirit-lantern/generated/r7-showcase-run.log
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r8-spirit-lantern-Godot-light-probe-UNSCORED
+          path: |
+            examples/spirit-lantern/generated/phase3-godot/r8-light-probe/
+            examples/spirit-lantern/generated/r8-light-run.log
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r8-spirit-lantern-R7-vs-R8-UNSCORED
+          path: examples/spirit-lantern/generated/r8-review/
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
         with:
