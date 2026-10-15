@@ -131,6 +131,15 @@ jobs:
             exit 1
           fi
 
+      - name: Capture R8 real Godot light-on/off and assert local environment response
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/phase3-godot --scene res://showcase.tscn -- --capture-r8-light-probe 2>&1 | tee examples/spirit-lantern/generated/r8-light-run.log
+          grep -q "GAME_ARTIST_R8_LIGHT_PROBE_OK" examples/spirit-lantern/generated/r8-light-run.log
+          R8_CAPTURE_VERIFICATION=1 node --test test/r8-showcase-light-response.test.mjs
+          if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r8-light-run.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then
+            exit 1
+          fi
+
       - name: Build exact FolderForge integration fixture
         run: |
           git clone --filter=blob:none --no-checkout https://github.com/roronoazoroshao369/FolderForge.git ../FolderForge
@@ -210,6 +219,15 @@ jobs:
             examples/spirit-lantern/generated/phase3-godot/r7-showcase-review/
             examples/spirit-lantern/generated/r7-showcase-run.log
           if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r8-spirit-lantern-Godot-light-probe-UNSCORED
+          path: |
+            examples/spirit-lantern/generated/phase3-godot/r8-light-probe/
+            examples/spirit-lantern/generated/r8-light-run.log
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
         with:
