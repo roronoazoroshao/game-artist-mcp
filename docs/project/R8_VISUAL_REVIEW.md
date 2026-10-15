@@ -1,0 +1,20 @@
+# R8 visual / Godot evidence — UNSCORED technical review
+
+**Context:** Spirit Lantern R8 proposal [Issue #33](https://github.com/roronoazoroshao/game-artist-mcp/issues/33) and approved [plan](../superpowers/plans/2026-10-15-spirit-lantern-r8.md). Candidate is a technical iteration, **not certified 9–10/10 commercial art**.
+
+## Native TDD RED→GREEN audit
+- R8a 64px/detail acceptance: [RED #38678028947](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678028947), [GREEN #38678106712](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678106712). Five authored original nodes owned by their correct body/paper/tassel rig parts, with low-res test.
+- R8b actual Godot light off/on: [RED #38678270622](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678270622), [GREEN #38678363852](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678363852). Actual `PointLight2D` instances toggled at the same authored timestamp and camera; image regions outside the lantern vary in cyan brightness. No unsupported global-illumination claim.
+- R8c world stone relief and temporal sanity: [RED #38678624783](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678624783), [GREEN #38678728550](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678728550). Authored altar engravings, distinct rock facets, real 512px framebuffer check for controlled flash/no missing flame.
+- R8d frozen image provenance review packet: [RED #38678900212](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38678900212), [GREEN #38679112933](https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38679112933). Fixed R7 baseline source `2efb6eeb502eaa0fa7def55face68d355c463931` from real GitHub run `38607190380`. Baseline GitHub head SHA verified using `gh api` in CI and artifact downloaded. Candidate images generated from actual current Godot run. Packet contains review.json per-frame SHA256, paired 512/128/64 contact sheets; status `UNSCORED`.
+
+## Visual self-review: known limits
+- Self-assessment is **one AI acting in art-director/technical-art/VFX/QA roles**, not independent human artists.
+- Actual side-by-side R7/R8 512px Godot framebuffer at time=0 inspected. More distinctive roof highlight, side metal rim, paper/tassel accents and altar hairline grooves. **Difference is subtle** and not proof of a production-grade art upgrade. In this comparison, at t=0, about 0.64/765 mean absolute total RGB difference per pixel (computed after decoding a contact pair), i.e. around 0.083% of full RGB sum; this is a magnitude signal, not an aesthetic quality metric.
+- 128px full-scene contact sheet retains identifiable central cyan lantern, red tassel and altar; 64px scene is still an extreme reduction, not proof a designer/player would recognize every cue.
+- Lighting toggle visually changes both lantern halo and environment, but remains within limited handcrafted 2D renderer and no physically accurate GI/material BRDF.
+- Current cyan glass/flame/metal retains illustrated/cutout character; three-quarter perspective, varied surface roughness and environmental complexity likely require **another substantive art-direction pass**. Do not claim 9–10/10 or stable art readiness now.
+- A/B packet is **paired, not truly blind**: review.json exposes baseline/candidate order. Preserve this truth when seeking human scores. Issue #21 independent review and original provider attestation still unmet.
+
+## Safe integration / governance
+Owner authorized implementation of the written R8 plan and wants **main-only** after merge. Do not merge a failing exact HEAD or delete a divergent branch. On technical PASS, merge the reviewed exact commit, check real main push CI, let `.github/workflows/cleanup-merged-branches.yml` delete only safely merged branches, and verify branch list afterward. No production release. Exact final commit and artifact URLs are recorded in GitHub PR/Issue #33 **after** CI and merge, not predicted in this document.
