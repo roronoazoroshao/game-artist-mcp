@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   poc:
@@ -141,6 +142,27 @@ jobs:
             exit 1
           fi
 
+      - name: Freeze actual R7 baseline and build unscored R8 candidate A-B review packet
+        env:
+          GH_TOKEN: ${{ github.token }}
+          R8_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          R8_BASELINE_SHA: 2efb6eeb502eaa0fa7def55face68d355c463931
+        run: |
+          baseline_head="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/38607190380" --jq .head_sha)"
+          test "$baseline_head" = "$R8_BASELINE_SHA"
+          mkdir -p "$RUNNER_TEMP/r8-actual-r7"
+          gh run download 38607190380 --repo "$GITHUB_REPOSITORY" --name r7-spirit-lantern-Godot-gameplay-UNSCORED --dir "$RUNNER_TEMP/r8-actual-r7"
+          node scripts/r8-review-packet.mjs \
+            --baseline-dir "$RUNNER_TEMP/r8-actual-r7/phase3-godot/r7-showcase-review" \
+            --candidate-dir examples/spirit-lantern/generated/phase3-godot/r7-showcase-review \
+            --baseline-sha "$R8_BASELINE_SHA" \
+            --candidate-sha "$R8_CANDIDATE_SHA" \
+            --output examples/spirit-lantern/generated/r8-review
+          test -s examples/spirit-lantern/generated/r8-review/review.json
+          test -s examples/spirit-lantern/generated/r8-review/contact-512.png
+          test -s examples/spirit-lantern/generated/r8-review/contact-128.png
+          test -s examples/spirit-lantern/generated/r8-review/contact-64.png
+
       - name: Build exact FolderForge integration fixture
         run: |
           git clone --filter=blob:none --no-checkout https://github.com/roronoazoroshao369/FolderForge.git ../FolderForge
@@ -228,6 +250,13 @@ jobs:
           path: |
             examples/spirit-lantern/generated/phase3-godot/r8-light-probe/
             examples/spirit-lantern/generated/r8-light-run.log
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r8-spirit-lantern-R7-vs-R8-UNSCORED
+          path: examples/spirit-lantern/generated/r8-review/
           if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
