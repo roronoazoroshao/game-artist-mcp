@@ -942,7 +942,33 @@
       ],
       "fill": "#332820",
       "stroke": "#211c1a",
-      "strokeWidth": 3
+      "strokeWidth": 3,
+      "appearance": {
+        "material": "metal",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.1,
+            0.1
+          ],
+          "end": [
+            0.9,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#725342",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#211c1a",
+              "opacity": 1
+            }
+          ]
+        }
+      }
     },
     {
       "id": "body_side_plane",
@@ -968,7 +994,33 @@
       "fill": "#4d392f",
       "stroke": "#211c1a",
       "strokeWidth": 3,
-      "opacity": 0.98
+      "opacity": 0.98,
+      "appearance": {
+        "material": "metal",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.1,
+            0.1
+          ],
+          "end": [
+            0.9,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#4d392f",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#211c1a",
+              "opacity": 1
+            }
+          ]
+        }
+      }
     },
     {
       "id": "base_side_plane",
@@ -993,7 +1045,33 @@
       ],
       "fill": "#332820",
       "stroke": "#211c1a",
-      "strokeWidth": 3
+      "strokeWidth": 3,
+      "appearance": {
+        "material": "metal",
+        "basePaint": {
+          "kind": "linearGradient",
+          "start": [
+            0.1,
+            0.1
+          ],
+          "end": [
+            0.9,
+            0.9
+          ],
+          "stops": [
+            {
+              "at": 0,
+              "color": "#725342",
+              "opacity": 1
+            },
+            {
+              "at": 1,
+              "color": "#332820",
+              "opacity": 1
+            }
+          ]
+        }
+      }
     }
   ]
 }
