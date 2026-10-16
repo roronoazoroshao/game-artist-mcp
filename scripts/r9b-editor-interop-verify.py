@@ -118,7 +118,6 @@ def verify(source, exported, reopened, report):
     success = False
     try:
         a, b = inspect(source), inspect(exported)
-        delta = ImageChops.difference(a["merged"], b["merged"])
         # RGBA getbbox() may depend on the alpha channel; compare every byte.
         rgba_same = a["merged"].tobytes() == b["merged"].tobytes()
         source_layer_names = [x["name"] for x in a["layers"]]
