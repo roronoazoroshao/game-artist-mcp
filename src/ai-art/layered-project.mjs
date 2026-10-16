@@ -74,7 +74,29 @@ export function writeLayeredProject(source,{placements}={}){
  }
  for(const key of placements.keys())
   if(!source.layers.some(l=>l.layerId===key))fail('unlisted placement');
- const ora=writeOpenRaster({width:c.width,height:c.height,layers:rendered});
+ // Group only adjacent layers with the same rig owner: one group per run.
+ // Interleaved runs remain separate groups rather than silently changing
+ // the artist's top-first z-order to gather all parts together.
+ const usedIds=new Set(rendered.map(layer=>layer.id));
+ const sequences=new Map(),children=[];
+ let lastPart=null,group=null;
+ for(const layer of manifestLayers){
+  if(layer.partId!==lastPart){
+   const seq=(sequences.get(layer.partId)??0)+1;
+   sequences.set(layer.partId,seq);
+   let id='rig_'+layer.partId+(seq===1?'':'_'+seq);
+   while(usedIds.has(id))id+='_g';
+   usedIds.add(id);
+   group={type:'group',id,opacity:1,visible:true,
+    isolation:'isolate',children:[]};
+   children.push(group);
+   lastPart=layer.partId;
+  }
+  group.children.push({type:'layer',id:layer.layerId});
+ }
+ const stackTree={type:'group',id:'root',children};
+ const ora=writeOpenRaster({width:c.width,height:c.height,
+  layers:rendered,stackTree});
  const manifest={
   version:1,assetId:source.assetId,origin:'R9A_IMPORTED_UNATTESTED',
   paintProviderAttested:false,artisticReview:'UNSCORED',
