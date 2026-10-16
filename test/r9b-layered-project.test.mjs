@@ -103,3 +103,14 @@ test('R9b rejects placements outside canvas or missing/extra art layout; rights 
  assert.equal(m.rightsDecision,'RIGHTS_UNVERIFIED');
  assert.equal(m.paintProviderAttested,false);
 });
+
+test('R9b refuses forged validation objects and mutated operations provenance',()=>{
+ const p=project();
+ rejects(()=>writeLayeredProject({...p.validated},{placements:p.placements}));
+ const out=p.packed();
+ const altered=JSON.parse(out.operationsJson);
+ altered[0].accepted=false;
+ rejects(()=>verifyLayeredProject({...out,operationsJson:JSON.stringify(altered)}));
+ const noLog={...out};delete noLog.operationsJson;
+ rejects(()=>verifyLayeredProject(noLog));
+});
