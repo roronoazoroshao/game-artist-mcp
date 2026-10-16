@@ -67,6 +67,9 @@ jobs:
             "$RUNNER_TEMP/r9b-editor/exported.ora" \
             "$RUNNER_TEMP/r9b-editor/reopened.png" \
             "$RUNNER_TEMP/r9b-editor/editor-interop-report.json"
+      - name: Verify actual Krita archive imports into isolated R9b editor profile
+        run: |
+          node scripts/r9b-krita-import-check.mjs "$RUNNER_TEMP/r9b-editor/exported.ora"
       - name: Upload factual artifacts even on failure
         if: always()
         uses: actions/upload-artifact@v4
