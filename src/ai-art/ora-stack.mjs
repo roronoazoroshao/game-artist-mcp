@@ -165,6 +165,20 @@ export function serializeGroupStack(width,height,tree,layers){
  return header+render(tree,0)+'\n</image>\n';
 }
 export function composeGroupTree({width,height,layers,stackTree}){
+ // Isolated groups each allocate a full-canvas framebuffer, even when
+ // their child paint layer is a single pixel. Reject aggregate allocation
+ // *before* rendering any subgroup to avoid resource amplification.
+ let groupFrames=0;
+ function countFrames(node){
+  if(node.type!=='group')return;
+  groupFrames++;
+  for(const child of node.children)countFrames(child);
+ }
+ countFrames(stackTree);
+ if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||
+    width<1||height<1||width*height>4194304||
+    groupFrames*width*height*4>64*1024*1024)
+   fail('group framebuffer budget');
  const byId=new Map(layers.map(l=>[l.id,l]));
  function render(node){
   const items=node.children.map(child=>{
