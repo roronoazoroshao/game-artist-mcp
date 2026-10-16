@@ -5,7 +5,7 @@ import pngjs from 'pngjs';
 import {makeProvenanceEvent,digestProvenanceEvents} from '../src/ai-art/provenance.mjs';
 import {validateLayeredSource} from '../src/ai-art/layered-source.mjs';
 import {writeLayeredProject,verifyLayeredProject} from '../src/ai-art/layered-project.mjs';
-import {readOpenRaster} from '../src/ai-art/openraster.mjs';
+import {readOpenRaster,writeOpenRaster} from '../src/ai-art/openraster.mjs';
 import {applyAlphaMask} from '../src/ai-art/layer-composite.mjs';
 const {PNG}=pngjs;
 const hash=b=>createHash('sha256').update(b).digest('hex');
