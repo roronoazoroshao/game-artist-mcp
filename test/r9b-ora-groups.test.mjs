@@ -73,6 +73,6 @@ test('R9b rejects excessive isolated full-canvas group image memory before compo
   type:'group',id:'group_'+i,opacity:1,visible:true,isolation:'isolate',
   children:[{type:'layer',id:l.id}]
  }))};
- reject(()=>writeOpenRaster({width:2048,height:2048,
-  layers:frameLayers,stackTree}));
+ assert.throws(()=>writeOpenRaster({width:2048,height:2048,
+  layers:frameLayers,stackTree}),/R9B_STACK_REJECTED: group framebuffer budget/);
 });
