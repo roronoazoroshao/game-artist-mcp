@@ -35,7 +35,7 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq krita xvfb xauth python3-pil
-          krita --version
+          QT_QPA_PLATFORM=offscreen krita --version
           /usr/bin/python3 -c "import PIL; print('Pillow', PIL.__version__)"
       - name: Create deterministic editable ORA fixture
         run: |
