@@ -133,3 +133,34 @@ test('R9b master ORA preserves machine-visible rig-part groups without reorderin
   layers:doc.layers,stackTree:doc.stackTree});
  assert.deepEqual(readOpenRaster(repaint).stackTree,doc.stackTree);
 });
+
+
+test('R9b review P1: reject re-signed malformed stack ownership, flame visibility and manifest order',()=>{
+ const p=project(),out=p.packed(),doc=readOpenRaster(out.ora);
+ const forge=(layers,stackTree,mutateManifest=()=>{})=>{
+  const ora=writeOpenRaster({width:doc.width,height:doc.height,layers,stackTree});
+  const manifest=JSON.parse(out.manifestJson);
+  manifest.oraSha256=hash(ora);
+  mutateManifest(manifest);
+  return {...out,ora,manifestJson:JSON.stringify(manifest)};
+ };
+ // Moving a flame paint layer under a body group still preserves stack order,
+ // layer pixels, region visibility and recomputable sidecar SHA, but breaks
+ // immutable rig-part ownership. The original verifier accepted this.
+ const groups=structuredClone(doc.stackTree);
+ const displaced=groups.children[1].children.shift();
+ groups.children[0].children.push(displaced);
+ rejects(()=>verifyLayeredProject(forge(doc.layers,groups)));
+ // A hidden alternative flame is not permitted to render as part of the
+ // canonical editor preview, even if its ORA and sidecar are re-signed.
+ const badVisibility=doc.layers.map(l=>({...l,visible:l.id==='flame_flame_b_paint'?true:l.visible}));
+ rejects(()=>verifyLayeredProject(forge(badVisibility,doc.stackTree,m=>{
+  const l=m.layers.find(x=>x.layerId==='flame_flame_b_paint');
+  l.visible=true;
+ })));
+ // Manifest order isn't a decorative field: it controls compositor z-order.
+ const reordered=JSON.parse(out.manifestJson);
+ [reordered.layers[0].order,reordered.layers[1].order]=
+  [reordered.layers[1].order,reordered.layers[0].order];
+ rejects(()=>verifyLayeredProject({...out,manifestJson:JSON.stringify(reordered)}));
+});
