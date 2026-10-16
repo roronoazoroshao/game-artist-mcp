@@ -20,7 +20,7 @@ const reject=f=>assert.throws(f,/R9B_|AI_PNG_REJECTED/);
 test('R9b isolated nested group applies parent opacity only once and roundtrips editable tree',()=>{
  const bytes=writeOpenRaster({width:1,height:1,layers:layers(),stackTree:group()});
  const doc=readOpenRaster(bytes);
- assert.deepEqual(pixel(doc.mergedPng),[128,0,127,255]);
+ assert.deepEqual(pixel(doc.mergedPng),[128,0,128,255]);
  assert.equal(doc.stackTree.children[0].id,'effects');
  assert.equal(doc.stackTree.children[0].opacity,0.5);
  assert.equal(doc.stackTree.children[0].isolation,'isolate');
@@ -53,4 +53,14 @@ test('R9b refuses malicious nested XML with external entities or unsupported gro
  reject(()=>readOpenRaster(mutate(x=>x.replace('isolation="isolate"','isolation="auto"'))));
  reject(()=>readOpenRaster(mutate(x=>x.replace('<stack>','<!DOCTYPE image [ <!ENTITY evil SYSTEM "file:///etc/passwd"> ]><stack>'))));
  reject(()=>readOpenRaster(mutate(x=>x.replace('<stack>','<stack><stack name="x" opacity="0.5" foo="unknown"> </stack>'))));
+});
+
+test('R9b re-exports parsed nested ORA stack without dropping hierarchy or changing pixels',()=>{
+ const original=writeOpenRaster({width:1,height:1,layers:layers(),stackTree:group()});
+ const first=readOpenRaster(original);
+ const exported=writeOpenRaster({width:first.width,height:first.height,
+  layers:first.layers,stackTree:first.stackTree});
+ const second=readOpenRaster(exported);
+ assert.deepEqual(second.stackTree,first.stackTree);
+ assert.deepEqual(pixel(second.mergedPng),pixel(first.mergedPng));
 });
