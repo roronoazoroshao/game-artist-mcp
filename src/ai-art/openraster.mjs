@@ -90,12 +90,18 @@ export function writeOpenRaster({width,height,layers,stackTree}={}){
  ];
  return writeOraZip(entries);
 }
-export function readOpenRaster(bytes){
+export function readOpenRaster(bytes,options={}){
+ if(!options||typeof options!=='object'||Array.isArray(options)||
+    Object.keys(options).some(k=>k!=='editorProfile'))fail('invalid reader options');
+ const editorProfile=options.editorProfile??null;
+ if(editorProfile!==null&&editorProfile!=='krita_5_2')fail('unsupported editor profile');
  const files=readOraZip(bytes);
  for(const mandatory of ['mimetype','stack.xml','mergedimage.png','Thumbnails/thumbnail.png'])
   if(!files.has(mandatory))fail('missing required OpenRaster entry '+mandatory);
  const xml=files.get('stack.xml').toString('utf8');
- const stack=/<stack\s+/.test(xml)?parseGroupStack(xml):readStack(xml);
+ const stack=/<stack\s+/.test(xml)?
+  parseGroupStack(xml,{editorProfile}):
+  editorProfile===null?readStack(xml):fail('Krita import requires bounded group stack');
  const layers=stack.layers.map(layer=>{
   const png=files.get(layer.src);
   if(!png)fail('missing layer PNG');
@@ -111,8 +117,21 @@ export function readOpenRaster(bytes){
   composeGroupTree({width:stack.width,height:stack.height,layers,stackTree:stack.stackTree}):
   composeLayers({width:stack.width,height:stack.height,layers});
  const expected=PNG.sync.read(computed,{checkCRC:true}),actual=PNG.sync.read(merged,{checkCRC:true});
- if(!expected.data.equals(actual.data))fail('mergedimage.png contradicts editable layer stack');
+ // The opt-in Krita 5.2 importer accepts a bounded one-quantum
+ // preview difference due to Krita's 8-bit opacity normalization.
+ // Never silently report pixel exact when rounding changed any byte.
+ let maxChannelDelta=0,changedPixels=0;
+ for(let i=0;i<expected.data.length;i+=4){
+  let peak=0;
+  for(let channel=0;channel<4;channel++)
+   peak=Math.max(peak,Math.abs(expected.data[i+channel]-actual.data[i+channel]));
+  if(peak){changedPixels++;maxChannelDelta=Math.max(maxChannelDelta,peak)}
+ }
+ if(maxChannelDelta>0&&(editorProfile!=='krita_5_2'||maxChannelDelta>1))
+  fail('mergedimage.png contradicts editable layer stack');
  return Object.freeze({width:stack.width,height:stack.height,layers,mergedPng:Buffer.from(merged),
+  mergedFidelity:maxChannelDelta===0?'PIXEL_EXACT':'BOUNDED_1LSB_NOT_PIXEL_EXACT',
+  changedPixels,maxChannelDelta,exportAllowed:false,
   thumbnailPng:Buffer.from(thumbnail),sha256:sha(bytes),
   stackTree:stack.stackTree??{type:'group',id:'root',
    children:layers.map(layer=>({type:'layer',id:layer.id}))}});
