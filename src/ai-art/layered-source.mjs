@@ -4,7 +4,8 @@ import {inspectAiPng} from './png-intake.mjs';
 import {verifyProvenanceEvents,digestProvenanceEvents} from './provenance.mjs';
 
 const fail=reason=>{throw Error('R9B_SOURCE_REJECTED: '+reason)};
-const ID=/^[a-z][a-z0-9_]{0,63}$/;
+const verifiedSources=new WeakSet();
+export const isValidatedLayeredSource=value=>!!value&&typeof value==='object'&&verifiedSources.has(value);
 const MASK_PATH=/^masks\/[a-z][a-z0-9_]{0,63}\.png$/;
 const hash=buf=>createHash('sha256').update(buf).digest('hex');
 const SAME=(a,b)=>a.length===b.length&&a.every((item,i)=>item===b[i]);
@@ -86,7 +87,7 @@ export function validateLayeredSource({
  if(!SAME(PARTS,[...PARTS].filter(x=>partCoverage.has(x)))||
     !SAME(POSES,[...POSES].filter(x=>poseCoverage.has(x))))
   fail('missing required rig parts or flame poses');
- return Object.freeze({
+ const verified=Object.freeze({
   ok:true,exportAllowed:false,rightsStatus:pkg.rightsDecision,
   masterCanvas:Object.freeze({...pkg.masterCanvas}),
   runtimeCanvas:Object.freeze({...pkg.runtimeCanvas}),
@@ -94,6 +95,9 @@ export function validateLayeredSource({
   operationsAuditSha256:pkg.operationsAuditSha256,
   layerDigests:Object.freeze(layerDigests),maskDigests:Object.freeze(maskDigests),
   coverage:Object.freeze({parts:Object.freeze([...PARTS]),poses:Object.freeze([...POSES])}),
-  layers:Object.freeze(layers)
+  layers:Object.freeze(layers),
+  operations:Object.freeze(operations.map(operation=>Object.freeze({...operation})))
  });
+ verifiedSources.add(verified);
+ return verified;
 }
