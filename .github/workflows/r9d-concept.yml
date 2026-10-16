@@ -1,0 +1,49 @@
+name: r9d-original-ai-concept-evidence
+
+on:
+  push:
+    branches:
+      - feat/r9d-firefly-original-concept
+    paths:
+      - 'examples/spirit-lantern/r9d/concept/**'
+      - 'scripts/r9d-verify-candidate.mjs'
+      - 'test/r9d-firefly-evidence.test.mjs'
+      - '.github/workflows/r9d-concept.yml'
+  pull_request:
+    paths:
+      - 'examples/spirit-lantern/r9d/concept/**'
+      - 'scripts/r9d-verify-candidate.mjs'
+      - 'test/r9d-firefly-evidence.test.mjs'
+      - '.github/workflows/r9d-concept.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  original-ai-painted-concept:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned package without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Negative and positive provenance tests (no rights claim)
+        run: node --test test/r9d-firefly-evidence.test.mjs
+      - name: Validate newly generated Firefly image rendition bytes and freeze exact digest
+        run: |
+          mkdir -p "$RUNNER_TEMP/r9d-review"
+          node scripts/r9d-verify-candidate.mjs > "$RUNNER_TEMP/r9d-review/exact-head-evidence.json"
+          grep -q 'GAME_ARTIST_R9D_REAL_PROVIDER_CONCEPT_BYTES_VERIFIED' "$RUNNER_TEMP/r9d-review/exact-head-evidence.json"
+          cp examples/spirit-lantern/r9d/concept/candidate-001-firefly-rendition.jpg "$RUNNER_TEMP/r9d-review/"
+          cp examples/spirit-lantern/r9d/concept/candidate-001-evidence.json "$RUNNER_TEMP/r9d-review/"
+      - name: Upload actual generated concept as UNSCORED art-review packet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r9d-Firefly-new-original-concept-RENDIITION-UNSCORED-NOT_RIG
+          path: ${{ runner.temp }}/r9d-review/
+          if-no-files-found: warn
