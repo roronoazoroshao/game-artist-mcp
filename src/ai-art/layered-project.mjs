@@ -138,6 +138,35 @@ export function verifyLayeredProject(files){
  files.layerPngs.size!==m.layers.length)fail('inconsistent ORA stack');
  const masked=m.layers.filter(l=>l.maskSha256!==null);
  if(files.maskPngs.size!==masked.length)fail('missing/surplus mask PNG');
+ // Re-check semantic rig ownership and source z-order independently of
+ // editable archive/sidecar SHA: re-signing a changed ORA does not allow a
+ // flame pose or layer to move into a different rig part.
+ const ownedById=new Map(m.layers.map(l=>[l.layerId,l.partId]));
+ const tree=doc.stackTree;
+ if(tree?.type!=='group'||tree.id!=='root'||!Array.isArray(tree.children)||
+    tree.children.length<1)fail('missing canonical root rig groups');
+ const lastSeq=new Map(),seenGroupIds=new Set();
+ let lastGroupPart=null;
+ for(const child of tree.children){
+  if(child.type!=='group'||child.visible!==true||child.opacity!==1||
+     child.isolation!=='isolate'||!Array.isArray(child.children)||
+     child.children.length<1||seenGroupIds.has(child.id))fail('invalid rig group');
+  seenGroupIds.add(child.id);
+  const entries=child.children.map(x=>{
+   if(x.type!=='layer'||!ownedById.has(x.id))fail('non-leaf or unknown rig member');
+   return ownedById.get(x.id);
+  });
+  if(new Set(entries).size!==1)fail('cross-part editable rig group');
+  const part=entries[0];
+  if(part===lastGroupPart)fail('unnecessary adjacent split rig groups');
+  lastGroupPart=part;
+  const seq=(lastSeq.get(part)??0)+1;lastSeq.set(part,seq);
+  const expectedName='rig_'+part+(seq===1?'':'_'+seq);
+  if(child.id!==expectedName)fail('rig group identity mismatch');
+ }
+ for(let i=1;i<m.layers.length;i++)
+  if(m.layers[i-1]?.order>=m.layers[i]?.order)
+   fail('manifest stack order differs from OpenRaster');
  const ids=new Set(),sources=new Set(),masks=new Set(),orders=new Set();
  for(let i=0;i<m.layers.length;i++){
   const l=m.layers[i],actual=doc.layers[i];
@@ -153,6 +182,8 @@ export function verifyLayeredProject(files){
   ids.add(l.layerId);sources.add(l.path);orders.add(l.order);
   const p={x:l.x,y:l.y,opacity:l.opacity,visible:l.visible};
   validPlacement(p,l,m.masterCanvas);
+  if(l.partId==='flame'&&l.poseId!=='flame_a'&&l.visible)
+   fail('non-canonical flame pose must stay hidden in editor preview');
   if(actual.id!==l.layerId||actual.x!==l.x||actual.y!==l.y||
   actual.opacity!==l.opacity||actual.visible!==l.visible)fail('ORA metadata mismatch');
   const original=files.layerPngs.get(l.path);
