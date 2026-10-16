@@ -54,6 +54,7 @@ export function verifyR9dCandidate({bytes,evidence}={}){
   evidence.repositoryArtifact!==EXPECTED_PATH||
   evidence.repositoryArtifactFormat!=='image/jpeg'||
   evidence.providerOriginalPngSha256!==null||
+  evidence.generatedImagePreviewSha256!=='944f6b1dbf25fff8f59d19dbcf2eb2a20be7265d3976d7a91dcea911c7aac3f6'||
   evidence.editableRigLayers!==false||
   evidence.layeredSourceCanvas1024x1280!==false||
   evidence.artisticallyApproved!==false||
@@ -68,6 +69,11 @@ export function verifyR9dCandidate({bytes,evidence}={}){
    evidence.conceptualParts.join('/')!=='body/flame/talisman_left/talisman_right/tassel')
   fail('unexpected conceptual rig identities');
  const {width,height}=dimensionsJpeg(bytes);
+ if(width!==1344||height!==1728||
+    evidence.verifiedJpegDimensions?.width!==1344||
+    evidence.verifiedJpegDimensions?.height!==1728||
+    SHA(bytes)!==evidence.generatedImagePreviewSha256)
+    fail('provider preview SHA256 or exact dimensions changed');
  return Object.freeze({
   ok:true,assetId:'spirit_lantern',origin:'ADOBE_FIREFLY_LIVE_GENERATION',
   providerRequestId:MODEL_REQUEST,
