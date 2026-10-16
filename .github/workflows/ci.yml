@@ -47,6 +47,12 @@ jobs:
       - name: Run unit tests
         run: npm test
 
+      - name: Build real editable Spirit Lantern R9b ORA (legacy art; technical only)
+        run: |
+          node scripts/r9b-spirit-lantern-ora.mjs
+          test -s examples/spirit-lantern/generated/r9b-layered-art/spirit-lantern-r8e-editable-TECHNICAL.ora
+          grep -q '"origin": "LEGACY_VECTOR_ORA_TECHNICAL"' examples/spirit-lantern/generated/r9b-layered-art/evidence.json
+
       - name: Check POC-005C2 provider capability (fail-closed)
         run: npm run poc:005c2:capabilities
 
@@ -258,6 +264,12 @@ jobs:
           name: r8-spirit-lantern-R7-vs-R8-UNSCORED
           path: examples/spirit-lantern/generated/r8-review/
           if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r9b-spirit-lantern-editable-ORA-TECHNICAL
+          path: examples/spirit-lantern/generated/r9b-layered-art/
+          if-no-files-found: error
 
       - uses: actions/upload-artifact@v4
         with:
