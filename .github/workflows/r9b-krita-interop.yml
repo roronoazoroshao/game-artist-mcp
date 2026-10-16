@@ -1,0 +1,74 @@
+name: r9b-krita-editor-interop
+
+on:
+  push:
+    branches:
+      - feat/r9b-master-source-hardening
+    paths:
+      - 'scripts/r9b-editor-*'
+      - '.github/workflows/r9b-krita-interop.yml'
+      - 'src/ai-art/**'
+      - 'test/r9b-editor-fixture.test.mjs'
+  pull_request:
+    paths:
+      - 'scripts/r9b-editor-*'
+      - '.github/workflows/r9b-krita-interop.yml'
+      - 'src/ai-art/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  editor-interop:
+    name: Real Krita import export reopen
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned npm dependencies
+        run: npm ci --ignore-scripts
+      - name: Install actual Krita and independent Pillow parser
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq krita xvfb xauth python3-pil
+          krita --version
+          /usr/bin/python3 -c "import PIL; print('Pillow', PIL.__version__)"
+      - name: Create deterministic editable ORA fixture
+        run: |
+          node --test test/r9b-editor-fixture.test.mjs
+          node scripts/r9b-editor-fixture.mjs "$RUNNER_TEMP/r9b-editor"
+          test -s "$RUNNER_TEMP/r9b-editor/source.ora"
+      - name: Real editor open, save and reopen (no pretend AI painting)
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          QT_OPENGL: software
+          QT_QPA_PLATFORM: xcb
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP/r9b-editor"
+          timeout 180s xvfb-run -a --server-args="-screen 0 1280x900x24" \
+            krita --nosplash source.ora --export --export-filename exported.ora \
+            2>&1 | tee krita-export.log
+          test -s exported.ora
+          timeout 180s xvfb-run -a --server-args="-screen 0 1280x900x24" \
+            krita --nosplash exported.ora --export --export-filename reopened.png \
+            2>&1 | tee krita-reopen.log
+          test -s reopened.png
+      - name: Independently verify archive structure, editing layers, and exact pixels
+        run: |
+          /usr/bin/python3 scripts/r9b-editor-interop-verify.py \
+            "$RUNNER_TEMP/r9b-editor/source.ora" \
+            "$RUNNER_TEMP/r9b-editor/exported.ora" \
+            "$RUNNER_TEMP/r9b-editor/reopened.png" \
+            "$RUNNER_TEMP/r9b-editor/editor-interop-report.json"
+      - name: Upload factual artifacts even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r9b-real-krita-editor-interop-technical-UNSCORED
+          path: ${{ runner.temp }}/r9b-editor/
+          if-no-files-found: warn
