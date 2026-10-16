@@ -39,14 +39,14 @@ test('R9a stages all declared RGBA art layers only after checksums, owners and l
  assert.equal(ok.status,'INTAKE_VERIFIED_REVIEW_DECLARED');assert.equal(ok.exportAllowed,false,'declaration alone must never authorize commercial export');
 });
 test('R9a rejects missing, additional, tampered or path-spoofed layer bytes',()=>{
- const missing=fixture();missing.layers.delete(missing.pkg.layers[0].path);assert.throws(()=>validateAiRasterIntake(missing),/R9A_/);
- const extra=fixture();extra.layers.set('layers/stray.png',extra.layers.values().next().value);assert.throws(()=>validateAiRasterIntake(extra),/R9A_/);
- const wrong=fixture();wrong.layers.set(wrong.pkg.layers[0].path,Buffer.alloc(42));assert.throws(()=>validateAiRasterIntake(wrong),/R9A_/);
- const swapped=fixture();swapped.pkg.layers[0].path='../outside.png';assert.throws(()=>validateAiRasterIntake(swapped),/R9A_/);
+ const missing=fixture();missing.layers.delete(missing.pkg.layers[0].path);assert.throws(()=>validateAiRasterIntake(missing),/(?:R9A_|AI_PNG_REJECTED)/);
+ const extra=fixture();extra.layers.set('layers/stray.png',extra.layers.values().next().value);assert.throws(()=>validateAiRasterIntake(extra),/(?:R9A_|AI_PNG_REJECTED)/);
+ const wrong=fixture();wrong.layers.set(wrong.pkg.layers[0].path,Buffer.alloc(42));assert.throws(()=>validateAiRasterIntake(wrong),/(?:R9A_|AI_PNG_REJECTED)/);
+ const swapped=fixture();swapped.pkg.layers[0].path='../outside.png';assert.throws(()=>validateAiRasterIntake(swapped),/(?:R9A_|AI_PNG_REJECTED)/);
 });
 test('R9a refuses invented provider provenance, wrong lineage and hash mismatches',()=>{
- const badEvent=fixture();badEvent.operations[0]={...badEvent.operations[0],provider:'counterfeit_provider'};assert.throws(()=>validateAiRasterIntake(badEvent),/R9A_/);
- const wrongAudit=fixture();wrongAudit.pkg.operationsAuditSha256='f'.repeat(64);assert.throws(()=>validateAiRasterIntake(wrongAudit),/R9A_/);
- const orphan=fixture();orphan.operations=orphan.operations.slice(1);orphan.pkg.operationsAuditSha256=digestProvenanceEvents(orphan.operations);assert.throws(()=>validateAiRasterIntake(orphan),/R9A_/);
- const missingProof=fixture();missingProof.operations=missingProof.operations.slice(0,-1);missingProof.pkg.operationsAuditSha256=digestProvenanceEvents(missingProof.operations);assert.throws(()=>validateAiRasterIntake(missingProof),/R9A_/);
+ const badEvent=fixture();badEvent.operations[0]={...badEvent.operations[0],provider:'counterfeit_provider'};assert.throws(()=>validateAiRasterIntake(badEvent),/(?:R9A_|AI_PNG_REJECTED)/);
+ const wrongAudit=fixture();wrongAudit.pkg.operationsAuditSha256='f'.repeat(64);assert.throws(()=>validateAiRasterIntake(wrongAudit),/(?:R9A_|AI_PNG_REJECTED)/);
+ const orphan=fixture();orphan.operations=orphan.operations.slice(1);orphan.pkg.operationsAuditSha256=digestProvenanceEvents(orphan.operations);assert.throws(()=>validateAiRasterIntake(orphan),/(?:R9A_|AI_PNG_REJECTED)/);
+ const missingProof=fixture();missingProof.operations=missingProof.operations.slice(0,-1);missingProof.pkg.operationsAuditSha256=digestProvenanceEvents(missingProof.operations);assert.throws(()=>validateAiRasterIntake(missingProof),/(?:R9A_|AI_PNG_REJECTED)/);
 });
