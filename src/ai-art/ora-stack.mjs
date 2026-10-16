@@ -114,7 +114,7 @@ export function parseGroupStack(xml,{editorProfile=null}={}){
    !Number.isSafeInteger(w)||!Number.isSafeInteger(h)||w<1||h<1||
    w>4096||h>4096||w*h>4194304||
    (a.version!==undefined&&!(krita?['0.0.1']:['0.0.3','0.0.6']).includes(a.version))||
-   (krita&&['xres','yres'].some(k=>a[k]!==undefined&&(!/^\\d+$/.test(a[k])||Number(a[k])<1||Number(a[k])>1200))))
+   (krita&&['xres','yres'].some(k=>a[k]!==undefined&&(!/^\d+$/.test(a[k])||Number(a[k])<1||Number(a[k])>1200))))
     fail('XML image header');
    image={width:w,height:h};continue;
   }
