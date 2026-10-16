@@ -39,6 +39,6 @@ test('R9a raster package binds layer ownership, hashes and statuses and never au
  for(const candidate of invalids)assert.throws(()=>validateRasterPackage(candidate),/R9A_INVALID_/);
  const reviewed={...pkg(),rightsDecision:'COMMERCIAL_REVIEWED',rightsEvidenceRef:'review_20261016',rightsReviewer:'reviewer_owner'};
  assert.equal(validateRasterPackage(reviewed).ok,true);
- assert.equal(assertRasterExportable(reviewed).ok,true);
+ assert.throws(()=>assertRasterExportable(reviewed),/R9A_INVALID_RIGHTS/, 'unverified caller-supplied reviewer names must not unlock export');
  assert.throws(()=>assertRasterExportable({...reviewed,rightsReviewer:null}),/R9A_INVALID_/);
 });
