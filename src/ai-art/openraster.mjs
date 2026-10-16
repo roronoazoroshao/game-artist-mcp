@@ -95,7 +95,7 @@ export function readOpenRaster(bytes){
  for(const mandatory of ['mimetype','stack.xml','mergedimage.png','Thumbnails/thumbnail.png'])
   if(!files.has(mandatory))fail('missing required OpenRaster entry '+mandatory);
  const xml=files.get('stack.xml').toString('utf8');
- const stack=/<stack\\s+/.test(xml)?parseGroupStack(xml):readStack(xml);
+ const stack=/<stack\s+/.test(xml)?parseGroupStack(xml):readStack(xml);
  const layers=stack.layers.map(layer=>{
   const png=files.get(layer.src);
   if(!png)fail('missing layer PNG');
