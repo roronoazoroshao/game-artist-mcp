@@ -36,7 +36,7 @@ test('R9a stages all declared RGBA art layers only after checksums, owners and l
  assert.equal(result.layerCount,9);
  const reviewed=fixture();reviewed.pkg.rightsDecision='COMMERCIAL_REVIEWED';reviewed.pkg.rightsEvidenceRef='review_20261016';reviewed.pkg.rightsReviewer='reviewer_owner';
  const ok=validateAiRasterIntake(reviewed);
- assert.equal(ok.status,'INTAKE_VERIFIED');assert.equal(ok.exportAllowed,true);
+ assert.equal(ok.status,'INTAKE_VERIFIED_REVIEW_DECLARED');assert.equal(ok.exportAllowed,false,'declaration alone must never authorize commercial export');
 });
 test('R9a rejects missing, additional, tampered or path-spoofed layer bytes',()=>{
  const missing=fixture();missing.layers.delete(missing.pkg.layers[0].path);assert.throws(()=>validateAiRasterIntake(missing),/R9A_/);
