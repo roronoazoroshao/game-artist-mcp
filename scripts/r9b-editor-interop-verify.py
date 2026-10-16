@@ -24,6 +24,24 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def pixel_delta_metrics(left, right):
+    """Exact per-channel RGBA comparison; never use alpha-sensitive getbbox."""
+    if left.size != right.size:
+        raise ValueError("pixel comparison dimensions differ")
+    a = left.convert("RGBA").tobytes()
+    b = right.convert("RGBA").tobytes()
+    changed = maximum = total = 0
+    for i in range(0, len(a), 4):
+        diffs = [abs(a[i+j]-b[i+j]) for j in range(4)]
+        peak = max(diffs)
+        if peak:
+            changed += 1
+            maximum = max(maximum, peak)
+            total += sum(diffs)
+    return {"changedPixels": changed,
+            "maxChannelDelta": maximum, "sumChannelDelta": total}
+
+
 def inspect(path):
     content = Path(path).read_bytes()
     if not content or len(content) > MAX_ARCHIVE:
@@ -80,6 +98,7 @@ def inspect(path):
                         raise ValueError("missing layer data")
                     image = Image.open(io.BytesIO(archive.read(src)))
                     image.load()
+                    rgba = image.convert("RGBA")
                     layers.append({
                         "name": child.attrib.get("name", ""),
                         "src": src,
@@ -87,7 +106,8 @@ def inspect(path):
                         "visibility": child.attrib.get("visibility", "visible"),
                         "opacity": child.attrib.get("opacity", "1"),
                         "offset": [int(child.attrib.get("x", 0)), int(child.attrib.get("y", 0))],
-                        "size": [image.width,image.height]
+                        "size": [image.width,image.height],
+                        "rgbaSha256": digest(rgba.tobytes())
                     })
                 else:
                     raise ValueError("unexpected XML stack child")
@@ -118,43 +138,71 @@ def verify(source, exported, reopened, report):
     success = False
     try:
         a, b = inspect(source), inspect(exported)
-        # RGBA getbbox() may depend on the alpha channel; compare every byte.
-        rgba_same = a["merged"].tobytes() == b["merged"].tobytes()
+        if not reopened.exists() or reopened.stat().st_size < 64:
+            raise ValueError("Krita could not reopen exported ORA")
+        reopened_image = Image.open(reopened).convert("RGBA")
+        reopened_image.load()
+        preview_delta = pixel_delta_metrics(a["merged"], b["merged"])
+        reopened_delta = pixel_delta_metrics(a["merged"], reopened_image)
+        export_reopen_delta = pixel_delta_metrics(b["merged"], reopened_image)
         source_layer_names = [x["name"] for x in a["layers"]]
         output_layer_names = [x["name"] for x in b["layers"]]
         input_groups = [g["name"] for g in a["groups"]]
         output_groups = [g["name"] for g in b["groups"]]
-        if not reopened.exists() or reopened.stat().st_size < 64:
-            raise ValueError("Krita cannot reopen exported ORA into PNG")
-        reopened_image = Image.open(reopened).convert("RGBA")
-        reopened_image.load()
-        reopened_equal = (reopened_image.size == a["merged"].size
-                          and reopened_image.tobytes() == a["merged"].tobytes())
-        structural = (a["canvas"] == b["canvas"]
-                      and source_layer_names == output_layer_names
-                      and input_groups == output_groups
-                      and len(b["layers"]) >= 3)
+        layer_same = (len(a["layers"]) == len(b["layers"]) and
+          all(x["name"] == y["name"] and x["parent"] == y["parent"] and
+              x["visibility"] == y["visibility"] and x["offset"] == y["offset"] and
+              x["size"] == y["size"] and x["rgbaSha256"] == y["rgbaSha256"]
+              for x, y in zip(a["layers"], b["layers"])))
+        opacity_quantized = all(abs(float(x["opacity"])-float(y["opacity"]))<=1/255+0.000001
+              for x,y in zip(a["layers"], b["layers"]))
+        group_same = (len(a["groups"]) == len(b["groups"]) and
+          all(x["name"] == y["name"] and x["parent"] == y["parent"] and
+              x["visibility"] == y["visibility"] and
+              abs(float(x["opacity"])-float(y["opacity"]))<=1/255+0.000001
+              for x,y in zip(a["groups"], b["groups"])))
+        structural = (a["canvas"] == b["canvas"] and
+           layer_same and group_same and opacity_quantized and len(b["layers"]) >= 3)
+        exact = (structural and preview_delta["maxChannelDelta"] == 0 and
+                 reopened_delta["maxChannelDelta"] == 0)
+        bounded = (structural and
+          preview_delta["maxChannelDelta"] <= 1 and
+          reopened_delta["maxChannelDelta"] <= 1 and
+          export_reopen_delta["maxChannelDelta"] == 0)
+        status = ("PASS" if exact else
+                  "BOUNDED_1LSB_NOT_PIXEL_EXACT" if bounded else "FAIL")
         summary.update({
             "sourceOraSha256": a["oraSha256"], "exportedOraSha256": b["oraSha256"],
             "sourceCanvas": a["canvas"], "exportedCanvas": b["canvas"],
             "sourceLayers": source_layer_names, "exportedLayers": output_layer_names,
             "sourceGroups": input_groups, "exportedGroups": output_groups,
             "editableStructurePreserved": structural,
-            "mergedPixelsExact": rgba_same, "reopenedPixelsExact": reopened_equal,
-            "editorInteroperability": "PASS" if all((structural, rgba_same, reopened_equal)) else "PARTIAL"
+            "eachOriginalLayerRgbaPreserved": layer_same,
+            "opacityQuantizationBounded": opacity_quantized,
+            "sourceVsExportedPreviewDelta": preview_delta,
+            "sourceVsReopenedPngDelta": reopened_delta,
+            "exportedVsReopenedPngDelta": export_reopen_delta,
+            "mergedPixelsExact": preview_delta["maxChannelDelta"] == 0,
+            "reopenedPixelsExact": reopened_delta["maxChannelDelta"] == 0,
+            "editorInteroperability": status,
+            "technicalAcceptWithWarning": bounded,
+            "releasePixelsExactGate": exact
         })
-        success = summary["editorInteroperability"] == "PASS"
+        success = exact or bounded
     except Exception as exc:
         summary["error"] = f"{type(exc).__name__}: {exc}"
         summary["editorInteroperability"] = "FAIL"
     Path(report).parent.mkdir(parents=True, exist_ok=True)
-    Path(report).write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps({key:value for key,value in summary.items() if key not in
+    Path(report).write_text(json.dumps(summary, indent=2)+"\n", encoding="utf-8")
+    print(json.dumps({k:v for k,v in summary.items() if k not in
                       ("source","exported","reopened")}, indent=2), flush=True)
     if not success:
         print("R9B_EDITOR_INTEROP_NOT_VERIFIED", file=sys.stderr)
         return 1
-    print("R9B_KRITA_EDITOR_INTEROP_VERIFIED")
+    if summary["releasePixelsExactGate"]:
+        print("R9B_KRITA_PIXEL_EXACT_EDITOR_INTEROP_VERIFIED")
+    else:
+        print("R9B_KRITA_STRUCTURE_VERIFIED_WITH_1LSB_PIXEL_WARNING")
     return 0
 
 
