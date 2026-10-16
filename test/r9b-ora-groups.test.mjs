@@ -64,3 +64,15 @@ test('R9b re-exports parsed nested ORA stack without dropping hierarchy or chang
  assert.deepEqual(second.stackTree,first.stackTree);
  assert.deepEqual(pixel(second.mergedPng),pixel(first.mergedPng));
 });
+
+test('R9b rejects excessive isolated full-canvas group image memory before composing',()=>{
+ const frameLayers=Array.from({length:6},(_,i)=>({
+  id:'cell_'+i,png:solid([i,20,40,255])
+ }));
+ const stackTree={type:'group',id:'root',children:frameLayers.map((l,i)=>({
+  type:'group',id:'group_'+i,opacity:1,visible:true,isolation:'isolate',
+  children:[{type:'layer',id:l.id}]
+ }))};
+ reject(()=>writeOpenRaster({width:2048,height:2048,
+  layers:frameLayers,stackTree}));
+});
