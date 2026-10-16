@@ -49,8 +49,8 @@ export function validateAiRasterIntake({brief,pkg,layers,operations}={}){
  const rightsReviewed=pkg.rightsDecision==='COMMERCIAL_REVIEWED';
  return Object.freeze({
   ok:true,
-  status:rightsReviewed?'INTAKE_VERIFIED':'INTAKE_VERIFIED_RIGHTS_PENDING',
-  exportAllowed:rightsReviewed,
+  status:rightsReviewed?'INTAKE_VERIFIED_REVIEW_DECLARED':'INTAKE_VERIFIED_RIGHTS_PENDING',
+  exportAllowed:false,
   layerCount:pkg.layers.length,
   operationsCount:verified.count,
   provenanceHeadSha256:verified.headSha256
