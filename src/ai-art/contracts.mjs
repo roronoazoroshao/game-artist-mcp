@@ -70,5 +70,5 @@ export function validateRasterPackage(pkg){
 export function assertRasterExportable(pkg){
  validateRasterPackage(pkg);
  if(pkg.rightsDecision==='RIGHTS_UNVERIFIED')FAIL('RIGHTS_UNVERIFIED blocks export');
- return Object.freeze({ok:true});
+ throw Error('R9A_INVALID_RIGHTS: a self-declared commercial review is not independently authenticated; R9a is import-only');
 }
