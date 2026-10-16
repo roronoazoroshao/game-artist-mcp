@@ -81,7 +81,7 @@ test('R9c Godot project uses raster AtlasTexture, four flame poses, light and au
  assert.equal(evidence.exportAllowed,false);
  assert.equal(evidence.artisticReview,'UNSCORED');
  const scene=String(files.get('assets/spirit_lantern/spirit_lantern.tscn'));
- assert.match(scene,/Animation_flame_/i);
+ assert.match(scene,/Atlas_flame_flame_d/);
  assert.match(scene,/tracks\/\d+\/path = NodePath\("body\/flame\/Sprite2D:texture"\)/);
  assert.match(scene,/length = 2/);
  assert.match(scene,/SpiritLight/);
