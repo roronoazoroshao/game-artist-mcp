@@ -146,6 +146,7 @@ export function verifyLayeredProject(files){
  if(tree?.type!=='group'||tree.id!=='root'||!Array.isArray(tree.children)||
     tree.children.length<1)fail('missing canonical root rig groups');
  const lastSeq=new Map(),seenGroupIds=new Set();
+ const reservedGroupIds=new Set(m.layers.map(l=>l.layerId));
  let lastGroupPart=null;
  for(const child of tree.children){
   if(child.type!=='group'||child.visible!==true||child.opacity!==1||
@@ -161,7 +162,9 @@ export function verifyLayeredProject(files){
   if(part===lastGroupPart)fail('unnecessary adjacent split rig groups');
   lastGroupPart=part;
   const seq=(lastSeq.get(part)??0)+1;lastSeq.set(part,seq);
-  const expectedName='rig_'+part+(seq===1?'':'_'+seq);
+  let expectedName='rig_'+part+(seq===1?'':'_'+seq);
+  while(reservedGroupIds.has(expectedName))expectedName+='_g';
+  reservedGroupIds.add(expectedName);
   if(child.id!==expectedName)fail('rig group identity mismatch');
  }
  for(let i=1;i<m.layers.length;i++)
