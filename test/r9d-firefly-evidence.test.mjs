@@ -29,3 +29,10 @@ test('R9d fail closed on mutated bytes, fabricated origin/rights and missing pro
  invalid(()=>verifyR9dCandidate({bytes,evidence:{...evidence,modelVersion:'fictional verified version'}}));
  invalid(()=>verifyR9dCandidate({bytes,evidence:{...evidence,providerRequestId:null}}));
 });
+
+
+test('R9d provider rendition SHA must reject a well-framed but altered JPEG',()=>{
+ const modified=Buffer.from(bytes);
+ modified[modified.length-48]^=1; // preserve SOI, EOI and JPEG segment framing
+ invalid(()=>verifyR9dCandidate({bytes:modified,evidence}));
+});
