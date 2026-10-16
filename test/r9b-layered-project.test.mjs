@@ -68,7 +68,7 @@ test('R9b packages true 1024x1280 editable ORA source with independent masks and
  assert.deepEqual([doc.width,doc.height],[1024,1280]);
  assert.equal(doc.layers.length,9);
  assert.equal(doc.layers.filter(x=>x.id.startsWith('flame_flame_')&&x.visible).length,1);
- assert.equal(doc.layers.find(x=>x.id==='flame_base').visible,false);
+ assert.equal(doc.layers.find(x=>x.id==='flame_paint').visible,false);
  const first=p.validated.layers[0],renderLayer=doc.layers.find(x=>x.id===first.layerId);
  assert.deepEqual(renderLayer.png,applyAlphaMask(first.png,first.maskPng));
  assert.equal(renderLayer.x,p.placements.get(first.layerId).x);
