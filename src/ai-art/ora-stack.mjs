@@ -30,8 +30,11 @@ export function assertStackTree(tree,layers){
    if(root)fail('root must be stack');
    return normalizeLeaf(node,byId,seen);
   }
-  keys(node,root?['type','id','children']:
-    ['type','id','children','opacity','visible','isolation','blendMode']);
+  keys(node,['type','id','children','opacity','visible','isolation','blendMode']);
+  if(root&&((node.opacity!==undefined&&node.opacity!==1)||
+    (node.visible!==undefined&&node.visible!==true)||
+    (node.isolation!==undefined&&node.isolation!=='isolate')||
+    node.blendMode!==undefined))fail('root XML group attributes cannot change');
   if(node.type!=='group'||!ID.test(node.id)||!Array.isArray(node.children)||
   node.children.length<1||node.children.length>24||depth>4||
   groups.has(node.id)||byId.has(node.id)||(!root&&node.id==='root'))
