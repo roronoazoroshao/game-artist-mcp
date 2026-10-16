@@ -37,6 +37,8 @@ jobs:
           sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq krita xvfb xauth python3-pil
           dpkg-query -W -f='${Version}\n' krita
           /usr/bin/python3 -c "import PIL; print('Pillow', PIL.__version__)"
+      - name: Verify independent Pillow comparison safeguards
+        run: /usr/bin/python3 test/r9b-editor-interop-verifier.py
       - name: Create deterministic editable ORA fixture
         run: |
           node --test test/r9b-editor-fixture.test.mjs
