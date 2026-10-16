@@ -13,7 +13,7 @@ import sys
 import xml.etree.ElementTree as ET
 import zipfile
 from pathlib import Path
-from PIL import Image, ImageChops
+from PIL import Image
 
 MAX_ARCHIVE = 24 * 1024 * 1024
 MAX_DECODE = 64 * 1024 * 1024
@@ -119,8 +119,8 @@ def verify(source, exported, reopened, report):
     try:
         a, b = inspect(source), inspect(exported)
         delta = ImageChops.difference(a["merged"], b["merged"])
-        bbox = delta.getbbox()
-        rgba_same = bbox is None
+        # RGBA getbbox() may depend on the alpha channel; compare every byte.
+        rgba_same = a["merged"].tobytes() == b["merged"].tobytes()
         source_layer_names = [x["name"] for x in a["layers"]]
         output_layer_names = [x["name"] for x in b["layers"]]
         input_groups = [g["name"] for g in a["groups"]]
@@ -130,7 +130,7 @@ def verify(source, exported, reopened, report):
         reopened_image = Image.open(reopened).convert("RGBA")
         reopened_image.load()
         reopened_equal = (reopened_image.size == a["merged"].size
-                          and ImageChops.difference(reopened_image, a["merged"]).getbbox() is None)
+                          and reopened_image.tobytes() == a["merged"].tobytes())
         structural = (a["canvas"] == b["canvas"]
                       and source_layer_names == output_layer_names
                       and input_groups == output_groups
