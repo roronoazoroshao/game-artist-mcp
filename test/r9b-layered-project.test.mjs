@@ -114,3 +114,22 @@ test('R9b refuses forged validation objects and mutated operations provenance',(
  const noLog={...out};delete noLog.operationsJson;
  rejects(()=>verifyLayeredProject(noLog));
 });
+
+test('R9b master ORA preserves machine-visible rig-part groups without reordering paint layers',()=>{
+ const p=project(),out=p.packed();
+ const doc=readOpenRaster(out.ora),manifest=JSON.parse(out.manifestJson);
+ assert.deepEqual(doc.layers.map(x=>x.id),manifest.layers.map(x=>x.layerId));
+ assert.ok(doc.stackTree.children.every(x=>x.type==='group'));
+ const owned=doc.stackTree.children.map(g=>({
+  group:g.id,ids:g.children.map(c=>c.id)
+ }));
+ assert.ok(owned.some(g=>g.group.startsWith('rig_body')));
+ assert.ok(owned.some(g=>g.group.startsWith('rig_flame')));
+ for(const g of owned){
+  const parts=new Set(g.ids.map(id=>manifest.layers.find(l=>l.layerId===id).partId));
+  assert.equal(parts.size,1,'each editable group owns one rig part');
+ }
+ const repaint=writeOpenRaster({width:doc.width,height:doc.height,
+  layers:doc.layers,stackTree:doc.stackTree});
+ assert.deepEqual(readOpenRaster(repaint).stackTree,doc.stackTree);
+});
