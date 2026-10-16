@@ -94,7 +94,9 @@ function layerFromXml(a){
  * Token-only subset XML parser: no processing instructions except fixed prolog,
  * no DTD/entities, CDATA, comments, network, or non-whitespace character data.
  */
-export function parseGroupStack(xml){
+export function parseGroupStack(xml,{editorProfile=null}={}){
+ const krita=editorProfile==='krita_5_2';
+ if(editorProfile!==null&&!krita)fail('unsupported editor profile');
  if(typeof xml!=='string'||Buffer.byteLength(xml)>65536||
  /<!|&|\x00/.test(xml))fail('unsafe XML entities/markup');
  const input=xml.replace(/^<\?xml version="1\.0" encoding="UTF-8"\?>\s*/,'').trim();
@@ -106,12 +108,13 @@ export function parseGroupStack(xml){
   offset=m.index+m[0].length;
   const t=m[0];
   if(t.startsWith('<image ')&&t.endsWith('>')&&!image&&!root&&!ended){
-   const a=attr(t.slice(6,-1),['w','h','name','version']);
+   const a=attr(t.slice(6,-1),krita?['w','h','name','version','xres','yres']:['w','h','name','version']);
    const w=Number(a.w),h=Number(a.h);
    if(!/^\d+$/.test(a.w??'')||!/^\d+$/.test(a.h??'')||
    !Number.isSafeInteger(w)||!Number.isSafeInteger(h)||w<1||h<1||
    w>4096||h>4096||w*h>4194304||
-   (a.version!==undefined&&!['0.0.3','0.0.6'].includes(a.version)))
+   (a.version!==undefined&&!(krita?['0.0.1']:['0.0.3','0.0.6']).includes(a.version))||
+   (krita&&['xres','yres'].some(k=>a[k]!==undefined&&(!/^\\d+$/.test(a[k])||Number(a[k])<1||Number(a[k])>1200))))
     fail('XML image header');
    image={width:w,height:h};continue;
   }
@@ -119,9 +122,21 @@ export function parseGroupStack(xml){
    if(root||open.length)fail('nested anonymous stack unsupported');
    root={type:'group',id:'root',children:[]};open.push(root);continue;
   }
+  if(krita&&t.startsWith('<stack ')&&t.endsWith('>')&&image&&!ended&&!root&&!open.length){
+   const a=attr(t.slice(6,-1),['name','opacity','visibility','composite-op','isolation','x','y']);
+   if(a.name!==''||(a.x??'0')!=='0'||(a.y??'0')!=='0'||
+      (a.opacity??'1')!=='1'||(a.visibility??'visible')!=='visible'||
+      (a.isolation??'isolate')!=='isolate'||
+      (a['composite-op']??'svg:src-over')!=='svg:src-over')
+    fail('unsafe noncanonical Krita root stack');
+   root={type:'group',id:'root',children:[]};open.push(root);continue;
+  }
   if(t.startsWith('<stack ')&&t.endsWith('>')&&image&&!ended&&open.length){
    if(open.length>4)fail('XML nesting budget');
-   const a=attr(t.slice(6,-1),['name','opacity','visibility','composite-op','isolation']);
+   const a=attr(t.slice(6,-1),krita?
+    ['name','opacity','visibility','composite-op','isolation','x','y']:
+    ['name','opacity','visibility','composite-op','isolation']);
+   if(krita&&((a.x??'0')!=='0'||(a.y??'0')!=='0'))fail('unsupported Krita group offset');
    if(!ID.test(a.name??'')||a.name==='root')fail('XML group identity');
    const node={type:'group',id:a.name,...groupAttrs(a),children:[]};
    open[open.length-1].children.push(node);open.push(node);continue;
