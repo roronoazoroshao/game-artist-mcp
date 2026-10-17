@@ -1,6 +1,7 @@
 import {createHash} from 'node:crypto';
 import pngjs from 'pngjs';
 import {readOpenRaster} from './openraster.mjs';
+import {deriveR9dFrontCageRail} from './r9d-depth-occlusion.mjs';
 import {verifyAtlas} from '../cutout/atlas.mjs';
 
 const {PNG}=pngjs;
@@ -19,12 +20,85 @@ const median=values=>{
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
 const validSha=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 
+const CAVITY=Object.freeze({centerX:515,centerY:645,radiusX:99,radiusY:177,
+ minX:416,maxX:614,minY:468,maxY:822,version:'AUTHORED_PAINTED_FIRE_CAVITY_V1'});
+/**
+ * This faint technical lighting buffer is derived from the actual painted
+ * flame masks. It neither edits Firefly source pixels nor pretends to be an
+ * artist-authored layer or Krita-native mask.
+ */
+function deriveUnderlight({doc,master,paintings}){
+ const rail=deriveR9dFrontCageRail({ora:master.ora,expectedOraSha256:master.oraSha256});
+ const front=PNG.sync.read(rail.runtimePng,{checkCRC:true});
+ const poses=paintings.map(p=>{
+  const layer=doc.layers.find(l=>l.id==='flame_'+p.poseId);
+  if(!layer)fail('missing canonical underlight pose input');
+  return {x:layer.x,y:layer.y,img:PNG.sync.read(layer.png,{checkCRC:true})};
+ });
+ const image=new PNG({width:256,height:320,colorType:6});
+ let visibleGlowPixels=0,railOverlapPixels=0,maxAlpha=0;
+ const sampled=(pose,mx,my)=>{
+  const px=Math.floor(mx-pose.x),py=Math.floor(my-pose.y);
+  if(px<0||py<0||px>=pose.img.width||py>=pose.img.height)return 0;
+  return pose.img.data[4*(py*pose.img.width+px)+3];
+ };
+ for(let y=0;y<320;y++)for(let x=0;x<256;x++){
+  const mx=4*x+2,my=4*y+2,q=4*(y*256+x);
+  if(mx<CAVITY.minX||mx>CAVITY.maxX||my<CAVITY.minY||my>CAVITY.maxY)continue;
+  const nx=(mx-CAVITY.centerX)/CAVITY.radiusX,
+   ny=(my-CAVITY.centerY)/CAVITY.radiusY;
+  const radial=nx*nx+ny*ny;
+  if(radial>=1)continue;
+  // Subtract even weak painted bronze-rail coverage; this overlay is behind
+  // the rail in Godot and may not tint any actual foreground metal pixels.
+  if(front.data[q+3]>0)continue;
+  let sourceAlpha=0;
+  for(const pose of poses){
+   sourceAlpha=Math.max(sourceAlpha,
+    sampled(pose,mx,my),sampled(pose,mx-8,my),sampled(pose,mx+8,my),
+    sampled(pose,mx,my-8),sampled(pose,mx,my+8));
+  }
+  if(sourceAlpha<=5)continue;
+  const falloff=Math.sqrt(1-radial);
+  const alpha=Math.min(46,Math.round(46*(sourceAlpha/255)*falloff));
+  if(alpha<=0)continue;
+  image.data[q]=36;image.data[q+1]=214;image.data[q+2]=218;
+  image.data[q+3]=alpha;
+  maxAlpha=Math.max(maxAlpha,alpha);
+  visibleGlowPixels++;
+ }
+ for(let i=3;i<front.data.length;i+=4){
+  if(front.data[i]>=96&&image.data[i]>0)railOverlapPixels++;
+ }
+ if(visibleGlowPixels<100||railOverlapPixels!==0||maxAlpha>46)
+  fail('untrusted underlight cavity/source overlap');
+ const png=PNG.sync.write(image);
+ return Object.freeze({
+  png,
+  provenance:Object.freeze({
+   type:'R9D06_DERIVED_CAVITY_UNDERLIGHT_NOT_ORIGINAL_ART',
+   cavity:CAVITY,
+   sourceOraSha256:master.oraSha256,
+   originalBodyLayerSha256:rail.sourceBodySha256,
+   originalRailSha256:rail.overlaySha256,
+   sourceFlameLayerSha256s:paintings.map(p=>p.derivedLayerSha256),
+   sha256:hash(png),maxAlpha,visibleGlowPixels,railOverlapPixels,
+   nativeKritaMask:false,sourceIsModelPaint:false,
+   artisticReview:'UNSCORED',commercialRightsCleared:false,exportAllowed:false
+  })
+ });
+}
+
+
 /**
  * R9d-only, source-bound technical color/alpha measurements and bounded
  * presentation corrections. This does NOT repaint, resample, certify artistic
  * merit, validate native Krita masks, or grant commercial use.
  */
 export function planR9dFlamePresentation({master,atlas,rig,options={}}={}){
+ if(!options||typeof options!=='object'||Array.isArray(options)||
+    Object.keys(options).some(k=>k!=='custody'))
+  fail('unexpected cavity mask or lighting controls');
  const custody=options?.custody;
  if(!master||!Buffer.isBuffer(master.ora)||!validSha(master.oraSha256)||
     hash(master.ora)!==SOURCE_ORA_SHA||
@@ -97,6 +171,7 @@ export function planR9dFlamePresentation({master,atlas,rig,options={}}={}){
  const cx=median(poseSlots.map(x=>x.centroidMaster.x));
  const cy=median(poseSlots.map(x=>x.centroidMaster.y));
  const meanLum=median(poseSlots.map(x=>x.averageLuminance));
+ const paintInputs=master.sourcePaintings.filter(p=>p.partId==='flame');
  const correctionByPose={};
  for(const p of poseSlots){
   const delta=[
@@ -114,17 +189,18 @@ export function planR9dFlamePresentation({master,atlas,rig,options={}}={}){
    ])
   });
  }
+ const underlight=deriveUnderlight({doc,master,paintings:paintInputs});
  return Object.freeze({
   poseSlots:Object.freeze(poseSlots),
   correctionByPose:Object.freeze(correctionByPose),
-  underlightPng:null,
+  underlightPng:underlight.png,
   provenance:Object.freeze({
    algorithm:'R9D06_REAL_ALPHA_CYAN_SOURCE_MEASURE_V1',
    sourceOraSha256:SOURCE_ORA_SHA,atlasSha256:atlas.atlasSha256,
    sourceCount:8,originalsUnchanged:true,
    authoredFrames:Object.freeze([...AUTHORED]),
    centroidTargetMaster:Object.freeze({x:cx,y:cy}),
-   underlightStatus:'PENDING_TASK_2',
+   underlight:underlight.provenance,
    providerOriginalAttested:false,commercialRightsCleared:false,
    artisticReview:'UNSCORED',exportAllowed:false
   }),
