@@ -179,7 +179,7 @@ jobs:
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9d-godot/import.log examples/spirit-lantern/generated/r9d-godot/runtime.log
           if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9d-godot/capture.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then exit 1; fi
 
-      - name: Compare R9d-05 baseline vs R9d-06 hybrid in same pinned Godot
+      - name: Compare R9d-05 baseline vs R9d-07 polished in same pinned Godot
         run: |
           set -euo pipefail
           R9D_RENDER_VARIANT=R9D05_BASELINE node scripts/r9d-real-godot-demo.mjs
@@ -191,8 +191,8 @@ jobs:
           grep -q "R9D06_REAL_GODOT_FOURTEEN_TIME_THREE_SCALE_CAPTURE_OK" "$BASE/motion-capture.log"
           grep -q "R9D06_REAL_GODOT_FOURTEEN_TIME_THREE_SCALE_CAPTURE_OK" "$HYBRID/motion-capture.log"
           node scripts/r9d-06-compare.mjs "$BASE" "$HYBRID"
-          grep -q '"artisticReview": "UNSCORED"' "$HYBRID/r9d-06-visual-qa.json"
-          grep -q '"exportAllowed": false' "$HYBRID/r9d-06-visual-qa.json"
+          grep -q '"artisticReview": "UNSCORED"' "$HYBRID/r9d-07-visual-qa.json"
+          grep -q '"exportAllowed": false' "$HYBRID/r9d-07-visual-qa.json"
           if grep -E "SCRIPT ERROR|Parse Error|ERROR:" "$BASE/import.log" "$BASE/motion-capture.log"; then exit 1; fi
 
       - name: Capture R8 real Godot light-on/off and assert local environment response
