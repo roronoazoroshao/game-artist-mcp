@@ -13,7 +13,7 @@ const compiled=compileCutout(rawSource,rig,{revision:1});
 async function fixture(){
  const original=new Map();
  for(const row of custody.sources)original.set(row.partId,await readFile(new URL(row.partId+'.png',root)));
- const project=buildR9dCandidateGodotProject({sourcePngs:original,custody,compiled});
+ const project=buildR9dCandidateGodotProject({sourcePngs:original,custody,compiled,hybridFlame:false});
  const presentation=planR9dFlamePresentation({master:project.master,atlas:project.atlas,rig:compiled.manifest,options:{custody}});
  return {project,presentation,scene:String(project.files.get('assets/spirit_lantern/spirit_lantern.tscn'))};
 }
