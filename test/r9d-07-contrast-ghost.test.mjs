@@ -35,12 +35,19 @@ test('R9d-07 synchronizes original in-cage underlight with same authored SpiritL
  assert.equal(meta.exportAllowed,false);
  assert.equal(meta.artisticReview,'UNSCORED');
  assert.equal(meta.underlightTrack.source,'body/flame/SpiritLight:energy');
- assert.deepEqual(meta.underlightTrack.times,lightKeys.map(k=>k.time));
- assert.equal(meta.underlightTrack.alpha.length,lightKeys.length);
+ assert.deepEqual(meta.underlightTrack.authoredKeyTimes,lightKeys.map(k=>k.time));
+ assert.ok(meta.underlightTrack.times.length>lightKeys.length,
+  'actual Godot bake must retain intermediate smoothstep samples');
+ assert.equal(meta.underlightTrack.alpha.length,meta.underlightTrack.times.length);
  assert.ok(meta.underlightTrack.alpha.every(v=>v>=.07&&v<=.34));
+ const authoredLevels=lightKeys.map(k=>{
+  const i=meta.underlightTrack.times.findIndex(t=>Math.abs(t-k.time)<=.000001);
+  assert.ok(i>=0,'missing original SpiritLight energy anchor in baked scene');
+  return meta.underlightTrack.alpha[i];
+ });
  for(let i=1;i<lightKeys.length;i++)
   if(lightKeys[i].value>lightKeys[i-1].value)
-   assert.ok(meta.underlightTrack.alpha[i]>meta.underlightTrack.alpha[i-1],
+   assert.ok(authoredLevels[i]>authoredLevels[i-1],
     'underlight must follow physical light-energy direction');
  assert.equal(meta.underlightTrack.alpha[0],meta.underlightTrack.alpha.at(-1),
   '2s loop must not flash');
