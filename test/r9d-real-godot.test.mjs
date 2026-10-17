@@ -33,3 +33,20 @@ test('R9d actual AI-painted source is a nine-frame Godot atlas with truthful blo
 test('R9d refuses false provider attestation at Godot packaging boundary',async()=>{
  await assert.rejects(async()=>buildR9dCandidateGodotProject({sourcePngs:await pngs(),custody:{...custody,rightsVerified:true},compiled}),/R9D_MASTER_REJECTED|R9D_GODOT_REJECTED/);
 });
+
+test('R9d-05: actual derived front brass cage rail sits above flame without modifying nine original frames',async()=>{
+ const out=buildR9dCandidateGodotProject({sourcePngs:await pngs(),custody,compiled});
+ const scene=String(out.files.get('assets/spirit_lantern/spirit_lantern.tscn'));
+ assert.match(scene,/\[node name="FrontCageRail" type="Sprite2D" parent="body"\]/);
+ assert.match(scene,/\[ext_resource type="Texture2D" path="res:\/\/assets\/spirit_lantern\/foreground-rail.png" id="R9dForeground"\]/);
+ assert.match(scene,/\[node name="FrontCageRail"[^\[]+z_index = 6/s);
+ assert.match(scene,/\[node name="FrontCageRail"[^\[]+position = Vector2\(-128, -160\)/s);
+ const overlay=out.files.get('assets/spirit_lantern/foreground-rail.png');
+ assert.ok(Buffer.isBuffer(overlay));
+ const metadata=JSON.parse(out.files.get('assets/spirit_lantern/r9d-occlusion.json'));
+ assert.equal(metadata.type,'AUTHORED_CONSERVATIVE_FRONT_RAIL');
+ assert.equal(metadata.sourceBodySha256,out.master.sourcePaintings[0].derivedLayerSha256);
+ assert.equal(metadata.exportAllowed,false);
+ assert.equal(out.atlas.regions.length,9,'no legacy/hidden replacement pose frame');
+ assert.equal(out.master.sourcePaintings.length,8,'all original Firefly source layers preserved');
+});
