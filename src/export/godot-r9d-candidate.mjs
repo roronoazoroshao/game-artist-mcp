@@ -83,13 +83,17 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybri
    'texture = ExtResource("R9dUnderlight")\n'+
    'centered = false\n'+
    'position = Vector2(-128, -160)\n'+
-   'z_index = 3\n';
+   'z_index = 3\n'+
+   'modulate = Color(1, 1, 1, '+transformed.trackEvidence.underlightTrack.alpha[0]+')\n';
   files.set(ROOT+'flame-underlight.png',presentation.underlightPng);
   files.set(ROOT+'r9d-flame-polish.json',JSON.stringify({
-   version:1,method:'R9D06_HYBRID_SOURCE_PRESERVING_TWO_SPRITE_FADE',
+   version:2,method:'R9D07_CONTRAST_AND_GHOST_POLISH',
    sourceOraSha256:master.oraSha256,
    atlasSha256:original.atlas.atlasSha256,
    transitionMs:transformed.trackEvidence.transitionMs,
+   overlapConstrainedMs:transformed.trackEvidence.overlapConstrainedMs,
+   ghostEasing:transformed.trackEvidence.ghostEasing,
+   underlightTrack:transformed.trackEvidence.underlightTrack,
    originalPoseSequence:transformed.trackEvidence.authoredPoses,
    wrap:transformed.trackEvidence.wrap,
    poseMetrics:presentation.poseSlots,
