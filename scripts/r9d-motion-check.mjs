@@ -17,6 +17,8 @@ const result=auditR9dMotionScreenshots({
 await writeFile(join(base,'r9d-motion-qa.json'),JSON.stringify({
  ...result,
  screenshotProvenance:'PINNED_GODOT_XVFB_REAL_RENDER',
+ framingByScale:{'512':'FULL_SCENE','128':'300x300_FIXED_ITEM_CROP','64':'300x300_FIXED_ITEM_CROP'},
+ cropRectAt512:{x:106,y:75,width:300,height:300},
  sourceType:'R9D_NEW_ADOBE_FIREFLY_PAINTED_PNG_COMPONENTS',
  productionSmoothnessVerified:false,
  artisticReview:'UNSCORED',exportAllowed:false
