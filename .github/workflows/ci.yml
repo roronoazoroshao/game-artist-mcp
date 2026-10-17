@@ -160,6 +160,7 @@ jobs:
       - name: Import and replay actual R9d Firefly PNG rig in pinned Godot (UNSCORED technical)
         run: |
           node scripts/r9d-real-godot-demo.mjs
+          node scripts/r9d-06-baseline.mjs
           test -s examples/spirit-lantern/generated/r9d-master/spirit-lantern-r9d-1024x1280-TECHNICAL.ora
           test -s examples/spirit-lantern/generated/r9d-godot/assets/spirit_lantern/atlas.png
           grep -q '"paintedByAI": true' examples/spirit-lantern/generated/r9d-godot/r9d-evidence.json
@@ -234,6 +235,7 @@ jobs:
           path: |
             examples/spirit-lantern/generated/r9d-master/
             examples/spirit-lantern/generated/r9d-godot/
+            examples/spirit-lantern/generated/r9d-06-baseline/
           if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
