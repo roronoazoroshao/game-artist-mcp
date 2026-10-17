@@ -7,6 +7,9 @@ const AUTHORED=[
  'flame_c','flame_d','flame_a','flame_b','flame_d','flame_a','flame_b','flame_c'
 ];
 const PHASE=0.125,FADE=0.055,HOLD=PHASE-FADE;
+const OVERLAP_START=0.38,OVERLAP_END=0.62;
+const clamp01=x=>Math.max(0,Math.min(1,x));
+const fadeWeight=progress=>{const x=clamp01((progress-OVERLAP_START)/(OVERLAP_END-OVERLAP_START));return x*x*(3-2*x)};
 const N=16;
 const round=x=>Math.round(x*1000000)/1000000;
 const v2=xy=>'Vector2('+xy.map(x=>Number(x.toFixed(6))).join(', ')+')';
@@ -23,7 +26,7 @@ export function sampleR9dFlameMix({sequence,timeSeconds}={}){
  const t=timeSeconds===2?0:timeSeconds;
  const index=Math.min(15,Math.floor(t/PHASE));
  const inSlot=t-index*PHASE;
- const blend=Math.max(0,Math.min(1,(inSlot-HOLD)/FADE));
+ const blend=fadeWeight((inSlot-HOLD)/FADE);
  const a=sequence[index],b=sequence[(index+1)%N];
  if(index%2===0)return Object.freeze({
   phase:index,primary:{pose:a,alpha:1-blend},
@@ -120,6 +123,31 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
   fail('duplicated/missing clip source');
  const clip=scene.slice(start,stop),{prefix,segments}=extractTrackSegments(clip);
  const sequence=rig.frameSequence.frames;
+ const originalLight=rig.animations?.find(a=>a.id==='idle')?.tracks?.filter(t=>t.part==='flame'&&t.property==='light_energy');
+ if(!Array.isArray(originalLight)||originalLight.length!==1||!Array.isArray(originalLight[0].keys)||
+    originalLight[0].keys.length<3)fail('missing original SpiritLight energy motion');
+ const energyKeys=originalLight[0].keys;
+ if(energyKeys[0]?.time!==0||energyKeys.at(-1)?.time!==2||
+    energyKeys.some((k,i)=>!Number.isFinite(k.time)||!Number.isFinite(k.value)||
+      k.value<0.6||k.value>1.3||(i>0&&k.time<=energyKeys[i-1].time)))
+  fail('invalid SpiritLight energy keyframes');
+ const energyIndex=extractTrackSegments(clip).path.indexOf('body/flame/SpiritLight:energy');
+ if(energyIndex<0)fail('original light energy track missing in Godot scene');
+ const actualEnergySegment=segments[energyIndex];
+ const timeMatch=actualEnergySegment.match(/"times": PackedFloat32Array\(([^)]*)\)/);
+ const energyMatch=actualEnergySegment.match(/"values": \[([^\]]*)\]/);
+ if(!timeMatch||!energyMatch)fail('unreadable Godot source light energy');
+ const actualTimes=timeMatch[1].split(',').map(s=>Number(s.trim()));
+ const actualEnergies=energyMatch[1].split(',').map(s=>Number(s.trim()));
+ if(actualTimes.length!==energyKeys.length||actualEnergies.length!==energyKeys.length||
+    energyKeys.some((e,i)=>Math.abs(e.time-actualTimes[i])>0.000001||
+      Math.abs(e.value-actualEnergies[i])>0.000001))
+  fail('untrusted Godot energy source differs from authored rig');
+ const minLight=Math.min(...energyKeys.map(k=>k.value));
+ const maxLight=Math.max(...energyKeys.map(k=>k.value));
+ if(maxLight-minLight<.1)fail('insufficient authored light variation');
+ const lightAlpha=value=>round(.1+.22*(value-minLight)/(maxLight-minLight));
+ const underlightKeys=energyKeys.map(k=>({t:k.time,value:color(1,lightAlpha(k.value))}));
  const regions=new Map(atlas.regions.filter(x=>x.partId==='flame'&&x.poseId!==null).map(x=>[x.poseId,x]));
  const coeff=pose=>presentation.correctionByPose[pose];
  const textureFor=pose=>'SubResource("Atlas_flame_'+pose+'")';
@@ -139,7 +167,12 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
    ['secondary',1-primaryAtStart,1-primaryAtEnd]]){
     if(i===0)opacityKeys[name].push({t,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,a)});
     opacityKeys[name].push({t:hold,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,a)});
-    opacityKeys[name].push({t:end,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,b)});
+    for(const progress of [.38,.44,.5,.56,.62,1]){
+     const tKey=round(hold+progress*FADE);
+     const w=fadeWeight(progress);
+     opacityKeys[name].push({t:tKey,value:color(
+      coeff(phaseKeys[name].at(-1).pose).intensity,a+(b-a)*w)});
+    }
   }
  }
  const tracks=[];
@@ -151,6 +184,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  for(const [name,node] of [['primary','body/flame/Sprite2D'],['secondary','body/flame/SpriteBlend2D']]){
   tracks.push({path:node+':modulate',discrete:false,keys:opacityKeys[name]});
  }
+ tracks.push({path:'body/CavityUnderlight:modulate',discrete:false,keys:underlightKeys});
  // Exact preservation of every unrelated track, including body motion, swing,
  // current SpiritLight and any non-flame transform.
  const rewritten=prefix+segments.slice(0,10).join('')+
@@ -161,7 +195,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
   'position = '+v2(coeff(sequence[1]).correctedSpriteOffset)+'\n'+
   'modulate = Color(1, 1, 1, 0)\n';
  const out=fragment+secondary;
- if((out.match(/tracks\/\d+\/type = "value"/g)||[]).length!==16||
+ if((out.match(/tracks\/\d+\/type = "value"/g)||[]).length!==17||
     (out.match(/\[node name="SpriteBlend2D"/g)||[]).length!==1)
    fail('animation scene/resource count failure');
  const positions={};
@@ -169,6 +203,15 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  return Object.freeze({
   scene:out,trackEvidence:Object.freeze({
    phaseCount:N,transitionMs:55,durationSeconds:2,
+   overlapConstrainedMs:round(FADE*(OVERLAP_END-OVERLAP_START)*1000),
+   ghostEasing:'BOUNDED_SMOOTHSTEP_38_62',
+   underlightTrack:Object.freeze({
+    source:'body/flame/SpiritLight:energy',
+    path:'body/CavityUnderlight:modulate',
+    times:Object.freeze(energyKeys.map(k=>k.time)),
+    alpha:Object.freeze(energyKeys.map(k=>lightAlpha(k.value))),
+    maxOpacity:.32
+   }),
    authoredPoses:Object.freeze([...sequence]),
    wrap:'C_TO_A',sourceAtlasSha256:atlas.atlasSha256,
    secondaryNode:'body/flame/SpriteBlend2D',
