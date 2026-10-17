@@ -69,21 +69,21 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybri
    durationSeconds:2
   });
   scene=transformed.scene;
-  const header2=scene.match(/\\[gd_scene load_steps=(\\d+) format=3\\]/);
+  const header2=scene.match(/\[gd_scene load_steps=(\d+) format=3\]/);
   if(!header2||!Buffer.isBuffer(presentation.underlightPng)||
      scene.includes('R9dUnderlight')||scene.includes('CavityUnderlight'))
    fail('unexpected hybrid scene or source-light buffer');
   scene=scene.replace(header2[0],
    '[gd_scene load_steps='+(Number(header2[1])+1)+' format=3]');
   const underlightResource='[ext_resource type="Texture2D" path="res://'+
-   ROOT+'flame-underlight.png" id="R9dUnderlight"]\\n';
+   ROOT+'flame-underlight.png" id="R9dUnderlight"]\n';
   scene=scene.replace('[sub_resource type="AtlasTexture"',
-   underlightResource+'\\n[sub_resource type="AtlasTexture"');
-  scene+='\\n[node name="CavityUnderlight" type="Sprite2D" parent="body"]\\n'+
-   'texture = ExtResource("R9dUnderlight")\\n'+
-   'centered = false\\n'+
-   'position = Vector2(-128, -160)\\n'+
-   'z_index = 3\\n';
+   underlightResource+'\n[sub_resource type="AtlasTexture"');
+  scene+='\n[node name="CavityUnderlight" type="Sprite2D" parent="body"]\n'+
+   'texture = ExtResource("R9dUnderlight")\n'+
+   'centered = false\n'+
+   'position = Vector2(-128, -160)\n'+
+   'z_index = 3\n';
   files.set(ROOT+'flame-underlight.png',presentation.underlightPng);
   files.set(ROOT+'r9d-flame-polish.json',JSON.stringify({
    version:1,method:'R9D06_HYBRID_SOURCE_PRESERVING_TWO_SPRITE_FADE',
@@ -100,7 +100,7 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybri
    sourceArtUnchanged:true,
    providerOriginalAttested:false,commercialRightsCleared:false,
    artisticReview:'UNSCORED',exportAllowed:false
-  },null,2)+'\\n');
+  },null,2)+'\n');
   files.set(scenePath,scene);
  }
  const asset=JSON.parse(files.get(ROOT+'asset.json'));
