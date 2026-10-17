@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "candidateId": "spirit_lantern_r9d_concept_001",
+  "assetId": "spirit_lantern",
+  "state": "ORIGINAL_AI_PAINTED_CONCEPT_RENDITION_ONLY",
+  "origin": "ADOBE_FIREFLY_LIVE_GENERATION",
+  "provider": "Adobe Firefly",
+  "providerTool": "Adobe.image_generate",
+  "providerRequestId": "eb52e735-6625-414e-bb83-bc47bb83cef7",
+  "modelVersion": null,
+  "requestSeed": 20261016,
+  "generatorRequestedFormat": "png",
+  "generatorRequestedSize": "1344x1728",
+  "generatorReturnedMediaType": "image/png",
+  "returnedSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:93956374-bdaf-4947-a2ec-df1794a8331a",
+  "repositoryArtifact": "examples/spirit-lantern/r9d/concept/candidate-001-firefly-rendition.jpg",
+  "repositoryArtifactFormat": "image/jpeg",
+  "artifactIsProviderOriginal": false,
+  "artifactDescription": "Adobe asset_inline_preview JPEG rendition at requested longer edge 1728; the original Firefly PNG source bytes were not retrievable by the available Adobe asset resolver, so this is not the immutable master source.",
+  "providerOriginalPngSha256": null,
+  "generatedImagePreviewSha256": "944f6b1dbf25fff8f59d19dbcf2eb2a20be7265d3976d7a91dcea911c7aac3f6",
+  "conceptualParts": [
+    "body",
+    "flame",
+    "talisman_left",
+    "talisman_right",
+    "tassel"
+  ],
+  "editableRigLayers": false,
+  "layeredSourceCanvas1024x1280": false,
+  "artisticallyApproved": false,
+  "artisticReview": "UNSCORED",
+  "independentSecurityReview": false,
+  "commercialRightsCleared": false,
+  "rightsStatus": "RIGHTS_UNVERIFIED",
+  "exportAllowed": false,
+  "godotIntegrationAllowed": false,
+  "previousArtReused": false,
+  "recommendedNextActions": [
+    "Retrieve authenticated original provider PNG bytes with provenance and usage terms",
+    "Produce independent aligned alpha/mask PNG paint for each rig part without merely slicing opaque concept",
+    "Validate content masks, layer hash and 4 flame poses in R9a/R9b",
+    "Run R9c Godot animated frame and 64/128/512 blinded review"
+  ],
+  "prompt": "Original premium-quality 2.5D isometric xianxia survival action-RPG Spirit Lantern; single hero prop centered at a three-quarter view from above and right. Detailed ancient bronze and jade roof/cage, separate left/right paper talismans, cyan-turquoise ghost flame behind glass, one hanging silk tassel; legible silhouette at 64px, physically grounded hand-painted materials, warm copper rim light, clean studio background, no duplicate objects, no typography or trademark.",
+  "reviewNotes": "New actual Adobe Firefly generated pixels, unlike legacy R8e, but painting appears as a single flattened opaque concept rendition. Background segmentation, geometric alignment, independent part authoring and commercially verified rights remain explicitly missing.",
+  "verifiedJpegDimensions": {
+    "width": 1344,
+    "height": 1728
+  },
+  "previewShaEvidenceRun": "https://github.com/roronoazoroshao/game-artist-mcp/actions/runs/38923497962"
+}

@@ -1,0 +1,163 @@
+{
+  "orAProjectSha256": "f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361",
+  "sha256": "f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361",
+  "sourcePaintings": [
+    {
+      "partId": "body",
+      "poseId": null,
+      "layerId": "body_base",
+      "originalSha256": "5fe9b97002dd88bcf6a04b3eee96078db0137ec52fc464d8b363d1f00dda1d5d",
+      "derivedLayerSha256": "3437c1160f5d3121b52e8d18f03a8fabcb80920c5463895c81144d9f829df32b",
+      "maskSha256": "f0ba613d62a055032ba8e6b8358127400931076629a5b7a83167fb029921c605",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1360,
+        1744
+      ],
+      "masterRect": {
+        "x": 124,
+        "y": 92,
+        "width": 776,
+        "height": 870
+      }
+    },
+    {
+      "partId": "flame",
+      "poseId": "flame_a",
+      "layerId": "flame_flame_a",
+      "originalSha256": "1c846bdffbd05ca9cb625d696182fcc333d8a9bbc16311621161e0e219575124",
+      "derivedLayerSha256": "547c1ea0cc62b482d77b0b08032c4f1ccb2507395d84eae4290fd829287c8b91",
+      "maskSha256": "a870ce11cdbb32fe7d4eff615797840ea333fe6c459e364af4dc0a7521e14ecf",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        2304,
+        1792
+      ],
+      "masterRect": {
+        "x": 474,
+        "y": 520,
+        "width": 77,
+        "height": 250
+      }
+    },
+    {
+      "partId": "flame",
+      "poseId": "flame_b",
+      "layerId": "flame_flame_b",
+      "originalSha256": "47c963b4b282a2eb348f934f64c8d473687b2ae18146e8856f1a4074bf9e6cfa",
+      "derivedLayerSha256": "8885acfd358c424dc0ff4b5b7560519bb2933f74a62a2147e68eb28cbfab7bc4",
+      "maskSha256": "b582429b62f29fac96b710add8da136b8845f9ec99ab4343803f5e551526b426",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1744,
+        1360
+      ],
+      "masterRect": {
+        "x": 440,
+        "y": 520,
+        "width": 144,
+        "height": 250
+      }
+    },
+    {
+      "partId": "flame",
+      "poseId": "flame_c",
+      "layerId": "flame_flame_c",
+      "originalSha256": "adee20a4f8b57cd22d8cf9efd0f6d44d010a89f1fef16074edde453eb9b600da",
+      "derivedLayerSha256": "7c2b2d7063eaf57187a2f95a25cafe2fde2c110858b17c23803d8ea0fe6d25f8",
+      "maskSha256": "905838e8d5496e9dff15c91db37143907191a1474a8c0de367234a45b8987927",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1744,
+        1360
+      ],
+      "masterRect": {
+        "x": 481,
+        "y": 520,
+        "width": 62,
+        "height": 250
+      }
+    },
+    {
+      "partId": "flame",
+      "poseId": "flame_d",
+      "layerId": "flame_flame_d",
+      "originalSha256": "14e8ecfc84d7db3bc01e8a0e26ab9b1acf0cd7ac1e9986e531ed8b8d59736f21",
+      "derivedLayerSha256": "97709d5fbf78c98b52d09790cc66af6ca55aac9b2ce3bccf58c239ed5995b065",
+      "maskSha256": "0e3f3714d06d16ecf2160d1e5187dfc88e87252674f46d8e4c275bb9aee507f4",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1744,
+        1360
+      ],
+      "masterRect": {
+        "x": 439,
+        "y": 520,
+        "width": 146,
+        "height": 250
+      }
+    },
+    {
+      "partId": "talisman_left",
+      "poseId": null,
+      "layerId": "talisman_left_base",
+      "originalSha256": "a8dd3c85e99c241914ffaa621447aa996befa8f079745701676296c744cfdbca",
+      "derivedLayerSha256": "0db728b60cbd486aeaf448de6d8bf418384c7b9778d3cfa1c878942c8c4772e0",
+      "maskSha256": "13d4ce069a4077fe8161f20e070950891eb1f2840dc2a1c2f79baf04b16e8d16",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1360,
+        1744
+      ],
+      "masterRect": {
+        "x": 232,
+        "y": 519,
+        "width": 106,
+        "height": 387
+      }
+    },
+    {
+      "partId": "talisman_right",
+      "poseId": null,
+      "layerId": "talisman_right_base",
+      "originalSha256": "3eaf7e990513b49b899dd4e3db189a58aa49e9d38f74d8c1b464c2fabd11281c",
+      "derivedLayerSha256": "8be730bc3cf0f414aae03bf18db8d9996619234b5a1e4ffae16b4a4d9aa172f5",
+      "maskSha256": "900c1e5c3f803a1d1d2b55dfc818510b383acb6a44d90ed67a62f0b9e42d3583",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1360,
+        1744
+      ],
+      "masterRect": {
+        "x": 694,
+        "y": 523,
+        "width": 103,
+        "height": 390
+      }
+    },
+    {
+      "partId": "tassel",
+      "poseId": null,
+      "layerId": "tassel_base",
+      "originalSha256": "89aadb6965d4b325483e256cf023369736a2970a4c57a549cbd43fddcc8f640a",
+      "derivedLayerSha256": "3fc083d3599cc7e49b02827f8fb5804b35bb2f1e79a6537fdcf100419733902e",
+      "maskSha256": "f879cc494ae21629b18d39c85471edd20801fc171af9ddc01755d984f832eba5",
+      "maskType": "DETERMINISTIC_ALPHA_DERIVED_NOT_NATIVE_ARTIST_MASK",
+      "sourceCanvas": [
+        1360,
+        1744
+      ],
+      "masterRect": {
+        "x": 444,
+        "y": 903,
+        "width": 144,
+        "height": 288
+      }
+    }
+  ],
+  "sourceAuthentication": "PROVIDER_URL_UNATTESTED",
+  "masks": "DERIVED_ALPHA_PNG_SIDECARS_NOT_NATIVE_EDITOR_MASKS",
+  "artisticReview": "UNSCORED",
+  "commercialRightsCleared": false,
+  "exportAllowed": false
+}

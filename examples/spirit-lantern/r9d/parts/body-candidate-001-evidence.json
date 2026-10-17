@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "partId": "body",
+  "status": "PART_CANDIDATE_UNALIGNED",
+  "generatedBy": "Adobe Firefly",
+  "generationRequestId": "61fee9ba-8db0-4762-b0df-1cdcea5c6ae0",
+  "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:e34e8863-6333-4935-9bf4-882a13dfe148",
+  "cutoutRequestId": "7b0708a3-4273-4dfa-928d-647b6474db28",
+  "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a273eef3-2e12-49ef-8204-bad3ce001af1",
+  "cutoutMimeType": "image/png",
+  "cutoutDimensions": {
+    "width": 1360,
+    "height": 1744
+  },
+  "repositoryPngStored": false,
+  "sourceHashVerified": false,
+  "independentLayer": true,
+  "rigAligned": false,
+  "artisticReview": "UNSCORED",
+  "providerRightsVerified": false,
+  "exportAllowed": false,
+  "notes": "New standalone empty-body image and transparent cutout generated live. Binary upload did not complete; no original file or SHA256 claim. Await explicit immutable source import and quality review."
+}

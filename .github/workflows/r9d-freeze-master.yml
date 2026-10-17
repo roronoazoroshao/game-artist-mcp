@@ -1,0 +1,59 @@
+name: r9d-freeze-actual-editable-master
+
+on:
+  push:
+    branches: [feat/r9d-firefly-original-concept]
+    paths:
+      - '.github/workflows/r9d-freeze-master.yml'
+      - 'scripts/r9d-real-godot-demo.mjs'
+      - 'src/ai-art/r9d-master.mjs'
+      - 'src/export/godot-r9d-candidate.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  freeze-master:
+    name: Preserve real Firefly editable master without production claims
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Test actual source SHA, master layers and R9c Godot contract
+        run: node --test test/r9d-actual-master.test.mjs test/r9d-real-godot.test.mjs
+      - name: Rebuild actual 1024x1280 master and freeze its exact pixels
+        run: |
+          node scripts/r9d-real-godot-demo.mjs
+          test -s examples/spirit-lantern/generated/r9d-master/spirit-lantern-r9d-1024x1280-TECHNICAL.ora
+          mkdir -p examples/spirit-lantern/r9d/master/
+          cp examples/spirit-lantern/generated/r9d-master/spirit-lantern-r9d-1024x1280-TECHNICAL.ora examples/spirit-lantern/r9d/master/spirit-lantern-r9d-TECHNICAL.ora
+          cp examples/spirit-lantern/generated/r9d-master/master-preview-A-TECHNICAL.png examples/spirit-lantern/r9d/master/preview-A-TECHNICAL.png
+          cp examples/spirit-lantern/generated/r9d-master/master-source-evidence.json examples/spirit-lantern/r9d/master/
+          cp -a examples/spirit-lantern/generated/r9d-master/masks examples/spirit-lantern/r9d/master/
+          sha256sum examples/spirit-lantern/r9d/master/spirit-lantern-r9d-TECHNICAL.ora
+      - name: Commit verified master only to R9d feature branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/r9d-firefly-original-concept'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add examples/spirit-lantern/r9d/master/
+          if git diff --cached --quiet; then
+            echo "R9D_MASTER_ALREADY_FROZEN"
+          else
+            git commit -m "art(r9d): freeze SHA-verified eight-layer Firefly ORA technical master"
+            git push origin HEAD:refs/heads/feat/r9d-firefly-original-concept
+          fi
+      - name: Preserve actual editable master evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r9d-Firefly-master-FROZEN-TECHNICAL-UNSCORED
+          path: examples/spirit-lantern/r9d/master/
+          if-no-files-found: error
