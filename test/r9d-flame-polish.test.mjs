@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import pngjs from 'pngjs';
+import {deriveR9dFrontCageRail} from '../src/ai-art/r9d-depth-occlusion.mjs';
+const {PNG}=pngjs;
 import {buildR9dMaster} from '../src/ai-art/r9d-master.mjs';
 import {buildGodotRasterCutout} from '../src/export/godot-raster-cutout.mjs';
 import {compileCutout} from '../src/cutout/compile.mjs';
@@ -64,4 +67,49 @@ test('R9d-06 rejects extra flame pose, incomplete atlas and forged export rights
  const badAtlas={...atlas,regions:atlas.regions.filter(x=>x.poseId!=='flame_d')};
  assert.throws(()=>planR9dFlamePresentation({master,atlas:badAtlas,rig:compiled.manifest,options:{custody}}),/R9D_FLAME_POLISH_REJECTED/);
  assert.throws(()=>planR9dFlamePresentation({master:{...master,exportAllowed:true},atlas,rig:compiled.manifest,options:{custody}}),/R9D_FLAME_POLISH_REJECTED/);
+});
+
+test('R9d-06 underlight emits real low-alpha cyan pixels only in authored inner cavity',async()=>{
+ const {master,atlas}=await fixture();
+ const p=planR9dFlamePresentation({master,atlas,rig:compiled.manifest,options:{custody}});
+ assert.ok(Buffer.isBuffer(p.underlightPng));
+ const im=PNG.sync.read(p.underlightPng,{checkCRC:true});
+ assert.deepEqual([im.width,im.height],[256,320]);
+ let positive=0,maxAlpha=0;
+ for(let y=0;y<im.height;y++)for(let x=0;x<im.width;x++){
+  const q=4*(y*im.width+x),a=im.data[q+3];
+  maxAlpha=Math.max(maxAlpha,a);
+  if(a>0){
+   positive++;
+   assert.ok(im.data[q+1]>=im.data[q]&&im.data[q+2]>=im.data[q],
+    'soft derived light should be cyan, not a bronze recolor');
+   const mx=x*4+2,my=y*4+2;
+   assert.ok(mx>=416&&mx<=614&&my>=468&&my<=822,
+    'no light outside bounded inner cavity');
+  }
+ }
+ assert.ok(positive>=100,'actual source-flame-driven underlight must not be empty');
+ assert.ok(maxAlpha<=46,'derived texture must be restrained');
+ assert.equal(p.provenance.underlight.sha256,hash(p.underlightPng));
+ assert.equal(p.provenance.underlight.railOverlapPixels,0);
+ assert.equal(p.provenance.underlight.artisticReview,'UNSCORED');
+});
+test('R9d-06 underlight never touches original opaque bronze foreground rail',async()=>{
+ const {master,atlas}=await fixture();
+ const overlay=deriveR9dFrontCageRail({ora:master.ora,expectedOraSha256:master.oraSha256});
+ const front=PNG.sync.read(overlay.runtimePng,{checkCRC:true});
+ const p=planR9dFlamePresentation({master,atlas,rig:compiled.manifest,options:{custody}});
+ const glow=PNG.sync.read(p.underlightPng,{checkCRC:true});
+ for(let i=3;i<front.data.length;i+=4)if(front.data[i]>=96)
+  assert.equal(glow.data[i],0,'must leave front bronze fully unilluminated');
+ assert.equal(hash(master.ora),'f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361');
+});
+test('R9d-06 underlight refuses untrusted mask geometry and excessive alpha',async()=>{
+ const {master,atlas}=await fixture();
+ assert.throws(()=>planR9dFlamePresentation({master,atlas,rig:compiled.manifest,
+  options:{custody,cavityBounds:{x:-500,y:-1,width:9999,height:9999}}
+ }),/R9D_FLAME_POLISH_REJECTED/);
+ assert.throws(()=>planR9dFlamePresentation({master,atlas,rig:compiled.manifest,
+  options:{custody,maxUnderlightAlpha:150}
+ }),/R9D_FLAME_POLISH_REJECTED/);
 });
