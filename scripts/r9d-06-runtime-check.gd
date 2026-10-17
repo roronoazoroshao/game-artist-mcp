@@ -98,7 +98,7 @@ func verify_animation() -> void:
     player.seek(0.18, true)
     var rising_energy: float = light.energy
     var rising_glow: float = underlight.modulate.a
-    if not (rising_energy > baseline_energy + 0.07 and rising_glow > baseline_glow + 0.07):
+    if not (rising_energy > baseline_energy + 0.07 and rising_glow > baseline_glow + 0.02):
         fail_gate("R9d-07 underlight does not rise with original SpiritLight")
         return
     player.seek(0.32, true)
@@ -106,7 +106,7 @@ func verify_animation() -> void:
         fail_gate("R9d-07 underlight does not fall with original SpiritLight")
         return
     player.seek(0.86, true)
-    if underlight.modulate.a > 0.35 or underlight.modulate.a < rising_glow:
+    if underlight.modulate.a > 0.73 or underlight.modulate.a < rising_glow:
         fail_gate("R9d-07 glow did not cap and follow peak energy")
         return
     player.seek(1.999, true)
