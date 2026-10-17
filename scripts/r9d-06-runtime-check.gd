@@ -74,6 +74,46 @@ func verify_animation() -> void:
     if abs(primary.modulate.a - advanced_alpha) > 0.06:
         fail_gate("playback and seek disagree at loop seam")
         return
+    # R9d-07: verify actual runtime Sprite2D alpha keys are a narrowed
+    # overlap rather than just a plausible JSON report.
+    for time: float in [0.085, 0.095, 0.105]:
+        player.seek(time, true)
+        if abs(primary.modulate.a + secondary.modulate.a - 1.0) > 0.015:
+            fail_gate("R9d-07 ghost fade did not keep complementary alpha")
+            return
+        if time == 0.085 and secondary.modulate.a > 0.03:
+            fail_gate("early overlap ghost remains visible")
+            return
+        if time == 0.095 and secondary.modulate.a > 0.34:
+            fail_gate("ghost overlap near early midpoint is still too wide")
+            return
+        if time == 0.105 and secondary.modulate.a < 0.97:
+            fail_gate("late ghost overlap remains visible")
+            return
+    # Compare authored SpiritLight key positions with the actual derived
+    # animated CavityUnderlight modulate keys. No secondary PointLight2D.
+    player.seek(0.0, true)
+    var baseline_energy: float = light.energy
+    var baseline_glow: float = underlight.modulate.a
+    player.seek(0.18, true)
+    var rising_energy: float = light.energy
+    var rising_glow: float = underlight.modulate.a
+    if not (rising_energy > baseline_energy + 0.07 and rising_glow > baseline_glow + 0.07):
+        fail_gate("R9d-07 underlight does not rise with original SpiritLight")
+        return
+    player.seek(0.32, true)
+    if not (light.energy < rising_energy and underlight.modulate.a < rising_glow):
+        fail_gate("R9d-07 underlight does not fall with original SpiritLight")
+        return
+    player.seek(0.86, true)
+    if underlight.modulate.a > 0.35 or underlight.modulate.a < rising_glow:
+        fail_gate("R9d-07 glow did not cap and follow peak energy")
+        return
+    player.seek(1.999, true)
+    if abs(underlight.modulate.a - baseline_glow) > 0.025:
+        fail_gate("R9d-07 underlight flashes across the two-second loop")
+        return
+    print("R9D07_GODOT_GHOST_LIGHT_SYNC_TECHNICAL_OK")
     if lantern.get_node_or_null("Interaction/CollisionShape2D") == null:
         fail_gate("collision was removed")
         return
