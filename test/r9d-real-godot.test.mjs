@@ -50,3 +50,22 @@ test('R9d-05: actual derived front brass cage rail sits above flame without modi
  assert.equal(out.atlas.regions.length,9,'no legacy/hidden replacement pose frame');
  assert.equal(out.master.sourcePaintings.length,8,'all original Firefly source layers preserved');
 });
+
+test('R9d-06: Godot candidate integrates real two-sprite flame under existing bronze and one masked underlight',async()=>{
+ const out=buildR9dCandidateGodotProject({sourcePngs:await pngs(),custody,compiled});
+ const scene=String(out.files.get('assets/spirit_lantern/spirit_lantern.tscn'));
+ assert.match(scene,/\[node name="SpriteBlend2D" type="Sprite2D" parent="body\/flame"\]/);
+ assert.match(scene,/\[node name="CavityUnderlight" type="Sprite2D" parent="body"\]/);
+ assert.match(scene,/body\/flame\/Sprite2D:modulate/);
+ assert.match(scene,/body\/flame\/SpriteBlend2D:modulate/);
+ assert.equal((scene.match(/\[node name="SpiritLight" type="PointLight2D"/g)||[]).length,1);
+ assert.equal((scene.match(/\[node name="FrontCageRail"/g)||[]).length,1);
+ assert.ok(Buffer.isBuffer(out.files.get('assets/spirit_lantern/flame-underlight.png')));
+ const info=JSON.parse(out.files.get('assets/spirit_lantern/r9d-flame-polish.json'));
+ assert.equal(info.transitionMs,55);
+ assert.equal(info.sourceOraSha256,out.master.oraSha256);
+ assert.equal(info.exportAllowed,false);
+ assert.equal(info.artisticReview,'UNSCORED');
+ assert.equal(out.atlas.regions.length,9);
+ assert.equal(out.master.sourcePaintings.length,8);
+});
