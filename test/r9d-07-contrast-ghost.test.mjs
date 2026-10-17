@@ -39,7 +39,10 @@ test('R9d-07 synchronizes original in-cage underlight with same authored SpiritL
  assert.ok(meta.underlightTrack.times.length>lightKeys.length,
   'actual Godot bake must retain intermediate smoothstep samples');
  assert.equal(meta.underlightTrack.alpha.length,meta.underlightTrack.times.length);
- assert.ok(meta.underlightTrack.alpha.every(v=>v>=.07&&v<=.34));
+ assert.ok(meta.underlightTrack.alpha.every(v=>v>=.64&&v<=.72),
+  'source-derived underlight remains legible yet capped after real A/B art review');
+ assert.ok(Math.max(...meta.underlightTrack.alpha)-Math.min(...meta.underlightTrack.alpha)<=.081,
+  'pulsation must not reintroduce R9d-05 large cyan-area instability');
  const authoredLevels=lightKeys.map(k=>{
   const i=meta.underlightTrack.times.findIndex(t=>Math.abs(t-k.time)<=.000001);
   assert.ok(i>=0,'missing original SpiritLight energy anchor in baked scene');
@@ -63,7 +66,7 @@ test('R9d-07 keeps unmodified real source/custody while decreasing underlight ov
  assert.equal(meta.underlight.sha256,
   (await import('node:crypto')).createHash('sha256')
    .update(out.files.get('assets/spirit_lantern/flame-underlight.png')).digest('hex'));
- assert.ok(meta.underlightTrack.alpha.every(v=>v<=.34));
+ assert.ok(meta.underlightTrack.alpha.every(v=>v>=.64&&v<=.72));
  assert.equal(out.master.sourcePaintings.length,8);
  assert.equal(out.atlas.regions.length,9);
  const paint=JSON.parse(out.files.get('assets/spirit_lantern/r9d-painting-source.json'));
