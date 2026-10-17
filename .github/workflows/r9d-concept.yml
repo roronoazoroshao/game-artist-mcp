@@ -6,12 +6,18 @@ on:
       - feat/r9d-firefly-original-concept
     paths:
       - 'examples/spirit-lantern/r9d/concept/**'
+      - 'examples/spirit-lantern/r9d/parts/**'
+      - 'src/ai-art/r9d-*.mjs'
+      - 'test/r9d-*.test.mjs'
       - 'scripts/r9d-verify-candidate.mjs'
       - 'test/r9d-firefly-evidence.test.mjs'
       - '.github/workflows/r9d-concept.yml'
   pull_request:
     paths:
       - 'examples/spirit-lantern/r9d/concept/**'
+      - 'examples/spirit-lantern/r9d/parts/**'
+      - 'src/ai-art/r9d-*.mjs'
+      - 'test/r9d-*.test.mjs'
       - 'scripts/r9d-verify-candidate.mjs'
       - 'test/r9d-firefly-evidence.test.mjs'
       - '.github/workflows/r9d-concept.yml'
@@ -33,6 +39,10 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Negative and positive provenance tests (no rights claim)
         run: node --test test/r9d-firefly-evidence.test.mjs
+      - name: Guard real part-candidate records, PNG alpha and flame silhouette tests
+        run: |
+          node --test test/r9d-part-registry.test.mjs test/r9d-paint-intake.test.mjs test/r9d-flame-pose-diversity.test.mjs
+          node scripts/r9d-registry-check.mjs
       - name: Validate newly generated Firefly image rendition bytes and freeze exact digest
         run: |
           mkdir -p "$RUNNER_TEMP/r9d-review"
@@ -40,6 +50,7 @@ jobs:
           grep -q 'GAME_ARTIST_R9D_REAL_PROVIDER_CONCEPT_BYTES_VERIFIED' "$RUNNER_TEMP/r9d-review/exact-head-evidence.json"
           cp examples/spirit-lantern/r9d/concept/candidate-001-firefly-rendition.jpg "$RUNNER_TEMP/r9d-review/"
           cp examples/spirit-lantern/r9d/concept/candidate-001-evidence.json "$RUNNER_TEMP/r9d-review/"
+          cp examples/spirit-lantern/r9d/parts/paint-operations-001.json "$RUNNER_TEMP/r9d-review/paint-operations-001.json"
       - name: Upload actual generated concept as UNSCORED art-review packet
         if: always()
         uses: actions/upload-artifact@v4
