@@ -11,7 +11,7 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const sources=join(root,'examples/spirit-lantern/r9d/parts/sources');
 const baseline=process.env.R9D_RENDER_VARIANT==='R9D05_BASELINE';
 if(process.env.R9D_RENDER_VARIANT!==undefined&&
-   !['R9D05_BASELINE','R9D06_HYBRID'].includes(process.env.R9D_RENDER_VARIANT))
+   !['R9D05_BASELINE','R9D07_POLISHED'].includes(process.env.R9D_RENDER_VARIANT))
  throw Error('R9D_RENDER_VARIANT_REJECTED');
 const out=join(root,'examples/spirit-lantern/generated/'+
  (baseline?'r9d-05-baseline-godot':'r9d-godot'));
@@ -48,7 +48,7 @@ files.set('r9d-motion-capture.tscn',[
  'position = Vector2(128, 64)',''].join('\n'));
 files.set('r9d-evidence.json',JSON.stringify({
  origin:'R9D_REAL_ADOBE_PAINTED_COMPONENTS_CANDIDATE',paintedByAI:true,
- presentationVariant:baseline?'R9D05_BASELINE':'R9D06_HYBRID',
+ presentationVariant:baseline?'R9D05_BASELINE':'R9D07_POLISHED',
  sourceAuthenticity:'UNATTESTED_EXTERNAL_PROVIDER_REQUEST_AND_VERIFIED_BYTES',
  sourcePngSha256s:Object.fromEntries(custody.sources.map(x=>[x.partId,x.sha256])),
  sourceOriSha256:master.oraSha256,
