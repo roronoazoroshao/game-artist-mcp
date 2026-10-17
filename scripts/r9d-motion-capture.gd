@@ -22,7 +22,8 @@ func capture_motion() -> void:
         fail_capture("front bronze occlusion depth lower than flame")
         return
     player.play("idle")
-    var times: Array[float] = [0.0, 0.125, 0.375, 0.75, 1.25, 1.875]
+    # Preserve six legacy captures; add precise 2s loop/crossfade probe times.
+    var times: Array[float] = [0.0, 0.001, 0.069, 0.070, 0.095, 0.124, 0.125, 0.180, 0.375, 0.75, 1.25, 1.875, 1.945, 1.999]
     for time: float in times:
         player.seek(time, true)
         await RenderingServer.frame_post_draw
@@ -45,4 +46,5 @@ func capture_motion() -> void:
                 return
         print("R9D_REAL_FRAME_TIME " + str(time))
     print("R9D_REAL_GODOT_SIX_TIME_THREE_SCALE_CAPTURE_OK")
+    print("R9D06_REAL_GODOT_FOURTEEN_TIME_THREE_SCALE_CAPTURE_OK")
     get_tree().quit(0)
