@@ -65,7 +65,7 @@ const META={sourceSha256:'a'.repeat(64),engineVersion:'4.7.2-stable',
 function sequenceFrames(staticPose=false){
  return new Map(SEAMS.flatMap((t,i)=>SIZES.map(size=>[
   'r9d-t-'+String(t).padStart(4,'0')+'-'+size+'.png',
-  screenshot(size,staticPose?0:i%4)
+  screenshot(size,staticPose?0:(t===1999?0:i%4))
  ])));
 }
 test('R9d-06 compares honest baseline and hybrid 3-scale PNGs with all seam times',()=>{
