@@ -33,6 +33,11 @@ func capture_motion() -> void:
         for dimension: int in [512, 128, 64]:
             var screenshot: Image = source.duplicate() as Image
             if dimension != 512:
+                # Item readability, not 512px scene readability: keep the same
+                # authored 300x300 gameplay region for 128px/64px sprite crops.
+                # This includes handle, roof, charms, base and fringe across
+                # all four poses; the 512px capture retains scene context.
+                screenshot = source.get_region(Rect2i(106, 75, 300, 300))
                 screenshot.resize(dimension, dimension, Image.INTERPOLATE_LANCZOS)
             var filename: String = "res://r9d-t-%04d-%d.png" % [int(round(time * 1000.0)), dimension]
             if screenshot.save_png(filename) != OK:
