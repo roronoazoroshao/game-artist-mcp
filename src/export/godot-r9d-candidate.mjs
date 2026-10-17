@@ -26,20 +26,20 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled}={}){
  const files=new Map(original.files);
  const scenePath=ROOT+'spirit_lantern.tscn';
  let scene=String(files.get(scenePath));
- const header=scene.match(/\\[gd_scene load_steps=(\\d+) format=3\\]/);
+ const header=scene.match(/\[gd_scene load_steps=(\d+) format=3\]/);
  if(!header||!scene.includes('[sub_resource type="AtlasTexture"')||
     scene.includes('R9dForeground')||!scene.includes('parent="body/flame"'))
    fail('unexpected original Godot scene resource layout');
  scene=scene.replace(header[0],'[gd_scene load_steps='+(Number(header[1])+1)+' format=3]');
  const material='[ext_resource type="Texture2D" path="res://'+
-  ROOT+'foreground-rail.png" id="R9dForeground"]\\n';
+  ROOT+'foreground-rail.png" id="R9dForeground"]\n';
  scene=scene.replace('[sub_resource type="AtlasTexture"',material+
-  '\\n[sub_resource type="AtlasTexture"');
- scene+='\\n[node name="FrontCageRail" type="Sprite2D" parent="body"]\\n'+
-  'texture = ExtResource("R9dForeground")\\n'+
-  'centered = false\\n'+
-  'position = Vector2(-128, -160)\\n'+
-  'z_index = 6\\n';
+  '\n[sub_resource type="AtlasTexture"');
+ scene+='\n[node name="FrontCageRail" type="Sprite2D" parent="body"]\n'+
+  'texture = ExtResource("R9dForeground")\n'+
+  'centered = false\n'+
+  'position = Vector2(-128, -160)\n'+
+  'z_index = 6\n';
  files.set(scenePath,scene);
  files.set(ROOT+'foreground-rail.png',occlusion.runtimePng);
  files.set(ROOT+'r9d-occlusion.json',JSON.stringify({
@@ -55,7 +55,7 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled}={}){
   sourcePaintUnchanged:true,
   artisticReview:'UNSCORED',commercialRightsCleared:false,
   exportAllowed:false
- },null,2)+'\\n');
+ },null,2)+'\n');
 
  const asset=JSON.parse(files.get(ROOT+'asset.json'));
  const raster=JSON.parse(files.get(ROOT+'raster-source.json'));
