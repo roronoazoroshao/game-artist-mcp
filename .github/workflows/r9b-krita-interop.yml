@@ -8,12 +8,18 @@ on:
       - 'scripts/r9b-editor-*'
       - '.github/workflows/r9b-krita-interop.yml'
       - 'src/ai-art/**'
+      - 'src/export/godot-r9d-candidate.mjs'
+      - 'scripts/r9d-real-godot-demo.mjs'
+      - 'examples/spirit-lantern/r9d/parts/sources/**'
       - 'test/r9b-editor-fixture.test.mjs'
   pull_request:
     paths:
       - 'scripts/r9b-editor-*'
       - '.github/workflows/r9b-krita-interop.yml'
       - 'src/ai-art/**'
+      - 'src/export/godot-r9d-candidate.mjs'
+      - 'scripts/r9d-real-godot-demo.mjs'
+      - 'examples/spirit-lantern/r9d/parts/sources/**'
   workflow_dispatch:
 
 permissions:
@@ -70,6 +76,43 @@ jobs:
       - name: Verify actual Krita archive imports into isolated R9b editor profile
         run: |
           node scripts/r9b-krita-import-check.mjs "$RUNNER_TEMP/r9b-editor/exported.ora"
+      - name: Build actual eight-paint Firefly R9d editable 1024x1280 master
+        run: |
+          node scripts/r9d-real-godot-demo.mjs
+          mkdir -p "$RUNNER_TEMP/r9d-master-editor"
+          cp examples/spirit-lantern/generated/r9d-master/spirit-lantern-r9d-1024x1280-TECHNICAL.ora "$RUNNER_TEMP/r9d-master-editor/source.ora"
+          test -s "$RUNNER_TEMP/r9d-master-editor/source.ora"
+      - name: Real Krita open export and reopen actual Firefly-painted R9d master
+        env:
+          LIBGL_ALWAYS_SOFTWARE: '1'
+          QT_OPENGL: software
+          QT_QPA_PLATFORM: xcb
+        run: |
+          set -o pipefail
+          cd "$RUNNER_TEMP/r9d-master-editor"
+          timeout 240s xvfb-run -a --server-args="-screen 0 1280x900x24" \
+            krita --nosplash source.ora --export --export-filename exported.ora \
+            2>&1 | tee krita-export.log
+          test -s exported.ora
+          timeout 240s xvfb-run -a --server-args="-screen 0 1280x900x24" \
+            krita --nosplash exported.ora --export --export-filename reopened.png \
+            2>&1 | tee krita-reopen.log
+          test -s reopened.png
+      - name: Independently check eight editable original Firefly layers and actual Krita pixels
+        run: |
+          /usr/bin/python3 scripts/r9b-editor-interop-verify.py \
+            "$RUNNER_TEMP/r9d-master-editor/source.ora" \
+            "$RUNNER_TEMP/r9d-master-editor/exported.ora" \
+            "$RUNNER_TEMP/r9d-master-editor/reopened.png" \
+            "$RUNNER_TEMP/r9d-master-editor/r9d-real-source-editor-evidence.json"
+      - name: Preserve factual R9d editable-master Krita evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r9d-actual-Firefly-master-Krita-ROUNDTRIP-TECHNICAL
+          path: ${{ runner.temp }}/r9d-master-editor/
+          if-no-files-found: warn
+
       - name: Upload factual artifacts even on failure
         if: always()
         uses: actions/upload-artifact@v4
