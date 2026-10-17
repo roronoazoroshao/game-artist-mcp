@@ -24,7 +24,7 @@ const result=buildR9dCandidateGodotProject({sourcePngs,custody,compiled});
 assert.equal(result.atlas.regions.length,9);
 assert.equal(result.evidence.exportAllowed,false);
 const {files,master}=result;
-files.set('validation.gd',await readFile(join(root,'scripts/r9c-runtime-check.gd'),'utf8'));
+files.set('validation.gd',await readFile(join(root,'scripts/r9d-06-runtime-check.gd'),'utf8'));
 files.set('r9c-capture.gd',await readFile(join(root,'scripts/r9c-capture.gd'),'utf8'));
 files.set('r9c-capture.tscn',[
  '[gd_scene load_steps=3 format=3]','',
