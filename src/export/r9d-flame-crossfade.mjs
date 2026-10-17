@@ -153,7 +153,9 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  if(maxLight-minLight<.1||
     actualEnergies.some(e=>e<minLight-.0001||e>maxLight+.0001))
   fail('baked light values exceed trusted original envelope');
- const lightAlpha=value=>round(.1+.22*(value-minLight)/(maxLight-minLight));
+ // Real R9d-06 vs first R9d-07 Godot A/B exposed a 52% cyan-area loss
+ // and >2x new pulse variability. Keep the signal synced but restrained.
+ const lightAlpha=value=>round(.64+.08*(value-minLight)/(maxLight-minLight));
  const underlightKeys=actualTimes.map((t,i)=>({t,value:color(1,lightAlpha(actualEnergies[i]))}));
  const regions=new Map(atlas.regions.filter(x=>x.partId==='flame'&&x.poseId!==null).map(x=>[x.poseId,x]));
  const coeff=pose=>presentation.correctionByPose[pose];
@@ -218,7 +220,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
     times:Object.freeze([...actualTimes]),
     alpha:Object.freeze(actualEnergies.map(v=>lightAlpha(v))),
     authoredKeyTimes:Object.freeze(energyKeys.map(k=>k.time)),
-    maxOpacity:.32
+    maxOpacity:.72
    }),
    authoredPoses:Object.freeze([...sequence]),
    wrap:'C_TO_A',sourceAtlasSha256:atlas.atlasSha256,
