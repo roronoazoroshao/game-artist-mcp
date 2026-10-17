@@ -1,0 +1,35 @@
+name: r9d-adobe-source-acquisition-probe
+
+on:
+  push:
+    branches: [feat/r9d-firefly-original-concept]
+    paths:
+      - '.github/workflows/r9d-source-probe.yml'
+      - 'scripts/r9d-source-probe.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  download-adobe-output:
+    name: Direct Adobe output HTTPS fetch (no production claims)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned decoding dependency
+        run: npm ci --ignore-scripts
+      - name: Try provider URL and independently inspect returned source
+        run: node scripts/r9d-source-probe.mjs
+      - name: Preserve exact probe diagnostics and source if valid
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: r9d-provider-source-probe-BYTES-IF_VERIFIED
+          path: .r9d-source-probe/
+          retention-days: 30
+          if-no-files-found: warn
