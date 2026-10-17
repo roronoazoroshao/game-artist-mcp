@@ -1,0 +1,166 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import pngjs from 'pngjs';
+import {makeProvenanceEvent,digestProvenanceEvents} from '../src/ai-art/provenance.mjs';
+import {validateLayeredSource} from '../src/ai-art/layered-source.mjs';
+import {writeLayeredProject,verifyLayeredProject} from '../src/ai-art/layered-project.mjs';
+import {readOpenRaster,writeOpenRaster} from '../src/ai-art/openraster.mjs';
+import {applyAlphaMask} from '../src/ai-art/layer-composite.mjs';
+const {PNG}=pngjs;
+const hash=b=>createHash('sha256').update(b).digest('hex');
+const parts=['body','flame','talisman_left','talisman_right','tassel'];
+const poses=['flame_a','flame_b','flame_c','flame_d'];
+function fixture(){
+ const rigHash='a'.repeat(64);
+ const brief={version:1,assetId:'spirit_lantern',masterCanvas:{width:1024,height:1280},runtimeCanvas:{width:256,height:320},requiredParts:parts,poseIds:poses,styleDirection:'Original painted xianxia lantern',allowedProviders:['adobe_firefly']};
+ const specs=[...parts.map(p=>[p,null]),...poses.map(p=>['flame',p])];
+ const layers=new Map(),layerDefs=[],operations=[];
+ let previous=null;
+ for(let i=0;i<specs.length;i++){
+  const [part,pose]=specs[i],name=part+(pose?'_'+pose:'')+'_paint',path='layers/'+name+'.png';
+  const png=new PNG({width:2,height:2,colorType:6});
+  for(let k=0;k<png.data.length;k+=4){png.data[k]=40+i;png.data[k+1]=80;png.data[k+2]=100;png.data[k+3]=255}
+  const bytes=PNG.sync.write(png),value=hash(bytes);
+  layers.set(path,bytes);
+  layerDefs.push({layerId:name,partId:part,poseId:pose,path,width:2,height:2,sourceSha256:value,maskSha256:null,order:i,visible:true,alphaMode:'straight'});
+  const event=makeProvenanceEvent({operationId:'op_'+String(i).padStart(4,'0'),provider:'adobe_firefly',modelId:'firefly_image_4',targetPart:part,promptSha256:rigHash,inputSha256:null,maskSha256:null,outputSha256:value,accepted:true},previous);
+  previous=event.eventSha256;operations.push(event);
+ }
+ const pkg={version:1,assetId:'spirit_lantern',rigManifestSha256:rigHash,masterCanvas:{width:1024,height:1280},runtimeCanvas:{width:256,height:320},parts,poseIds:poses,layers:layerDefs,operationsAuditSha256:digestProvenanceEvents(operations),rightsDecision:'RIGHTS_UNVERIFIED',rightsEvidenceRef:null,rightsReviewer:null};
+ return {brief,pkg,layers,operations};
+}
+
+function masked(){
+ const f=fixture();
+ const mask=new PNG({width:2,height:2,colorType:6});
+ for(let i=0;i<mask.data.length;i+=4)mask.data.set([0,0,0,255],i);
+ const maskPng=PNG.sync.write(mask),maskHash=hash(maskPng),maskPngs=new Map();
+ let previous=null;
+ f.operations=[];
+ for(let i=0;i<f.pkg.layers.length;i++){
+  const layer=f.pkg.layers[i];
+  const key='masks/'+layer.layerId+'.png';
+  maskPngs.set(key,Buffer.from(maskPng));
+  layer.maskSha256=maskHash;
+  const event=makeProvenanceEvent({operationId:'op_'+String(i).padStart(4,'0'),
+   provider:'adobe_firefly',modelId:'firefly_image_4',targetPart:layer.partId,
+   promptSha256:f.pkg.rigManifestSha256,inputSha256:null,
+   maskSha256:maskHash,outputSha256:layer.sourceSha256,accepted:true},previous);
+  previous=event.eventSha256;f.operations.push(event);
+ }
+ f.pkg.operationsAuditSha256=digestProvenanceEvents(f.operations);
+ return {brief:f.brief,pkg:f.pkg,layerPngs:f.layers,maskPngs,operations:f.operations,
+  rigManifestSha256:f.pkg.rigManifestSha256};
+}
+
+function project(){
+ const sample=masked(),validated=validateLayeredSource(sample);
+ const placements=new Map(sample.pkg.layers.map((l,i)=>[l.layerId,{x:100+i*3,y:200+i*3,opacity:1,visible:true}]));
+ return {validated,placements,packed:()=>writeLayeredProject(validated,{placements})};
+}
+const rejects=fn=>assert.throws(fn,/R9B_|R9A_|AI_PNG_REJECTED/);
+test('R9b packages true 1024x1280 editable ORA source with independent masks and SHA-bound manifest',()=>{
+ const p=project(),out=p.packed(),again=p.packed();
+ assert.deepEqual(out.ora,again.ora,'deterministic OpenRaster bytes');
+ assert.equal(out.manifestJson,again.manifestJson);
+ const doc=readOpenRaster(out.ora);
+ assert.deepEqual([doc.width,doc.height],[1024,1280]);
+ assert.equal(doc.layers.length,9);
+ assert.equal(doc.layers.filter(x=>x.id.startsWith('flame_flame_')&&x.visible).length,1);
+ assert.equal(doc.layers.find(x=>x.id==='flame_paint').visible,false);
+ const first=p.validated.layers[0],renderLayer=doc.layers.find(x=>x.id===first.layerId);
+ assert.deepEqual(renderLayer.png,applyAlphaMask(first.png,first.maskPng));
+ assert.equal(renderLayer.x,p.placements.get(first.layerId).x);
+ assert.equal(out.layerPngs.get(first.path).equals(first.png),true);
+ assert.equal(out.maskPngs.get(first.maskPath).equals(first.maskPng),true);
+ const evidence=verifyLayeredProject(out);
+ assert.equal(evidence.ok,true);
+ assert.equal(evidence.exportAllowed,false);
+ assert.equal(evidence.artisticReview,'UNSCORED');
+});
+test('R9b rejects mutating any archived source or editable mask after project creation',()=>{
+ const p=project(),out=p.packed();
+ const tampered={...out,maskPngs:new Map(out.maskPngs)};
+ const firstKey=[...tampered.maskPngs.keys()][0];
+ tampered.maskPngs.set(firstKey,Buffer.from('tampered'));rejects(()=>verifyLayeredProject(tampered));
+ const missing={...out,layerPngs:new Map(out.layerPngs)};
+ missing.layerPngs.delete([...missing.layerPngs.keys()][0]);rejects(()=>verifyLayeredProject(missing));
+ const manifest=JSON.parse(out.manifestJson);manifest.layers[0].sourceSha256='f'.repeat(64);
+ rejects(()=>verifyLayeredProject({...out,manifestJson:JSON.stringify(manifest)}));
+ rejects(()=>verifyLayeredProject({...out,ora:Buffer.alloc(32)}));
+});
+test('R9b rejects placements outside canvas or missing/extra art layout; rights are blocked',()=>{
+ const p=project();
+ const bad=new Map(p.placements);
+ bad.set(p.validated.layers[0].layerId,{x:1024,y:1280,opacity:1,visible:true});
+ rejects(()=>writeLayeredProject(p.validated,{placements:bad}));
+ const absent=new Map(p.placements);absent.delete(p.validated.layers[0].layerId);
+ rejects(()=>writeLayeredProject(p.validated,{placements:absent}));
+ const fake=new Map(p.placements);fake.set('unknown',{x:1,y:1,opacity:1,visible:true});
+ rejects(()=>writeLayeredProject(p.validated,{placements:fake}));
+ const out=p.packed();const m=JSON.parse(out.manifestJson);
+ assert.equal(m.rightsDecision,'RIGHTS_UNVERIFIED');
+ assert.equal(m.paintProviderAttested,false);
+});
+
+test('R9b refuses forged validation objects and mutated operations provenance',()=>{
+ const p=project();
+ rejects(()=>writeLayeredProject({...p.validated},{placements:p.placements}));
+ const out=p.packed();
+ const altered=JSON.parse(out.operationsJson);
+ altered[0].accepted=false;
+ rejects(()=>verifyLayeredProject({...out,operationsJson:JSON.stringify(altered)}));
+ const noLog={...out};delete noLog.operationsJson;
+ rejects(()=>verifyLayeredProject(noLog));
+});
+
+test('R9b master ORA preserves machine-visible rig-part groups without reordering paint layers',()=>{
+ const p=project(),out=p.packed();
+ const doc=readOpenRaster(out.ora),manifest=JSON.parse(out.manifestJson);
+ assert.deepEqual(doc.layers.map(x=>x.id),manifest.layers.map(x=>x.layerId));
+ assert.ok(doc.stackTree.children.every(x=>x.type==='group'));
+ const owned=doc.stackTree.children.map(g=>({
+  group:g.id,ids:g.children.map(c=>c.id)
+ }));
+ assert.ok(owned.some(g=>g.group.startsWith('rig_body')));
+ assert.ok(owned.some(g=>g.group.startsWith('rig_flame')));
+ for(const g of owned){
+  const parts=new Set(g.ids.map(id=>manifest.layers.find(l=>l.layerId===id).partId));
+  assert.equal(parts.size,1,'each editable group owns one rig part');
+ }
+ const repaint=writeOpenRaster({width:doc.width,height:doc.height,
+  layers:doc.layers,stackTree:doc.stackTree});
+ assert.deepEqual(readOpenRaster(repaint).stackTree,doc.stackTree);
+});
+
+
+test('R9b review P1: reject re-signed malformed stack ownership, flame visibility and manifest order',()=>{
+ const p=project(),out=p.packed(),doc=readOpenRaster(out.ora);
+ const forge=(layers,stackTree,mutateManifest=()=>{})=>{
+  const ora=writeOpenRaster({width:doc.width,height:doc.height,layers,stackTree});
+  const manifest=JSON.parse(out.manifestJson);
+  manifest.oraSha256=hash(ora);
+  mutateManifest(manifest);
+  return {...out,ora,manifestJson:JSON.stringify(manifest)};
+ };
+ // Moving a flame paint layer under a body group still preserves stack order,
+ // layer pixels, region visibility and recomputable sidecar SHA, but breaks
+ // immutable rig-part ownership. The original verifier accepted this.
+ const groups=structuredClone(doc.stackTree);
+ const displaced=groups.children[1].children.shift();
+ groups.children[0].children.push(displaced);
+ rejects(()=>verifyLayeredProject(forge(doc.layers,groups)));
+ // A hidden alternative flame is not permitted to render as part of the
+ // canonical editor preview, even if its ORA and sidecar are re-signed.
+ const badVisibility=doc.layers.map(l=>({...l,visible:l.id==='flame_flame_b_paint'?true:l.visible}));
+ rejects(()=>verifyLayeredProject(forge(badVisibility,doc.stackTree,m=>{
+  const l=m.layers.find(x=>x.layerId==='flame_flame_b_paint');
+  l.visible=true;
+ })));
+ // Manifest order isn't a decorative field: it controls compositor z-order.
+ const reordered=JSON.parse(out.manifestJson);
+ [reordered.layers[0].order,reordered.layers[1].order]=
+  [reordered.layers[1].order,reordered.layers[0].order];
+ rejects(()=>verifyLayeredProject({...out,manifestJson:JSON.stringify(reordered)}));
+});

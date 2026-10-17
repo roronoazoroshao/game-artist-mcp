@@ -3,6 +3,7 @@ import pngjs from 'pngjs';
 import {composeLayers,validateLayerStack} from './layer-composite.mjs';
 import {inspectAiPng} from './png-intake.mjs';
 import {readOraZip,writeOraZip} from './ora-zip.mjs';
+import {assertStackTree,serializeGroupStack,parseGroupStack,composeGroupTree} from './ora-stack.mjs';
 const {PNG}=pngjs;
 const fail=why=>{throw new Error('R9B_ORA_REJECTED: '+why)};
 const asciiId=/^[a-z][a-z0-9_]{0,63}$/;
@@ -72,12 +73,15 @@ function readStack(xml){
  });
  return {width,height,layers};
 }
-export function writeOpenRaster({width,height,layers}={}){
+export function writeOpenRaster({width,height,layers,stackTree}={}){
  const prepared=validateLayerStack({width,height,layers});
  const compositing=prepared.map(x=>({id:x.id,png:x.png,x:x.x,y:x.y,opacity:x.opacity,visible:x.visible}));
- const merged=composeLayers({width,height,layers:compositing});
+ const tree=stackTree===undefined?null:assertStackTree(stackTree,compositing);
+ const merged=tree?composeGroupTree({width,height,layers:compositing,stackTree:tree}):
+  composeLayers({width,height,layers:compositing});
  const thumbnail=makeThumbnail(merged);
- const xml=Buffer.from(xmlStack(width,height,compositing),'utf8');
+ const xml=Buffer.from(tree?serializeGroupStack(width,height,tree,compositing):
+  xmlStack(width,height,compositing),'utf8');
  const entries=[{name:'mimetype',bytes:Buffer.from('image/openraster','utf8')},
   {name:'stack.xml',bytes:xml},
   ...prepared.map(layer=>({name:'data/'+layer.id+'.png',bytes:layer.png})),
@@ -86,11 +90,18 @@ export function writeOpenRaster({width,height,layers}={}){
  ];
  return writeOraZip(entries);
 }
-export function readOpenRaster(bytes){
+export function readOpenRaster(bytes,options={}){
+ if(!options||typeof options!=='object'||Array.isArray(options)||
+    Object.keys(options).some(k=>k!=='editorProfile'))fail('invalid reader options');
+ const editorProfile=options.editorProfile??null;
+ if(editorProfile!==null&&editorProfile!=='krita_5_2')fail('unsupported editor profile');
  const files=readOraZip(bytes);
  for(const mandatory of ['mimetype','stack.xml','mergedimage.png','Thumbnails/thumbnail.png'])
   if(!files.has(mandatory))fail('missing required OpenRaster entry '+mandatory);
- const stack=readStack(files.get('stack.xml').toString('utf8'));
+ const xml=files.get('stack.xml').toString('utf8');
+ const stack=/<stack\s+/.test(xml)?
+  parseGroupStack(xml,{editorProfile}):
+  editorProfile===null?readStack(xml):fail('Krita import requires bounded group stack');
  const layers=stack.layers.map(layer=>{
   const png=files.get(layer.src);
   if(!png)fail('missing layer PNG');
@@ -102,9 +113,26 @@ export function readOpenRaster(bytes){
  const merged=files.get('mergedimage.png'),thumbnail=files.get('Thumbnails/thumbnail.png');
  const m=inspectAiPng(merged),t=inspectAiPng(thumbnail);
  if(m.width!==stack.width||m.height!==stack.height||t.width>256||t.height>256)fail('merged image/thumbnail dimensions');
- const computed=composeLayers({width:stack.width,height:stack.height,layers});
+ const computed=stack.stackTree?
+  composeGroupTree({width:stack.width,height:stack.height,layers,stackTree:stack.stackTree}):
+  composeLayers({width:stack.width,height:stack.height,layers});
  const expected=PNG.sync.read(computed,{checkCRC:true}),actual=PNG.sync.read(merged,{checkCRC:true});
- if(!expected.data.equals(actual.data))fail('mergedimage.png contradicts editable layer stack');
+ // The opt-in Krita 5.2 importer accepts a bounded one-quantum
+ // preview difference due to Krita's 8-bit opacity normalization.
+ // Never silently report pixel exact when rounding changed any byte.
+ let maxChannelDelta=0,changedPixels=0;
+ for(let i=0;i<expected.data.length;i+=4){
+  let peak=0;
+  for(let channel=0;channel<4;channel++)
+   peak=Math.max(peak,Math.abs(expected.data[i+channel]-actual.data[i+channel]));
+  if(peak){changedPixels++;maxChannelDelta=Math.max(maxChannelDelta,peak)}
+ }
+ if(maxChannelDelta>0&&(editorProfile!=='krita_5_2'||maxChannelDelta>1))
+  fail('mergedimage.png contradicts editable layer stack');
  return Object.freeze({width:stack.width,height:stack.height,layers,mergedPng:Buffer.from(merged),
-  thumbnailPng:Buffer.from(thumbnail),sha256:sha(bytes)});
+  mergedFidelity:maxChannelDelta===0?'PIXEL_EXACT':'BOUNDED_1LSB_NOT_PIXEL_EXACT',
+  changedPixels,maxChannelDelta,exportAllowed:false,
+  thumbnailPng:Buffer.from(thumbnail),sha256:sha(bytes),
+  stackTree:stack.stackTree??{type:'group',id:'root',
+   children:layers.map(layer=>({type:'layer',id:layer.id}))}});
 }
