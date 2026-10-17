@@ -32,4 +32,5 @@ jobs:
           name: r9d-provider-source-probe-BYTES-IF_VERIFIED
           path: .r9d-source-probe/
           retention-days: 30
-          if-no-files-found: warn
+          if-no-files-found: error
+          include-hidden-files: true
