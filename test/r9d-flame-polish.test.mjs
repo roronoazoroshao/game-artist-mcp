@@ -46,7 +46,7 @@ test('R9d-06 measures four source-bound cyan flame centroids without changing OR
  assert.equal(hash(atlas.png),oldAtlas);
  assert.equal(result.artisticReview,'UNSCORED');
  assert.equal(result.exportAllowed,false);
- assert.equal(result.underlightPng,null);
+ assert.ok(Buffer.isBuffer(result.underlightPng));
  for(const [id,original] of sourcePngs)assert.equal(hash(original),custody.sources.find(x=>x.partId===id).sha256);
 });
 test('R9d-06 rejects altered master ORA and source custody hashes',async()=>{
