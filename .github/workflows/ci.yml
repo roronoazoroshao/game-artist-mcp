@@ -170,6 +170,10 @@ jobs:
           LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/r9d-godot --scene res://r9c-capture.tscn 2>&1 | tee examples/spirit-lantern/generated/r9d-godot/capture.log
           grep -q "GAME_ARTIST_R9C_REAL_FRAMEBUFFER_OK" examples/spirit-lantern/generated/r9d-godot/capture.log
           node scripts/r9c-framebuffer-check.mjs examples/spirit-lantern/generated/r9d-godot/r9c-runtime-frame-0375-TECHNICAL.png
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 120s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/r9d-godot --scene res://r9d-motion-capture.tscn 2>&1 | tee examples/spirit-lantern/generated/r9d-godot/motion-capture.log
+          grep -q "R9D_REAL_GODOT_SIX_TIME_THREE_SCALE_CAPTURE_OK" examples/spirit-lantern/generated/r9d-godot/motion-capture.log
+          node scripts/r9d-motion-check.mjs examples/spirit-lantern/generated/r9d-godot
+          grep -q '"artisticReview": "UNSCORED"' examples/spirit-lantern/generated/r9d-godot/r9d-motion-qa.json
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9d-godot/import.log examples/spirit-lantern/generated/r9d-godot/runtime.log
           if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9d-godot/capture.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then exit 1; fi
 
