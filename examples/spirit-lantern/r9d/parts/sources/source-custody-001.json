@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "assetId": "spirit_lantern",
+  "provider": "Adobe Firefly",
+  "storeKind": "GIT_TRACKED_SOURCE_PNG",
+  "sourceAuthentication": "PROVIDER_URL_UNATTESTED",
+  "sources": [
+    {
+      "partId": "body",
+      "path": "examples/spirit-lantern/r9d/parts/sources/body.png",
+      "sha256": "5fe9b97002dd88bcf6a04b3eee96078db0137ec52fc464d8b363d1f00dda1d5d",
+      "bytes": 981433,
+      "canvas": [
+        1360,
+        1744
+      ],
+      "cutoutRequestId": "7b0708a3-4273-4dfa-928d-647b6474db28",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a273eef3-2e12-49ef-8204-bad3ce001af1",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "flame_a",
+      "path": "examples/spirit-lantern/r9d/parts/sources/flame_a.png",
+      "sha256": "1c846bdffbd05ca9cb625d696182fcc333d8a9bbc16311621161e0e219575124",
+      "bytes": 808059,
+      "canvas": [
+        2304,
+        1792
+      ],
+      "cutoutRequestId": "b9f99a01-aa30-4599-b0fe-e4a04235059e",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:f1cdeee3-fd98-41ac-b175-b808e073d9f1",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "flame_b",
+      "path": "examples/spirit-lantern/r9d/parts/sources/flame_b.png",
+      "sha256": "47c963b4b282a2eb348f934f64c8d473687b2ae18146e8856f1a4074bf9e6cfa",
+      "bytes": 659763,
+      "canvas": [
+        1744,
+        1360
+      ],
+      "cutoutRequestId": "ef0748cc-4df0-40be-9db2-64d1d2c444c1",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:842d7c49-0ec0-41f2-9f04-2d61ff58874d",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "flame_c",
+      "path": "examples/spirit-lantern/r9d/parts/sources/flame_c.png",
+      "sha256": "adee20a4f8b57cd22d8cf9efd0f6d44d010a89f1fef16074edde453eb9b600da",
+      "bytes": 346706,
+      "canvas": [
+        1744,
+        1360
+      ],
+      "cutoutRequestId": "a337757d-fee3-4e3b-ae16-c6055538196c",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a8f9ebd9-7895-408e-8c24-8e737feff402",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "flame_d",
+      "path": "examples/spirit-lantern/r9d/parts/sources/flame_d.png",
+      "sha256": "14e8ecfc84d7db3bc01e8a0e26ab9b1acf0cd7ac1e9986e531ed8b8d59736f21",
+      "bytes": 613326,
+      "canvas": [
+        1744,
+        1360
+      ],
+      "cutoutRequestId": "82008694-2ae0-425d-bce5-d4cd253d91da",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a66aeb87-bbb4-404c-8de8-56e8fb1fbb4e",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "talisman_left",
+      "path": "examples/spirit-lantern/r9d/parts/sources/talisman_left.png",
+      "sha256": "a8dd3c85e99c241914ffaa621447aa996befa8f079745701676296c744cfdbca",
+      "bytes": 934865,
+      "canvas": [
+        1360,
+        1744
+      ],
+      "cutoutRequestId": "317b098b-0974-481d-8785-0d265f470da7",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:31ac6c93-790a-4378-ae28-cb9b39465628",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "talisman_right",
+      "path": "examples/spirit-lantern/r9d/parts/sources/talisman_right.png",
+      "sha256": "3eaf7e990513b49b899dd4e3db189a58aa49e9d38f74d8c1b464c2fabd11281c",
+      "bytes": 880181,
+      "canvas": [
+        1360,
+        1744
+      ],
+      "cutoutRequestId": "2d0691e7-b177-4987-bbdd-6f801631c76e",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a4ba0dab-3e19-4856-b278-8ae1827f1bc6",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    },
+    {
+      "partId": "tassel",
+      "path": "examples/spirit-lantern/r9d/parts/sources/tassel.png",
+      "sha256": "89aadb6965d4b325483e256cf023369736a2970a4c57a549cbd43fddcc8f640a",
+      "bytes": 657932,
+      "canvas": [
+        1360,
+        1744
+      ],
+      "cutoutRequestId": "be42be8c-fbc0-40ef-baf9-d3b5d5c21bbb",
+      "providerSourceUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a7acba06-db48-4d27-9fef-2d22fd2804b9",
+      "verifiedPngRgba": true,
+      "rigAligned": false,
+      "rightsVerified": false
+    }
+  ],
+  "sourceCount": 8,
+  "flamePoseDiversity": [
+    {
+      "from": "flame_a",
+      "to": "flame_b",
+      "distance": 0.357421875
+    },
+    {
+      "from": "flame_b",
+      "to": "flame_c",
+      "distance": 0.4205729166666667
+    },
+    {
+      "from": "flame_c",
+      "to": "flame_d",
+      "distance": 0.3056640625
+    },
+    {
+      "from": "flame_d",
+      "to": "flame_a",
+      "distance": 0.3369140625
+    }
+  ],
+  "rightsVerified": false,
+  "rigAligned": false,
+  "artisticReview": "UNSCORED",
+  "exportAllowed": false,
+  "productionReady": false
+}
