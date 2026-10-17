@@ -168,6 +168,7 @@ jobs:
           "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/r9d-godot --editor --quit 2>&1 | tee examples/spirit-lantern/generated/r9d-godot/import.log
           "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/r9d-godot --scene res://main.tscn 2>&1 | tee examples/spirit-lantern/generated/r9d-godot/runtime.log
           grep -q "R9D06_GODOT_LOOP_WRAP_TECHNICAL_OK" examples/spirit-lantern/generated/r9d-godot/runtime.log
+          grep -q "R9D07_GODOT_GHOST_LIGHT_SYNC_TECHNICAL_OK" examples/spirit-lantern/generated/r9d-godot/runtime.log
           LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/r9d-godot --scene res://r9c-capture.tscn 2>&1 | tee examples/spirit-lantern/generated/r9d-godot/capture.log
           grep -q "GAME_ARTIST_R9C_REAL_FRAMEBUFFER_OK" examples/spirit-lantern/generated/r9d-godot/capture.log
           node scripts/r9c-framebuffer-check.mjs examples/spirit-lantern/generated/r9d-godot/r9c-runtime-frame-0375-TECHNICAL.png
