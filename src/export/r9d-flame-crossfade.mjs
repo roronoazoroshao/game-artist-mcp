@@ -139,15 +139,22 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  if(!timeMatch||!energyMatch)fail('unreadable Godot source light energy');
  const actualTimes=timeMatch[1].split(',').map(s=>Number(s.trim()));
  const actualEnergies=energyMatch[1].split(',').map(s=>Number(s.trim()));
- if(actualTimes.length!==energyKeys.length||actualEnergies.length!==energyKeys.length||
-    energyKeys.some((e,i)=>Math.abs(e.time-actualTimes[i])>0.000001||
-      Math.abs(e.value-actualEnergies[i])>0.000001))
-  fail('untrusted Godot energy source differs from authored rig');
+ if(actualTimes.length<energyKeys.length||actualTimes.length!==actualEnergies.length||
+    actualTimes[0]!==0||actualTimes.at(-1)!==2||
+    actualTimes.some((t,i)=>!Number.isFinite(t)||!Number.isFinite(actualEnergies[i])||
+      (i>0&&t<=actualTimes[i-1]))||
+    energyKeys.some(e=>{
+     const index=actualTimes.findIndex(t=>Math.abs(t-e.time)<=0.000001);
+     return index<0||Math.abs(actualEnergies[index]-e.value)>0.00001;
+    }))
+  fail('untrusted baked Godot energy differs from authored source');
  const minLight=Math.min(...energyKeys.map(k=>k.value));
  const maxLight=Math.max(...energyKeys.map(k=>k.value));
- if(maxLight-minLight<.1)fail('insufficient authored light variation');
+ if(maxLight-minLight<.1||
+    actualEnergies.some(e=>e<minLight-.0001||e>maxLight+.0001))
+  fail('baked light values exceed trusted original envelope');
  const lightAlpha=value=>round(.1+.22*(value-minLight)/(maxLight-minLight));
- const underlightKeys=energyKeys.map(k=>({t:k.time,value:color(1,lightAlpha(k.value))}));
+ const underlightKeys=actualTimes.map((t,i)=>({t,value:color(1,lightAlpha(actualEnergies[i]))}));
  const regions=new Map(atlas.regions.filter(x=>x.partId==='flame'&&x.poseId!==null).map(x=>[x.poseId,x]));
  const coeff=pose=>presentation.correctionByPose[pose];
  const textureFor=pose=>'SubResource("Atlas_flame_'+pose+'")';
@@ -208,8 +215,9 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
    underlightTrack:Object.freeze({
     source:'body/flame/SpiritLight:energy',
     path:'body/CavityUnderlight:modulate',
-    times:Object.freeze(energyKeys.map(k=>k.time)),
-    alpha:Object.freeze(energyKeys.map(k=>lightAlpha(k.value))),
+    times:Object.freeze([...actualTimes]),
+    alpha:Object.freeze(actualEnergies.map(v=>lightAlpha(v))),
+    authoredKeyTimes:Object.freeze(energyKeys.map(k=>k.time)),
     maxOpacity:.32
    }),
    authoredPoses:Object.freeze([...sequence]),
