@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   download-adobe-output:
@@ -25,12 +25,29 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Try provider URL and independently inspect returned source
         run: node scripts/r9d-source-probe.mjs
+      - name: Freeze and independently re-hash all eight PNGs before source commit
+        run: node scripts/r9d-freeze-sources.mjs
+      - name: Save validated source PNGs and custody ledger to original feature branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/feat/r9d-firefly-original-concept'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add examples/spirit-lantern/r9d/parts/sources/
+          if git diff --cached --quiet; then
+            echo "R9D_SOURCE_ALREADY_COMMITTED"
+          else
+            git commit -m "art(r9d): commit eight original verified Adobe transparent PNG cutouts"
+            git push origin HEAD:refs/heads/feat/r9d-firefly-original-concept
+          fi
       - name: Preserve exact probe diagnostics and source if valid
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: r9d-provider-source-probe-BYTES-IF_VERIFIED
-          path: .r9d-source-probe/
+          path: |
+            .r9d-source-probe/
+            examples/spirit-lantern/r9d/parts/sources/
           retention-days: 30
           if-no-files-found: error
           include-hidden-files: true
