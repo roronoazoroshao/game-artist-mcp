@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "assetId": "spirit_lantern",
+  "manifestKind": "ADOBE_GENERATED_PAINT_CANDIDATE_REQUEST_LOG",
+  "candidateSet": "r9d_parts_set_001",
+  "recordedDate": "2026-10-17",
+  "parentConceptRequestId": "eb52e735-6625-414e-bb83-bc47bb83cef7",
+  "componentCount": 8,
+  "rigPartCount": 5,
+  "flamePoseCount": 4,
+  "provider": "Adobe Firefly",
+  "operations": [
+    {
+      "partId": "body",
+      "generationRequestId": "61fee9ba-8db0-4762-b0df-1cdcea5c6ae0",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:e34e8863-6333-4935-9bf4-882a13dfe148",
+      "cutoutRequestId": "7b0708a3-4273-4dfa-928d-647b6474db28",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a273eef3-2e12-49ef-8204-bad3ce001af1",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1360,
+        "height": 1744
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "flame_a",
+      "generationRequestId": "b986e654-af24-478b-b726-e21c5c20c22a",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:ede0f384-2843-4e32-9038-f9bdc74025ab",
+      "cutoutRequestId": "b9f99a01-aa30-4599-b0fe-e4a04235059e",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:f1cdeee3-fd98-41ac-b175-b808e073d9f1",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 2304,
+        "height": 1792
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "flame_b",
+      "generationRequestId": "be921f8a-9185-40ec-b766-a28801ccf13b",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:4a007d6b-63b6-47be-a995-e6d505d4f2aa",
+      "cutoutRequestId": "665d58d5-4a6f-4dbe-b47a-1e81bfb4e698",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:c0706694-787c-495a-8e9d-431bcc8d9309",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1744,
+        "height": 1360
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "flame_c",
+      "generationRequestId": "50013db3-fb07-4aca-bd71-4104c59d6a54",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:4e37a377-d035-4e3f-b8c1-bd3a395283a3",
+      "cutoutRequestId": "fcb81cb2-7d7e-453f-946c-21afdb444434",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:2072cb43-edac-472d-a23a-3cd0c9647851",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1744,
+        "height": 1360
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "flame_d",
+      "generationRequestId": "e7d040ca-9326-42cf-bb7d-dc49fd171498",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:d3cfbd5f-6db0-4d36-b8e7-4bf14366429f",
+      "cutoutRequestId": "ba3bfa21-18cf-4339-9456-beec641f9a69",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:4658c62a-7f74-450d-9fd7-e33c53e8133b",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1744,
+        "height": 1360
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "talisman_left",
+      "generationRequestId": "cb4ae5b8-48f1-4e2e-8fd8-e99a1a819cac",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:11485a34-1aba-4a86-912c-b5aa731a7700",
+      "cutoutRequestId": "317b098b-0974-481d-8785-0d265f470da7",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:31ac6c93-790a-4378-ae28-cb9b39465628",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1360,
+        "height": 1744
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "talisman_right",
+      "generationRequestId": "cda13412-12f9-41cc-b710-f39fc0b06d4a",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:32fcb350-a92c-4028-a315-8b5c114655ab",
+      "cutoutRequestId": "2d0691e7-b177-4987-bbdd-6f801631c76e",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a4ba0dab-3e19-4856-b278-8ae1827f1bc6",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1360,
+        "height": 1744
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    },
+    {
+      "partId": "tassel",
+      "generationRequestId": "01530b71-d25a-4e77-821a-3cb649c8a3a2",
+      "generationOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:53592234-1e13-4780-8255-d8a624470228",
+      "cutoutRequestId": "be42be8c-fbc0-40ef-baf9-d3b5d5c21bbb",
+      "cutoutOutputUrl": "https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:a7acba06-db48-4d27-9fef-2d22fd2804b9",
+      "cutoutMimeType": "image/png",
+      "outputCanvas": {
+        "width": 1360,
+        "height": 1744
+      },
+      "sourcePngStored": false,
+      "sourcePngSha256": null,
+      "sourcePngByteInspected": false,
+      "rigPlacementVerified": false,
+      "commercialRightsCleared": false,
+      "artisticReview": "UNSCORED",
+      "exportAllowed": false,
+      "sourceStatus": "PROVIDER_URL_ONLY"
+    }
+  ],
+  "visualReview": {
+    "reviewer": "author-agent visual inspection",
+    "status": "CANDIDATES_UNSCORED",
+    "body": "Isolated shell visually present, cutout pixels not archived or rig aligned",
+    "talisman_left": "Distinct decorative aged paper charm candidate",
+    "talisman_right": "Distinct paper charm candidate with different ink markings",
+    "tassel": "Separate hanging tassel candidate",
+    "flame": "All four posed images appear strongly similar, potential repeated silhouette; require quantified independent per-pose divergence and rework",
+    "flamePoseGate": "UNVERIFIED_EXPECT_FAIL",
+    "noOriginalPngOrRigClaims": true
+  },
+  "publication": {
+    "paintedByAI": true,
+    "editableRigLayers": false,
+    "sourceBytesArchived": false,
+    "commercialRightsVerified": false,
+    "exportAllowed": false,
+    "artisticGO": false
+  }
+}
