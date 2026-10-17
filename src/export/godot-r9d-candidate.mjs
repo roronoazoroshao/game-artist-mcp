@@ -1,4 +1,5 @@
 import {buildR9dMaster} from '../ai-art/r9d-master.mjs';
+import {deriveR9dFrontCageRail} from '../ai-art/r9d-depth-occlusion.mjs';
 import {buildGodotRasterCutout} from './godot-raster-cutout.mjs';
 
 const fail=why=>{throw Error('R9D_GODOT_REJECTED: '+why)};
@@ -18,7 +19,44 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled}={}){
   origin:'R9A_IMPORTED_UNATTESTED'
  });
  if(original.atlas.regions.length!==9)fail('raster atlas missing flame frames');
+
+ const occlusion=deriveR9dFrontCageRail({
+  ora:master.ora,expectedOraSha256:master.oraSha256
+ });
  const files=new Map(original.files);
+ const scenePath=ROOT+'spirit_lantern.tscn';
+ let scene=String(files.get(scenePath));
+ const header=scene.match(/\\[gd_scene load_steps=(\\d+) format=3\\]/);
+ if(!header||!scene.includes('[sub_resource type="AtlasTexture"')||
+    scene.includes('R9dForeground')||!scene.includes('parent="body/flame"'))
+   fail('unexpected original Godot scene resource layout');
+ scene=scene.replace(header[0],'[gd_scene load_steps='+(Number(header[1])+1)+' format=3]');
+ const material='[ext_resource type="Texture2D" path="res://'+
+  ROOT+'foreground-rail.png" id="R9dForeground"]\\n';
+ scene=scene.replace('[sub_resource type="AtlasTexture"',material+
+  '\\n[sub_resource type="AtlasTexture"');
+ scene+='\\n[node name="FrontCageRail" type="Sprite2D" parent="body"]\\n'+
+  'texture = ExtResource("R9dForeground")\\n'+
+  'centered = false\\n'+
+  'position = Vector2(-128, -160)\\n'+
+  'z_index = 6\\n';
+ files.set(scenePath,scene);
+ files.set(ROOT+'foreground-rail.png',occlusion.runtimePng);
+ files.set(ROOT+'r9d-occlusion.json',JSON.stringify({
+  version:1,type:occlusion.maskType,
+  derivedFrom:'R9D_EIGHT_ORIGINAL_ADOBE_BODY_PIXELS_NOT_NEW_ART',
+  sourceOraSha256:occlusion.sourceOraSha256,
+  sourceBodySha256:occlusion.sourceBodySha256,
+  overlaySha256:occlusion.overlaySha256,
+  polygonMaster:occlusion.polygon,
+  visibleRailPixels:occlusion.visibleRailPixels,
+  railOverFlamePixels:occlusion.railOverFlamePixels,
+  spritePath:'body/FrontCageRail',zIndex:6,
+  sourcePaintUnchanged:true,
+  artisticReview:'UNSCORED',commercialRightsCleared:false,
+  exportAllowed:false
+ },null,2)+'\\n');
+
  const asset=JSON.parse(files.get(ROOT+'asset.json'));
  const raster=JSON.parse(files.get(ROOT+'raster-source.json'));
  const presentation={
