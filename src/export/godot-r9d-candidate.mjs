@@ -71,7 +71,8 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybri
   scene=transformed.scene;
   const header2=scene.match(/\[gd_scene load_steps=(\d+) format=3\]/);
   if(!header2||!Buffer.isBuffer(presentation.underlightPng)||
-     scene.includes('R9dUnderlight')||scene.includes('CavityUnderlight'))
+     scene.includes('R9dUnderlight')||
+     scene.includes('[node name="CavityUnderlight"'))
    fail('unexpected hybrid scene or source-light buffer');
   scene=scene.replace(header2[0],
    '[gd_scene load_steps='+(Number(header2[1])+1)+' format=3]');
