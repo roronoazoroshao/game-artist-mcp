@@ -126,6 +126,17 @@ jobs:
           grep -q "GAME_ARTIST_PHASE3_OK" examples/spirit-lantern/generated/phase3-run.log
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/phase3-import.log examples/spirit-lantern/generated/phase3-run.log
 
+      - name: Generate R9c raster-paint atlas and validate actual Godot animation runtime
+        run: |
+          node scripts/r9c-godot-demo.mjs
+          test -s examples/spirit-lantern/generated/r9c-godot/assets/spirit_lantern/atlas.png
+          test -s examples/spirit-lantern/generated/r9c-godot/assets/spirit_lantern/raster-source.json
+          grep -q '"paintedByAI": false' examples/spirit-lantern/generated/r9c-godot/r9c-evidence.json
+          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/r9c-godot --editor --quit 2>&1 | tee examples/spirit-lantern/generated/r9c-godot/import.log
+          "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/r9c-godot --scene res://main.tscn 2>&1 | tee examples/spirit-lantern/generated/r9c-godot/runtime.log
+          grep -q "GAME_ARTIST_R9C_GODOT_RUNTIME_OK" examples/spirit-lantern/generated/r9c-godot/runtime.log
+          ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9c-godot/import.log examples/spirit-lantern/generated/r9c-godot/runtime.log
+
       - name: Capture actual R7 in-game Godot screenshots and verify rendered pixels
         run: |
           sudo apt-get install -y xvfb xauth libgl1-mesa-dri
@@ -138,6 +149,13 @@ jobs:
           if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r7-showcase-run.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then
             exit 1
           fi
+
+      - name: Capture real R9c Godot raster framebuffer at t 0.375 (UNSCORED technical)
+        run: |
+          LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/r9c-godot --scene res://r9c-capture.tscn 2>&1 | tee examples/spirit-lantern/generated/r9c-godot/capture.log
+          grep -q "GAME_ARTIST_R9C_REAL_FRAMEBUFFER_OK" examples/spirit-lantern/generated/r9c-godot/capture.log
+          node scripts/r9c-framebuffer-check.mjs examples/spirit-lantern/generated/r9c-godot/r9c-runtime-frame-0375-TECHNICAL.png
+          if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9c-godot/capture.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then exit 1; fi
 
       - name: Capture R8 real Godot light-on/off and assert local environment response
         run: |
@@ -188,6 +206,13 @@ jobs:
           test -s examples/jade-spirit-stone/generated/jade-spirit-stone.svg
           test -s examples/jade-spirit-stone/generated/jade-spirit-stone.png
           test -s examples/jade-spirit-stone/generated/report.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r9c-spirit-lantern-raster-godot-TECHNICAL-UNSCORED
+          path: examples/spirit-lantern/generated/r9c-godot/
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
         with:
