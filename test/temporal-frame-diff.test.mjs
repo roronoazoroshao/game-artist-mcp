@@ -43,3 +43,10 @@ test('fail closed on dimensions, threshold, oversized arrays and corrupt data',(
  assert.throws(()=>summarizeFrameSequence([a]),/TEMPORAL_FRAME_REJECTED/);
  assert.throws(()=>summarizeFrameSequence([a,bad],{channelThreshold:-2}),/TEMPORAL_FRAME_REJECTED/);
 });
+
+
+test('aggregate temporal pixel budget prevents quadratic CPU/memory abuse',()=>{
+ const large=image(1024,1024);
+ assert.throws(()=>summarizeFrameSequence(Array(40).fill(large)),/TEMPORAL_FRAME_REJECTED/);
+ assert.throws(()=>compareDecodedFrames(image(),image(),{channelThreshold:null}),/TEMPORAL_FRAME_REJECTED/);
+});
