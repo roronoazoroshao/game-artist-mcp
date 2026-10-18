@@ -91,3 +91,30 @@ export function auditR9d07DenseTemporalFrames({baselineFrames,candidateFrames,me
   artisticReview:'UNSCORED',commercialRightsCleared:false,exportAllowed:false
  });
 }
+
+/**
+ * Explicit technical 64px regression bound, independent of ARTISTIC_GO.
+ * Accept a bounded +8 changed pixels on 4096-pixel images relative to the
+ * frozen source-identical R9d-06 baseline. This is not a perceptual score.
+ */
+export function assertR9d07TemporalStability({baseline,candidate}={}){
+ const safe=x=>x&&['p95Jump64','maxJump64'].every(k=>
+  Number.isSafeInteger(x[k])&&x[k]>=0&&x[k]<=4096);
+ if(!safe(baseline)||!safe(candidate)||
+    baseline.p95Jump64>baseline.maxJump64||
+    candidate.p95Jump64>candidate.maxJump64)
+  fail('invalid measured baseline or candidate');
+ const MAX_EXTRA_PIXELS=8;
+ if(candidate.p95Jump64>baseline.p95Jump64+MAX_EXTRA_PIXELS||
+    candidate.maxJump64>baseline.maxJump64+MAX_EXTRA_PIXELS)
+  fail('measured 64px temporal pop exceeds frozen R9d-06 +8px bound');
+ return Object.freeze({
+  status:'BOUNDED_64PX_TEMPORAL_TECHNICAL_ONLY',
+  boundExtraPixels:MAX_EXTRA_PIXELS,
+  baselineP95Jump64:baseline.p95Jump64,
+  candidateP95Jump64:candidate.p95Jump64,
+  baselineMaxJump64:baseline.maxJump64,
+  candidateMaxJump64:candidate.maxJump64,
+  artisticReview:'UNSCORED',exportAllowed:false
+ });
+}
