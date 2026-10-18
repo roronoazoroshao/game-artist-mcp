@@ -25,6 +25,8 @@ func capture() -> void:
         fail_capture("cannot create bounded screenshot output")
         return
     player.play("idle")
+    # Framebuffer capture awaits rendering; freeze playback to keep seek times exact.
+    player.pause()
     for tick: int in range(240):
         var current_time: float = float(tick) / 120.0
         player.seek(current_time, true)
