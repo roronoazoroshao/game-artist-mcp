@@ -11,8 +11,9 @@ const ROOT='assets/spirit_lantern/';
  * semantics with source-byte-bound genuine Adobe painting candidate metadata.
  * This proves game technical playback, not commercial rights or artistic GO.
  */
-export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybridFlame=true}={}){
- if(typeof hybridFlame!=='boolean')fail('unsafe R9d baseline selection');
+export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybridFlame=true,r9d06Baseline=false}={}){
+ if(typeof hybridFlame!=='boolean'||typeof r9d06Baseline!=='boolean'||(r9d06Baseline&&!hybridFlame))
+  fail('unsafe R9d baseline selection');
  if(!compiled||compiled.manifest?.assetId!=='spirit_lantern'||
     !Array.isArray(compiled.manifest?.parts)||compiled.manifest.parts.length!==5)
   fail('unrecognized canonical rig manifest');
@@ -66,7 +67,7 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybri
   });
   const transformed=transformR9dFlameScene({
    scene,atlas:original.atlas,rig:compiled.manifest,presentation,
-   durationSeconds:2
+   durationSeconds:2,r9d06Baseline
   });
   scene=transformed.scene;
   const header2=scene.match(/\[gd_scene load_steps=(\d+) format=3\]/);
@@ -85,16 +86,17 @@ export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybri
    'centered = false\n'+
    'position = Vector2(-128, -160)\n'+
    'z_index = 3\n'+
-   'modulate = Color(1, 1, 1, '+transformed.trackEvidence.underlightTrack.alpha[0]+')\n';
+   (r9d06Baseline?'':'modulate = Color(1, 1, 1, '+transformed.trackEvidence.underlightTrack.alpha[0]+')\n');
   files.set(ROOT+'flame-underlight.png',presentation.underlightPng);
   files.set(ROOT+'r9d-flame-polish.json',JSON.stringify({
-   version:2,method:'R9D07_CONTRAST_AND_GHOST_POLISH',
+   version:r9d06Baseline?1:2,
+   method:r9d06Baseline?'R9D06_HYBRID_SOURCE_PRESERVING_TWO_SPRITE_FADE':'R9D07_CONTRAST_AND_GHOST_POLISH',
    sourceOraSha256:master.oraSha256,
    atlasSha256:original.atlas.atlasSha256,
    transitionMs:transformed.trackEvidence.transitionMs,
    overlapConstrainedMs:transformed.trackEvidence.overlapConstrainedMs,
    ghostEasing:transformed.trackEvidence.ghostEasing,
-   underlightTrack:transformed.trackEvidence.underlightTrack,
+   underlightTrack:r9d06Baseline?undefined:transformed.trackEvidence.underlightTrack,
    originalPoseSequence:transformed.trackEvidence.authoredPoses,
    wrap:transformed.trackEvidence.wrap,
    poseMetrics:presentation.poseSlots,
