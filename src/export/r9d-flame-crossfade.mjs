@@ -7,7 +7,7 @@ const AUTHORED=[
  'flame_c','flame_d','flame_a','flame_b','flame_d','flame_a','flame_b','flame_c'
 ];
 const PHASE=0.125,FADE=0.055,HOLD=PHASE-FADE;
-const OVERLAP_START=0.38,OVERLAP_END=0.62;
+const OVERLAP_START=0.30,OVERLAP_END=0.74;
 const clamp01=x=>Math.max(0,Math.min(1,x));
 const fadeWeight=progress=>{const x=clamp01((progress-OVERLAP_START)/(OVERLAP_END-OVERLAP_START));return x*x*(3-2*x)};
 const N=16;
@@ -182,7 +182,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
      opacityKeys[name].push({t:end,value:color(
       coeff(phaseKeys[name].at(-1).pose).intensity,b)});
     }else{
-     for(const progress of [.38,.44,.5,.56,.62,1]){
+     for(const progress of [.30,.40,.50,.60,.74,1]{
       const tKey=round(hold+progress*FADE);
       const w=fadeWeight(progress);
       opacityKeys[name].push({t:tKey,value:color(
