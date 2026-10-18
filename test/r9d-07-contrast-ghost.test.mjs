@@ -16,18 +16,22 @@ async function project(){
  for(const x of custody.sources)pngs.set(x.partId,await readFile(new URL(x.partId+'.png',root)));
  return buildR9dCandidateGodotProject({sourcePngs:pngs,custody,compiled});
 }
-test('R9d-07 narrows the two-visible-poses portion within original 55ms transition and preserves C→A',()=>{
+test('R9d-07 smoothstep uses full approved 55ms to avoid measured temporal popping and preserves C→A',()=>{
  const mix=t=>sampleR9dFlameMix({sequence:frames,timeSeconds:t});
  for(const t of [.070,.075,.085,.090,.108,.115,.124,.125,1.999,2]){
   const p=mix(t);
   assert.ok(Math.abs(p.primary.alpha+p.secondary.alpha-1)<1e-6);
  }
- assert.ok(mix(.095).secondary.alpha<.32,'early overlap must be substantially below R9d-06 linear crossfade');
- assert.ok(mix(.105).secondary.alpha>.80&&mix(.105).secondary.alpha<.96,
-  'a 120Hz frame should sample an intermediate fade, not an almost instantaneous jump');
- assert.ok(mix(.090).secondary.alpha>.03&&mix(.090).secondary.alpha<.15,
-  'fade must begin early enough to expose an intermediate 120Hz sample');
- assert.ok(mix(.085).secondary.alpha<.02);
+ assert.ok(mix(.085).secondary.alpha>.12&&mix(.085).secondary.alpha<.25,
+  'must already progress at an early 120Hz sample rather than snap at midpoint');
+ assert.ok(mix(.090).secondary.alpha>.25&&mix(.090).secondary.alpha<.4,
+  '55ms smoothstep must have intermediate samples on the rising edge');
+ assert.ok(mix(.095).secondary.alpha>.36&&mix(.095).secondary.alpha<.5,
+  'must avoid compressed last-moment opacity changes');
+ assert.ok(mix(.105).secondary.alpha>.62&&mix(.105).secondary.alpha<.8,
+  'must avoid 13.2ms pose snapping in real temporal captures');
+ assert.ok(mix(.115).secondary.alpha>.85&&mix(.115).secondary.alpha<.98,
+  'must approach next flame before phase boundary');
  assert.equal(mix(2).primary.pose,'flame_a');
 });
 test('R9d-07 synchronizes original in-cage underlight with same authored SpiritLight key times',async()=>{
