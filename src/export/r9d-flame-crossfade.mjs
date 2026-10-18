@@ -182,7 +182,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
      opacityKeys[name].push({t:end,value:color(
       coeff(phaseKeys[name].at(-1).pose).intensity,b)});
     }else{
-     for(const progress of [.30,.40,.50,.60,.74,1]{
+     for(const progress of [.30,.40,.50,.60,.74,1]){
       const tKey=round(hold+progress*FADE);
       const w=fadeWeight(progress);
       opacityKeys[name].push({t:tKey,value:color(
