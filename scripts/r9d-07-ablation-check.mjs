@@ -8,7 +8,8 @@ const expected=[
  ['R9D07_POLISHED','r9d-godot'],
  ['R9D07_FADE_ONLY','r9d-07-ablation-fade-godot'],
  ['R9D07_LIGHT_ONLY','r9d-07-ablation-light-godot'],
- ['R9D07_SOFT_60HZ','r9d-07-ablation-soft-godot']
+ ['R9D07_SOFT_60HZ','r9d-07-ablation-soft-godot'],
+ ['R9D07_SMOOTH_FULL_55MS','r9d-07-ablation-full-godot']
 ];
 const ORA='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
 const readSet=async dir=>{
