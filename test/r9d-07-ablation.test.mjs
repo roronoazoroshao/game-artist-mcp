@@ -18,8 +18,8 @@ const meta=project=>JSON.parse(project.files.get('assets/spirit_lantern/r9d-flam
 const SHA='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
 
 test('R9d-07 P1 isolated ablations split crossfade from underlight without touching source or rights',()=>{
- const fade=build('FADE_ONLY'),light=build('LIGHT_ONLY'),soft=build('SOFT_60HZ');
- for(const p of [fade,light,soft]){
+ const fade=build('FADE_ONLY'),light=build('LIGHT_ONLY'),soft=build('SOFT_60HZ'),full=build('SMOOTH_FULL_55MS');
+ for(const p of [fade,light,soft,full]){
   assert.equal(p.master.oraSha256,SHA);
   assert.equal(p.atlas.regions.length,9);
   assert.equal(p.evidence.exportAllowed,false);
@@ -31,11 +31,15 @@ test('R9d-07 P1 isolated ablations split crossfade from underlight without touch
  assert.equal(meta(fade).ablation,'FADE_ONLY');
  assert.equal(meta(light).ablation,'LIGHT_ONLY');
  assert.equal(meta(soft).ablation,'SOFT_60HZ');
+ assert.equal(meta(full).ablation,'SMOOTH_FULL_55MS');
+ assert.equal(meta(full).ghostEasing,'SMOOTHSTEP_FULL_55MS');
+ assert.equal(meta(full).overlapConstrainedMs,55);
  assert.equal((scene(fade).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,0);
  assert.equal((scene(light).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,1);
  assert.equal((scene(soft).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,1);
  assert.equal(meta(light).ghostEasing,'R9D06_LINEAR_55MS');
  assert.ok(meta(soft).overlapConstrainedMs>=28,'enough time for 60Hz intermediate frames');
+ assert.equal((scene(full).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,1);
  assert.equal(meta(fade).underlightTrack,null);
  assert.ok(meta(light).underlightTrack.times.length>12);
  assert.throws(()=>build('ARBITRARY'),/R9D_GODOT_REJECTED/);
@@ -55,5 +59,9 @@ test('R9d-07 softer transition is complementary, finite and consistent at 60Hz o
  assert.equal(soft(0).primary.pose,'flame_a');
  assert.equal(soft(2).primary.pose,'flame_a');
  assert.equal(soft(2).primary.alpha,1);
+ const full=t=>sampleR9dFlameMix({sequence,timeSeconds:t,fadeProfile:'SMOOTH_FULL_55MS'});
+ assert.ok(full(.090).secondary.alpha>0&&full(.090).secondary.alpha<.5);
+ assert.ok(full(.110).secondary.alpha>.5&&full(.110).secondary.alpha<1);
+ assert.equal(full(2).primary.alpha,1);
  assert.throws(()=>sampleR9dFlameMix({sequence,timeSeconds:.1,fadeProfile:'UNTRUSTED'}),/R9D_CROSSFADE_REJECTED/);
 });
