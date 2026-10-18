@@ -9,6 +9,24 @@ const ORA='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
 const fail=(why)=>{throw Error('R9D_REVIEW_PACKET_REJECTED: '+why);};
 const obj=v=>v!==null&&typeof v==='object'&&!Array.isArray(v);
 const digest=b=>createHash('sha256').update(b).digest('hex');
+const PNG_MAGIC=Buffer.from('89504e470d0a1a0a','hex');
+/** Parse the fixed 33-byte PNG signature/IHDR *before* invoking the inflater. */
+export function preflightR9dPngHeader(bytes,size){
+ if(!Buffer.isBuffer(bytes)||bytes.length<33||
+    ![64,128,512].includes(size)||
+    !bytes.subarray(0,8).equals(PNG_MAGIC)||
+    bytes.readUInt32BE(8)!==13||bytes.toString('ascii',12,16)!=='IHDR'||
+    bytes.readUInt32BE(16)!==size||bytes.readUInt32BE(20)!==size||
+    bytes[24]!==8||bytes[25]!==6||bytes[26]!==0||bytes[27]!==0||bytes[28]!==0)
+  fail('PNG IHDR dimension/format violates fixed framebuffer contract');
+ return true;
+}
+async function readWithinBudget(path,maxBytes){
+ const stat=await lstat(path);
+ if(!stat.isFile()||stat.size<1||stat.size>maxBytes)
+  fail('file exceeds static byte budget');
+ return readFile(path);
+}
 const PUBLIC_NAMES=['README.md','viewer.html','scorecard-template.json','manifest.json'];
 const KEYS=['kind','sourceHead','sourceRun','sourceArtifactId','sourceOraSha256','sealCommitmentSha256','sampling','physicalDisplayTimingMeasured','exportAllowed','rightsVerified','humanReviewStatus','framesPerVariant60Hz','static512TimesMs','files'];
 function expectedImageSizes(m){
@@ -73,8 +91,7 @@ export async function verifyR9dReviewPacket({root,expectedSourceHead}={}){
  if(!found.includes('manifest.json'))fail('missing manifest');
  let m;
  try{
-  const bytes=await readFile(manifestPath);
-  if(bytes.length>200000)fail('manifest byte budget');
+  const bytes=await readWithinBudget(manifestPath,200000);
   m=JSON.parse(bytes.toString('utf8'));
  }catch(e){if(e.message?.startsWith('R9D_REVIEW_PACKET_REJECTED:'))throw e;fail('invalid manifest');}
  const summary=validateR9dReviewManifest(m,{expectedSourceHead});
@@ -84,24 +101,25 @@ export async function verifyR9dReviewPacket({root,expectedSourceHead}={}){
   fail('unexpected file (including possible sealed mapping)');
  let total=0;
  for(const [name,size] of expected){
-  const bytes=await readFile(join(base,...name.split('/')));
+  const bytes=await readWithinBudget(join(base,...name.split('/')),4194304);
   total+=bytes.length;
   if(bytes.length<100||bytes.length>4194304||total>67108864)
    fail('source bytes outside bounded budget');
   if(digest(bytes)!==m.files[name])fail('source PNG SHA mismatch: '+name);
+  preflightR9dPngHeader(bytes,size);
   let png;
   try{png=PNG.sync.read(bytes,{checkCRC:true});}
   catch{fail('invalid real PNG/CRC: '+name);}
   if(png.width!==size||png.height!==size||png.data.length!==size*size*4)
    fail('PNG size mismatch: '+name);
  }
- const template=JSON.parse(await readFile(join(base,'scorecard-template.json'),'utf8'));
+ const template=JSON.parse((await readWithinBudget(join(base,'scorecard-template.json'),65536)).toString('utf8'));
  if(template?.reviewerDeclaration!==null||
     template?.packetZipSha256!==null||
     template?.preferredVariant!==null||
     Object.values(template?.scores_1to5??{}).some(v=>v!==null))
   fail('reviewer template contains scores, reviewer signature or fabricated verdict');
- const html=await readFile(join(base,'viewer.html'),'utf8');
+ const html=(await readWithinBudget(join(base,'viewer.html'),500000)).toString('utf8');
  const csp=html.match(/<meta\s+http-equiv="Content-Security-Policy"\s+content="([^"]+)"/i)?.[1];
  if(!csp||!csp.includes("default-src 'none'")||
     !csp.includes("connect-src 'none'")||!csp.includes("form-action 'none'")||

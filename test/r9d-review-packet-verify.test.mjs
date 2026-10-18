@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateR9dReviewManifest} from '../src/ai-art/r9d-review-packet-verify.mjs';
+import {validateR9dReviewManifest,preflightR9dPngHeader} from '../src/ai-art/r9d-review-packet-verify.mjs';
 
 const SHA='1'.repeat(64),ORA='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
 const HEAD='e0bcf74feb7a92f4717669eae5f34de6423079d2';
@@ -55,4 +55,17 @@ test('R9d blind packet manifest requires pinned source identity and non-forgeabl
  invalid(()=>validateR9dReviewManifest(m,{expectedSourceHead:'0'.repeat(40)}));
  invalid(()=>validateR9dReviewManifest({...m,sourceOraSha256:'f'.repeat(64)},{expectedSourceHead:HEAD}));
  invalid(()=>validateR9dReviewManifest({...m,sealCommitmentSha256:'wrong'},{expectedSourceHead:HEAD}));
+});
+
+test('R9d PNG bounded header preflight rejects massive declared dimensions before decoder inflation',()=>{
+ const b=Buffer.alloc(33);
+ Buffer.from('89504e470d0a1a0a','hex').copy(b);
+ b.writeUInt32BE(13,8);b.write('IHDR',12);
+ b.writeUInt32BE(64,16);b.writeUInt32BE(64,20);
+ b[24]=8;b[25]=6;b[26]=0;b[27]=0;b[28]=0;
+ assert.equal(preflightR9dPngHeader(b,64),true);
+ const oversized=Buffer.from(b);oversized.writeUInt32BE(0x7fffffff,16);
+ invalid(()=>preflightR9dPngHeader(oversized,64));
+ const nonrgba=Buffer.from(b);nonrgba[25]=2;
+ invalid(()=>preflightR9dPngHeader(nonrgba,64));
 });
