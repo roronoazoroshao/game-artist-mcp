@@ -179,14 +179,16 @@ jobs:
           ! grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9d-godot/import.log examples/spirit-lantern/generated/r9d-godot/runtime.log
           if grep -E "SCRIPT ERROR|Parse Error|ERROR:|WARNING:" examples/spirit-lantern/generated/r9d-godot/capture.log | grep -vF "WARNING: Could not set V-Sync mode, as changing V-Sync mode is not supported by the graphics driver."; then exit 1; fi
 
-      - name: Compare R9d-05 baseline vs R9d-07 polished in same pinned Godot
+      - name: Compare true R9d-06 baseline vs R9d-07 polished in same pinned Godot
         run: |
           set -euo pipefail
-          R9D_RENDER_VARIANT=R9D05_BASELINE node scripts/r9d-real-godot-demo.mjs
-          BASE=examples/spirit-lantern/generated/r9d-05-baseline-godot
+          R9D_RENDER_VARIANT=R9D06_BASELINE node scripts/r9d-real-godot-demo.mjs
+          BASE=examples/spirit-lantern/generated/r9d-06-baseline-godot
           HYBRID=examples/spirit-lantern/generated/r9d-godot
           test -s "$BASE/assets/spirit_lantern/atlas.png"
           "${GODOT_BIN}" --headless --path "$BASE" --editor --quit 2>&1 | tee "$BASE/import.log"
+          "${GODOT_BIN}" --headless --path "$BASE" --scene res://main.tscn 2>&1 | tee "$BASE/runtime.log"
+          grep -q "R9D06_GODOT_LOOP_WRAP_TECHNICAL_OK" "$BASE/runtime.log"
           LIBGL_ALWAYS_SOFTWARE=1 timeout 120s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path "$BASE" --scene res://r9d-motion-capture.tscn 2>&1 | tee "$BASE/motion-capture.log"
           grep -q "R9D06_REAL_GODOT_FOURTEEN_TIME_THREE_SCALE_CAPTURE_OK" "$BASE/motion-capture.log"
           grep -q "R9D06_REAL_GODOT_FOURTEEN_TIME_THREE_SCALE_CAPTURE_OK" "$HYBRID/motion-capture.log"
@@ -198,7 +200,7 @@ jobs:
       - name: Probe full R9d-07 loop at 120Hz and 60Hz derived frames
         run: |
           set -euo pipefail
-          BASE=examples/spirit-lantern/generated/r9d-05-baseline-godot
+          BASE=examples/spirit-lantern/generated/r9d-06-baseline-godot
           POLISH=examples/spirit-lantern/generated/r9d-godot
           for path in "$BASE" "$POLISH"; do
             LIBGL_ALWAYS_SOFTWARE=1 timeout 240s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path "$path" --scene res://r9d-07-temporal-capture.tscn 2>&1 | tee "$path/temporal-capture.log"
@@ -269,7 +271,7 @@ jobs:
             examples/spirit-lantern/generated/r9d-master/
             examples/spirit-lantern/generated/r9d-godot/
             examples/spirit-lantern/generated/r9d-06-baseline/
-            examples/spirit-lantern/generated/r9d-05-baseline-godot/
+            examples/spirit-lantern/generated/r9d-06-baseline-godot/
           if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
