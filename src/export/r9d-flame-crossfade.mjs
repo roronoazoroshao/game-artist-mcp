@@ -7,7 +7,7 @@ const AUTHORED=[
  'flame_c','flame_d','flame_a','flame_b','flame_d','flame_a','flame_b','flame_c'
 ];
 const PHASE=0.125,FADE=0.055,HOLD=PHASE-FADE;
-const PROFILE_BOUNDS=Object.freeze({BOUNDED_13MS:[.30,.74],SOFT_60HZ:[.18,.82],LINEAR_55MS:[0,1]});
+const PROFILE_BOUNDS=Object.freeze({BOUNDED_13MS:[.30,.74],SOFT_60HZ:[.18,.82],SMOOTH_FULL_55MS:[0,1],LINEAR_55MS:[0,1]});
 const clamp01=x=>Math.max(0,Math.min(1,x));
 const fadeWeight=(progress,profile='BOUNDED_13MS')=>{
  const bounds=PROFILE_BOUNDS[profile];
@@ -121,10 +121,11 @@ function validate({scene,atlas,rig,presentation,durationSeconds}){
 }
 export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSeconds=2,r9d06Baseline=false,ablation=null}={}){
  if(typeof r9d06Baseline!=='boolean'||
-    ![null,'FADE_ONLY','LIGHT_ONLY','SOFT_60HZ'].includes(ablation)||
+    ![null,'FADE_ONLY','LIGHT_ONLY','SOFT_60HZ','SMOOTH_FULL_55MS'].includes(ablation)||
     (r9d06Baseline&&ablation!==null))fail('invalid baseline or ablation mode');
  const linearFade=r9d06Baseline||ablation==='LIGHT_ONLY';
  const softFade=ablation==='SOFT_60HZ';
+ const fullFade=ablation==='SMOOTH_FULL_55MS';
  const syncUnderlight=!r9d06Baseline&&ablation!=='FADE_ONLY';
  validate({scene,atlas,rig,presentation,durationSeconds});
  const mark='[sub_resource type="Animation" id="Animation_idle"]';
@@ -192,9 +193,10 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
      opacityKeys[name].push({t:end,value:color(
       coeff(phaseKeys[name].at(-1).pose).intensity,b)});
     }else{
-     for(const progress of (softFade?[.18,.30,.40,.50,.60,.74,.82,1]:[.30,.40,.50,.60,.74,1])){
+     for(const progress of (fullFade?[.12,.20,.30,.40,.50,.60,.70,.80,.90,1]:
+      softFade?[.18,.30,.40,.50,.60,.74,.82,1]:[.30,.40,.50,.60,.74,1])){
       const tKey=round(hold+progress*FADE);
-      const w=fadeWeight(progress,softFade?'SOFT_60HZ':'BOUNDED_13MS');
+      const w=fadeWeight(progress,fullFade?'SMOOTH_FULL_55MS':softFade?'SOFT_60HZ':'BOUNDED_13MS');
       opacityKeys[name].push({t:tKey,value:color(
        coeff(phaseKeys[name].at(-1).pose).intensity,a+(b-a)*w)});
      }
@@ -229,8 +231,10 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  return Object.freeze({
   scene:out,trackEvidence:Object.freeze({
    phaseCount:N,transitionMs:55,durationSeconds:2,
-   overlapConstrainedMs:linearFade?55:round(FADE*(softFade?.82-.18:.74-.30)*1000),
-   ghostEasing:linearFade?'R9D06_LINEAR_55MS':softFade?'SOFT_SMOOTHSTEP_60HZ':'BOUNDED_SMOOTHSTEP_38_62',
+   overlapConstrainedMs:linearFade||fullFade?55:
+    round(FADE*(softFade?(.82-.18):(.74-.30))*1000),
+   ghostEasing:linearFade?'R9D06_LINEAR_55MS':
+    fullFade?'SMOOTHSTEP_FULL_55MS':softFade?'SOFT_SMOOTHSTEP_60HZ':'BOUNDED_SMOOTHSTEP_38_62',
    ablation,
    underlightSyncEnabled:syncUnderlight,
    underlightTrack:syncUnderlight?Object.freeze({
