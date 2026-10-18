@@ -93,9 +93,10 @@ function applyOps(layers,ops,w,h,budget){
   if(!obj(op))fail('invalid paint operation');
   if(op.type==='layer.import_png'){
    exact(op,['type','layerId','pngBase64','sourceSha256','sourceLabel','rightsVerified']);
+   if(budget.imports>=MAX_IMPORTS)fail('import quota exhausted');
    if(typeof op.layerId!=='string'||!ID.test(op.layerId)||layers.length>=8||
-      layers.some(l=>l.id===op.layerId)||budget.imports>=MAX_IMPORTS||op.rightsVerified!==false)
-     fail('invalid imported layer or import quota');
+      layers.some(l=>l.id===op.layerId)||op.rightsVerified!==false)
+     fail('invalid imported layer or unverified-rights contract');
    if(typeof op.sourceLabel!=='string'||!/^[a-zA-Z0-9][ a-zA-Z0-9_.-]{0,47}$/.test(op.sourceLabel))
      fail('invalid source label');
    const bytes=decodeImport(op.pngBase64,w,h);

@@ -133,3 +133,11 @@ test('Godot export of imported painted image preserves non-attested original sou
  assert.deepEqual(evidence.importedSources,[{layerId:'original',sourceSha256,sourceLabel:'user-source',rightsVerified:false}]);
  assert.equal(evidence.exportAllowed,false);
 }));
+test('restore must not permit a third lifetime import via journal replay reset',async()=>sandbox(async({paint})=>{
+ const src=fixture();
+ await paint.importPng('painting',{expectedRevision:0,layerId:'a',imageBase64:src,sourceLabel:'one'});
+ await paint.importPng('painting',{expectedRevision:1,layerId:'b',imageBase64:src,sourceLabel:'two'});
+ await paint.restore('painting',{expectedRevision:2,targetRevision:0});
+ await assert.rejects(paint.importPng('painting',{expectedRevision:3,layerId:'c',imageBase64:src,sourceLabel:'three'}),/PAINT_REJECTED: import quota/);
+ assert.equal((await paint.load('painting')).revision,3);
+}));
