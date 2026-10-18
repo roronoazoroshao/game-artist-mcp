@@ -13,7 +13,7 @@ if(before.presentationVariant!=='R9D06_BASELINE'||after.presentationVariant!=='R
  before.exportAllowed!==false||after.exportAllowed!==false||
  before.artisticReview!=='UNSCORED'||after.artisticReview!=='UNSCORED')
  throw Error('R9D07_SOURCE_OR_VARIANT_REJECTED');
-const TIMES=[0,1,69,70,95,124,125,180,375,750,1250,1875,1945,1999];
+const TIMES=[0,1,69,70,95,105,124,125,180,375,750,1250,1875,1945,1999];
 const sizes=[512,128,64];
 const get=async dir=>{
  const out=new Map();
