@@ -6,7 +6,7 @@
  * file system access, decoder or exported asset is included.
  */
 const fail=reason=>{throw Error('TEMPORAL_FRAME_REJECTED: '+reason)};
-const MAX_SIDE=2048,MAX_FRAMES=1000;
+const MAX_SIDE=2048,MAX_FRAMES=1000,MAX_TOTAL_PIXELS=32*1024*1024;
 function checked(frame){
  if(!frame||typeof frame!=='object'||
     !Number.isSafeInteger(frame.width)||!Number.isSafeInteger(frame.height)||
@@ -19,11 +19,12 @@ function checked(frame){
 }
 function optionsOf(options){
  if(!options||typeof options!=='object'||Array.isArray(options)||
-    !Object.keys(options).every(k=>k==='channelThreshold')||
-    !Number.isSafeInteger(options.channelThreshold??16)||
-    (options.channelThreshold??16)<0||(options.channelThreshold??16)>255)
+    !Object.keys(options).every(k=>k==='channelThreshold'))
   fail('invalid channel threshold/options');
- return options.channelThreshold??16;
+ const threshold=Object.hasOwn(options,'channelThreshold')?options.channelThreshold:16;
+ if(!Number.isSafeInteger(threshold)||threshold<0||threshold>255)
+  fail('invalid channel threshold/options');
+ return threshold;
 }
 /** Strict > threshold on the maximum of the four RGBA channel deltas. */
 export function compareDecodedFrames(before,after,options={}){
@@ -55,6 +56,9 @@ export function summarizeFrameSequence(frames,options={}){
   fail('invalid temporal frame count');
  const threshold=optionsOf(options);
  const first=checked(frames[0]);
+ // Cap total work even when a caller repeats the same decoded object.
+ if(frames.length*first.width*first.height>MAX_TOTAL_PIXELS)
+  fail('temporal sequence exceeds aggregate pixel-work budget');
  for(const frame of frames){
   checked(frame);
   if(frame.width!==first.width||frame.height!==first.height)
