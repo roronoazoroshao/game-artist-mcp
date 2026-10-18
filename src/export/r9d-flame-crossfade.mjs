@@ -7,9 +7,14 @@ const AUTHORED=[
  'flame_c','flame_d','flame_a','flame_b','flame_d','flame_a','flame_b','flame_c'
 ];
 const PHASE=0.125,FADE=0.055,HOLD=PHASE-FADE;
-const OVERLAP_START=0.30,OVERLAP_END=0.74;
+const PROFILE_BOUNDS=Object.freeze({BOUNDED_13MS:[.30,.74],SOFT_60HZ:[.18,.82],LINEAR_55MS:[0,1]});
 const clamp01=x=>Math.max(0,Math.min(1,x));
-const fadeWeight=progress=>{const x=clamp01((progress-OVERLAP_START)/(OVERLAP_END-OVERLAP_START));return x*x*(3-2*x)};
+const fadeWeight=(progress,profile='BOUNDED_13MS')=>{
+ const bounds=PROFILE_BOUNDS[profile];
+ if(!bounds)fail('untrusted fade profile');
+ const x=clamp01((progress-bounds[0])/(bounds[1]-bounds[0]));
+ return profile==='LINEAR_55MS'?x:x*x*(3-2*x);
+};
 const N=16;
 const round=x=>Math.round(x*1000000)/1000000;
 const v2=xy=>'Vector2('+xy.map(x=>Number(x.toFixed(6))).join(', ')+')';
@@ -20,13 +25,13 @@ const validPoseSequence=s=>Array.isArray(s)&&s.length===N&&s.join('|')===AUTHORE
 
 /** Alternate which sprite owns the visible pose, so updates always occur on
  * the HIDDEN sprite at each 125ms boundary. This avoids opacity reset flashes. */
-export function sampleR9dFlameMix({sequence,timeSeconds}={}){
+export function sampleR9dFlameMix({sequence,timeSeconds,fadeProfile='BOUNDED_13MS'}={}){
  if(!validPoseSequence(sequence)||!Number.isFinite(timeSeconds)||
-    timeSeconds<0||timeSeconds>2)fail('invalid flame schedule or time');
+    timeSeconds<0||timeSeconds>2||!Object.hasOwn(PROFILE_BOUNDS,fadeProfile))fail('invalid flame schedule or time');
  const t=timeSeconds===2?0:timeSeconds;
  const index=Math.min(15,Math.floor(t/PHASE));
  const inSlot=t-index*PHASE;
- const blend=fadeWeight((inSlot-HOLD)/FADE);
+ const blend=fadeWeight((inSlot-HOLD)/FADE,fadeProfile);
  const a=sequence[index],b=sequence[(index+1)%N];
  if(index%2===0)return Object.freeze({
   phase:index,primary:{pose:a,alpha:1-blend},
@@ -114,8 +119,13 @@ function validate({scene,atlas,rig,presentation,durationSeconds}){
     fail('untrusted pose presentation correction');
  }
 }
-export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSeconds=2,r9d06Baseline=false}={}){
- if(typeof r9d06Baseline!=='boolean')fail('invalid baseline mode');
+export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSeconds=2,r9d06Baseline=false,ablation=null}={}){
+ if(typeof r9d06Baseline!=='boolean'||
+    ![null,'FADE_ONLY','LIGHT_ONLY','SOFT_60HZ'].includes(ablation)||
+    (r9d06Baseline&&ablation!==null))fail('invalid baseline or ablation mode');
+ const linearFade=r9d06Baseline||ablation==='LIGHT_ONLY';
+ const softFade=ablation==='SOFT_60HZ';
+ const syncUnderlight=!r9d06Baseline&&ablation!=='FADE_ONLY';
  validate({scene,atlas,rig,presentation,durationSeconds});
  const mark='[sub_resource type="Animation" id="Animation_idle"]';
  const after='[sub_resource type="AnimationLibrary" id="AnimationLibrary_main"]';
@@ -177,14 +187,14 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
    ['secondary',1-primaryAtStart,1-primaryAtEnd]]){
     if(i===0)opacityKeys[name].push({t,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,a)});
     opacityKeys[name].push({t:hold,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,a)});
-    if(r9d06Baseline){
-     // Frozen R9d-06: original 55ms linear crossfade.
+    if(linearFade){
+     // Frozen R9d-06 (and isolated light test): original 55ms linear crossfade.
      opacityKeys[name].push({t:end,value:color(
       coeff(phaseKeys[name].at(-1).pose).intensity,b)});
     }else{
-     for(const progress of [.30,.40,.50,.60,.74,1]){
+     for(const progress of (softFade?[.18,.30,.40,.50,.60,.74,.82,1]:[.30,.40,.50,.60,.74,1])){
       const tKey=round(hold+progress*FADE);
-      const w=fadeWeight(progress);
+      const w=fadeWeight(progress,softFade?'SOFT_60HZ':'BOUNDED_13MS');
       opacityKeys[name].push({t:tKey,value:color(
        coeff(phaseKeys[name].at(-1).pose).intensity,a+(b-a)*w)});
      }
@@ -200,7 +210,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  for(const [name,node] of [['primary','body/flame/Sprite2D'],['secondary','body/flame/SpriteBlend2D']]){
   tracks.push({path:node+':modulate',discrete:false,keys:opacityKeys[name]});
  }
- if(!r9d06Baseline)tracks.push({path:'body/CavityUnderlight:modulate',discrete:false,keys:underlightKeys});
+ if(syncUnderlight)tracks.push({path:'body/CavityUnderlight:modulate',discrete:false,keys:underlightKeys});
  // Exact preservation of every unrelated track, including body motion, swing,
  // current SpiritLight and any non-flame transform.
  const rewritten=prefix+segments.slice(0,10).join('')+
@@ -211,7 +221,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
   'position = '+v2(coeff(sequence[1]).correctedSpriteOffset)+'\n'+
   'modulate = Color(1, 1, 1, 0)\n';
  const out=fragment+secondary;
- if((out.match(/tracks\/\d+\/type = "value"/g)||[]).length!==(r9d06Baseline?16:17)||
+ if((out.match(/tracks\/\d+\/type = "value"/g)||[]).length!==(syncUnderlight?17:16)||
     (out.match(/\[node name="SpriteBlend2D"/g)||[]).length!==1)
    fail('animation scene/resource count failure');
  const positions={};
@@ -219,17 +229,18 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  return Object.freeze({
   scene:out,trackEvidence:Object.freeze({
    phaseCount:N,transitionMs:55,durationSeconds:2,
-   overlapConstrainedMs:r9d06Baseline?55:round(FADE*(OVERLAP_END-OVERLAP_START)*1000),
-   ghostEasing:r9d06Baseline?'R9D06_LINEAR_55MS':'BOUNDED_SMOOTHSTEP_38_62',
-   underlightSyncEnabled:!r9d06Baseline,
-   underlightTrack:Object.freeze({
+   overlapConstrainedMs:linearFade?55:round(FADE*(softFade?.82-.18:.74-.30)*1000),
+   ghostEasing:linearFade?'R9D06_LINEAR_55MS':softFade?'SOFT_SMOOTHSTEP_60HZ':'BOUNDED_SMOOTHSTEP_38_62',
+   ablation,
+   underlightSyncEnabled:syncUnderlight,
+   underlightTrack:syncUnderlight?Object.freeze({
     source:'body/flame/SpiritLight:energy',
     path:'body/CavityUnderlight:modulate',
     times:Object.freeze([...actualTimes]),
     alpha:Object.freeze(actualEnergies.map(v=>lightAlpha(v))),
     authoredKeyTimes:Object.freeze(energyKeys.map(k=>k.time)),
     maxOpacity:.72
-   }),
+   }):null,
    authoredPoses:Object.freeze([...sequence]),
    wrap:'C_TO_A',sourceAtlasSha256:atlas.atlasSha256,
    secondaryNode:'body/flame/SpriteBlend2D',
