@@ -71,6 +71,9 @@ try {
   const listed = await call(2, "tools/list");
   const names = listed.result.tools.map((tool) => tool.name);
   assert.deepEqual(names, [
+    "paint_import_png",
+    "paint_diff_preview",
+    "paint_evaluate",
     "paint_open",
     "paint_apply",
     "paint_preview",
@@ -271,6 +274,24 @@ try {
   const afterRestore=await call(36,"tools/call",{name:"paint_compare",arguments:{
     asset_id:"smoke_stone",baseline_revision:0,candidate_revision:2}});
   assert.equal(JSON.parse(afterRestore.result.content[0].text).changedPixels,0);
+  const incoming=await call(38,"tools/call",{name:"paint_import_png",arguments:{
+    asset_id:"smoke_stone",expected_revision:2,layer_id:"reference",
+    image_base64:Buffer.from(image.data,"base64").toString("base64"),source_label:"local-generated-vector"
+  }});
+  assert.equal(incoming.result.isError,undefined,JSON.stringify(incoming).slice(0,1500));
+  const diffResult=await call(39,"tools/call",{name:"paint_diff_preview",arguments:{
+    asset_id:"smoke_stone",baseline_revision:2,candidate_revision:3,size:64
+  }});
+  assert.equal(diffResult.result.isError,undefined);
+  assert.ok(diffResult.result.content.find(x=>x.type==="image"));
+  assert.ok(JSON.parse(diffResult.result.content[0].text).changedPixels>0);
+  const evaluated=await call(40,"tools/call",{name:"paint_evaluate",arguments:{
+    asset_id:"smoke_stone",baseline_revision:2,candidate_revision:3,
+    min_coverage:0.001,max_coverage:1,min_changed_pixels:1,max_iterations:3
+  }});
+  assert.equal(evaluated.result.isError,undefined);
+  assert.equal(JSON.parse(evaluated.result.content[0].text).result,"OBJECTIVE_TARGET_MET");
+  assert.equal(JSON.parse(evaluated.result.content[0].text).artisticReview,"UNSCORED");
   const unchangedVector=JSON.parse((await call(37,"tools/call",{
     name:"asset_get",arguments:{asset_id:"smoke_stone"}})).result.content[0].text);
   assert.equal(unchangedVector.revision,state.revision);

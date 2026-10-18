@@ -66,6 +66,8 @@ POC-005B is merged: opt-in material-aware Art IR, deterministic gradient/hand-di
 
 The optional `paint_*` tool family lets an MCP-capable vision host paint original RGBA strokes, mask/layer them, inspect 64/128px previews, compare historical revisions, roll back and generate a static Godot Sprite2D package. All decisions remain agent-directed and technical; no human-review or rights-clearance claims are inferred. See [Paint V1 workflow and limits](docs/workstation/PAINT_V1.md).
 
+**V2 raster import and visual-feedback tools (stacked PR):** `paint_import_png`, `paint_diff_preview` and `paint_evaluate` allow a host to bring a bounded, source-hashed PNG into an editable layer, observe changed pixels, and use an objective retry budget. This is **not** an autonomous art-director model or artistic approval. See [R2 guide](docs/workstation/PAINT_V2.md).
+
 ## Local development
 
 Requirements:

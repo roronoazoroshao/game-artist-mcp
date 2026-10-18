@@ -19,7 +19,7 @@ import { buildGodotV2Project } from "../export/godot-cutout-v2.mjs";
 import { publishGodotPackage } from "../export/atomic-package.mjs";
 import { renderCutoutPreview } from "../cutout/preview.mjs";
 import { AssetStore } from "./store.mjs";
-import {PaintWorkspace,renderPaint,analyzePaintDifference} from "../ai-art/paint-workstation.mjs";
+import {PaintWorkspace,renderPaint,analyzePaintDifference,renderPaintDiff,evaluatePaintProgress} from "../ai-art/paint-workstation.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
 
@@ -125,6 +125,29 @@ async function writeLegacyExportFile(path, bytes) {
 }
 
 const tools = [
+  {
+    name:"paint_import_png",
+    description:"Import user-provided authored RGBA PNG bytes into a separate editable layer, source hash pinned but copyright UNVERIFIED. PNG is exact-canvas-size noninterlaced RGBA, <=96KiB encoded, canonical base64. No URL/file path.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_revision:{type:"integer",minimum:0},
+      layer_id:{type:"string"},image_base64:{type:"string",maxLength:131072},source_label:{type:"string",maxLength:48}},
+      required:["asset_id","expected_revision","layer_id","image_base64","source_label"],additionalProperties:false}
+  },
+  {
+    name:"paint_diff_preview",
+    description:"Return RGBA heatmap preview highlighting all changed pixels between two saved paint revisions; only technical pixel diff, not perceived artistic quality.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},baseline_revision:{type:"integer",minimum:0},
+      candidate_revision:{type:"integer",minimum:0},size:{enum:[64,128]}},
+      required:["asset_id","baseline_revision","candidate_revision"],additionalProperties:false}
+  },
+  {
+    name:"paint_evaluate",
+    description:"Bounded objective coverage/change stopping rule for a vision-capable agent's paint correction loop. Returns TARGET_MET/REVISION_REQUIRED/BUDGET_EXHAUSTED; never Artistic GO or automatic AI critique.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},baseline_revision:{type:"integer",minimum:0},
+      candidate_revision:{type:"integer",minimum:0},size:{enum:[64,128]},min_coverage:{type:"number",minimum:0,maximum:1},
+      max_coverage:{type:"number",minimum:0,maximum:1},min_changed_pixels:{type:"integer",minimum:0},
+      max_iterations:{type:"integer",minimum:1,maximum:8}},
+      required:["asset_id","baseline_revision","candidate_revision"],additionalProperties:false}
+  },
   {
     name:"paint_open",description:"Create or resume a versioned native RGBA painting for an existing <=256px game asset.",
     inputSchema:{type:"object",properties:{asset_id:{type:"string"}},required:["asset_id"],additionalProperties:false}
@@ -301,6 +324,31 @@ const tools = [
 
 async function callTool(name, args) {
   switch (name) {
+    case "paint_import_png":{
+      const p=await painter.importPng(args.asset_id,{expectedRevision:args.expected_revision,
+       layerId:args.layer_id,imageBase64:args.image_base64,sourceLabel:args.source_label});
+      return textResult({asset_id:args.asset_id,revision:p.revision,sourceSha256:p.history.at(-1).operations[0].sourceSha256,
+        importedLayer:args.layer_id,rightsVerified:false,artisticReview:"UNSCORED",exportAllowed:false});
+    }
+    case "paint_diff_preview":{
+      const p=await painter.load(args.asset_id),a=args.baseline_revision,b=args.candidate_revision;
+      if(!Number.isSafeInteger(a)||!Number.isSafeInteger(b)||a<0||b<0||a>p.revision||b>p.revision)
+       throw Error("PAINT_REJECTED: diff revision out of bounds");
+      const rev=r=>({...p,revision:r,history:p.history.slice(0,r)});
+      const info=renderPaintDiff(rev(a),rev(b),{size:args.size??64});
+      const {png,...meta}=info;
+      return {content:[{type:"text",text:JSON.stringify(meta)},{type:"image",data:png.toString("base64"),mimeType:"image/png"}],
+        structuredContent:meta};
+    }
+    case "paint_evaluate":{
+      const p=await painter.load(args.asset_id),a=args.baseline_revision,b=args.candidate_revision;
+      if(!Number.isSafeInteger(a)||!Number.isSafeInteger(b)||a<0||b<0||a>p.revision||b>p.revision)
+       throw Error("PAINT_REJECTED: evaluate revision out of bounds");
+      const rev=r=>({...p,revision:r,history:p.history.slice(0,r)});
+      return textResult(evaluatePaintProgress(rev(a),rev(b),{size:args.size??64,
+        minCoverage:args.min_coverage??0,maxCoverage:args.max_coverage??1,
+        minChangedPixels:args.min_changed_pixels??1,maxIterations:args.max_iterations??3}));
+    }
     case "paint_open":{
       const p=await painter.open(args.asset_id);
       return textResult({asset_id:args.asset_id,revision:p.revision,canvas:[p.width,p.height],
