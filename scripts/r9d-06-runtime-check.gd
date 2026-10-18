@@ -74,21 +74,21 @@ func verify_animation() -> void:
     if abs(primary.modulate.a - advanced_alpha) > 0.06:
         fail_gate("playback and seek disagree at loop seam")
         return
-    # R9d-07: verify actual runtime Sprite2D alpha keys are a narrowed
-    # overlap rather than just a plausible JSON report.
+    # R9d-07: the old 13.2ms bright overlap produced 3x P95 frame jumps.
+    # Validate real Godot full 55ms smoothstep samples, not just metadata.
     for time: float in [0.085, 0.095, 0.105]:
         player.seek(time, true)
         if abs(primary.modulate.a + secondary.modulate.a - 1.0) > 0.015:
             fail_gate("R9d-07 ghost fade did not keep complementary alpha")
             return
-        if time == 0.085 and secondary.modulate.a > 0.03:
-            fail_gate("early overlap ghost remains visible")
+        if time == 0.085 and (secondary.modulate.a < 0.12 or secondary.modulate.a > 0.25):
+            fail_gate("early smoothstep sample skips expected fade envelope")
             return
-        if time == 0.095 and secondary.modulate.a > 0.34:
-            fail_gate("ghost overlap near early midpoint is still too wide")
+        if time == 0.095 and (secondary.modulate.a < 0.36 or secondary.modulate.a > 0.50):
+            fail_gate("midpoint 120Hz sample is compressed or mis-timed")
             return
-        if time == 0.105 and (secondary.modulate.a < 0.80 or secondary.modulate.a > 0.96):
-            fail_gate("transition snaps rather than showing intermediate 120Hz fade")
+        if time == 0.105 and (secondary.modulate.a < 0.62 or secondary.modulate.a > 0.80):
+            fail_gate("transition is still snapping instead of smoothstep")
             return
     # Compare authored SpiritLight key positions with the actual derived
     # animated CavityUnderlight modulate keys. No secondary PointLight2D.
