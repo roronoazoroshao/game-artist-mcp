@@ -11,11 +11,14 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const sources=join(root,'examples/spirit-lantern/r9d/parts/sources');
 const baseline=process.env.R9D_RENDER_VARIANT==='R9D05_BASELINE';
 const r9d06Baseline=process.env.R9D_RENDER_VARIANT==='R9D06_BASELINE';
+const ABLATIONS=Object.freeze({R9D07_FADE_ONLY:'FADE_ONLY',R9D07_LIGHT_ONLY:'LIGHT_ONLY',R9D07_SOFT_60HZ:'SOFT_60HZ'});
+const ablation=ABLATIONS[process.env.R9D_RENDER_VARIANT]??null;
+const ablationDirs=Object.freeze({FADE_ONLY:'r9d-07-ablation-fade-godot',LIGHT_ONLY:'r9d-07-ablation-light-godot',SOFT_60HZ:'r9d-07-ablation-soft-godot'});
 if(process.env.R9D_RENDER_VARIANT!==undefined&&
-   !['R9D05_BASELINE','R9D06_BASELINE','R9D07_POLISHED'].includes(process.env.R9D_RENDER_VARIANT))
+   !['R9D05_BASELINE','R9D06_BASELINE','R9D07_POLISHED',...Object.keys(ABLATIONS)].includes(process.env.R9D_RENDER_VARIANT))
  throw Error('R9D_RENDER_VARIANT_REJECTED');
 const out=join(root,'examples/spirit-lantern/generated/'+
- (baseline?'r9d-05-baseline-godot':r9d06Baseline?'r9d-06-baseline-godot':'r9d-godot'));
+ (baseline?'r9d-05-baseline-godot':r9d06Baseline?'r9d-06-baseline-godot':ablation?ablationDirs[ablation]:'r9d-godot'));
 const masterOut=join(root,'examples/spirit-lantern/generated/r9d-master');
 const custody=JSON.parse(await readFile(join(sources,'source-custody-001.json'),'utf8'));
 const sourcePngs=new Map();
@@ -26,7 +29,7 @@ for(const row of custody.sources){
 const canonicalSource=JSON.parse(await readFile(join(root,'examples/spirit-lantern/v2/source.json'),'utf8'));
 const rig=JSON.parse(await readFile(join(root,'examples/spirit-lantern/v2/cutout.json'),'utf8'));
 const compiled=compileCutout(canonicalSource,rig,{revision:1});
-const result=buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybridFlame:!baseline,r9d06Baseline});
+const result=buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybridFlame:!baseline,r9d06Baseline,ablation});
 assert.equal(result.atlas.regions.length,9);
 assert.equal(result.evidence.exportAllowed,false);
 const {files,master}=result;
@@ -57,7 +60,8 @@ files.set('r9d-07-temporal-capture.tscn',[
  'position = Vector2(128, 64)',''].join('\n'));
 files.set('r9d-evidence.json',JSON.stringify({
  origin:'R9D_REAL_ADOBE_PAINTED_COMPONENTS_CANDIDATE',paintedByAI:true,
- presentationVariant:baseline?'R9D05_BASELINE':r9d06Baseline?'R9D06_BASELINE':'R9D07_POLISHED',
+ presentationVariant:baseline?'R9D05_BASELINE':r9d06Baseline?'R9D06_BASELINE':
+  ablation?process.env.R9D_RENDER_VARIANT:'R9D07_POLISHED',
  sourceAuthenticity:'UNATTESTED_EXTERNAL_PROVIDER_REQUEST_AND_VERIFIED_BYTES',
  sourcePngSha256s:Object.fromEntries(custody.sources.map(x=>[x.partId,x.sha256])),
  sourceOriSha256:master.oraSha256,
