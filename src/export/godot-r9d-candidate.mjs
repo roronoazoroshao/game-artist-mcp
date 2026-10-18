@@ -13,7 +13,7 @@ const ROOT='assets/spirit_lantern/';
  */
 export function buildR9dCandidateGodotProject({sourcePngs,custody,compiled,hybridFlame=true,r9d06Baseline=false,ablation=null}={}){
  if(typeof hybridFlame!=='boolean'||typeof r9d06Baseline!=='boolean'||
-    ![null,'FADE_ONLY','LIGHT_ONLY','SOFT_60HZ'].includes(ablation)||
+    ![null,'FADE_ONLY','LIGHT_ONLY','SOFT_60HZ','SMOOTH_FULL_55MS'].includes(ablation)||
     (r9d06Baseline&&!hybridFlame)||(ablation!==null&&(!hybridFlame||r9d06Baseline)))
   fail('unsafe R9d baseline selection');
  if(!compiled||compiled.manifest?.assetId!=='spirit_lantern'||
