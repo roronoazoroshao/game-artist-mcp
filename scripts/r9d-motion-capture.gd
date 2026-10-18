@@ -22,6 +22,8 @@ func capture_motion() -> void:
         fail_capture("front bronze occlusion depth lower than flame")
         return
     player.play("idle")
+    # Framebuffer capture awaits rendering; freeze playback to keep seek times exact.
+    player.pause()
     # Preserve six legacy captures; add precise 2s loop/crossfade probe times.
     var times: Array[float] = [0.0, 0.001, 0.069, 0.070, 0.095, 0.105, 0.124, 0.125, 0.180, 0.375, 0.75, 1.25, 1.875, 1.945, 1.999]
     for time: float in times:
