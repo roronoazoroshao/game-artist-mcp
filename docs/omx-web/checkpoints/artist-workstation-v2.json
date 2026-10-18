@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "task": "AI_ARTIST_WORKSTATION_R2_RASTER_REVIEW",
+  "repository": "roronoazoroshao/game-artist-mcp",
+  "stackedOn": {
+    "branch": "feat/artist-workstation-paint-v1",
+    "pullRequest": 45,
+    "baseSha": "ba800f06b2404e47577d8b54f19667fa8bd6f87e"
+  },
+  "implementation": {
+    "pngImport": "PASS_LOCAL",
+    "importSourceShaAndNoRightsClaims": "PASS_LOCAL",
+    "mcpToolCount": 21,
+    "heatmapPixelDiff": "PASS_LOCAL",
+    "objectiveRubricBoundedIterations": "PASS_LOCAL",
+    "actualModelAutonomousPainter": "NOT_IMPLEMENTED",
+    "realGodotImportedImageCorrection": "PASS_LOCAL",
+    "technicalTestsPassed": 275,
+    "testsSkipped": 3,
+    "failed": 0
+  },
+  "security": {
+    "noRemoteUrl": true,
+    "maxEncodedPngBytes": 98304,
+    "pngDimensionsMustMatchCanvas": true,
+    "pngRgba8Uninterlaced": true,
+    "sourceDigestRecorded": true,
+    "rightsVerified": false,
+    "exportAllowed": false
+  },
+  "gates": {
+    "exactHeadGitHubCi": "PENDING_NEW_PR",
+    "humanArtReview": "NOT_CLAIMED",
+    "productionArt": "BLOCKED",
+    "merge": "NOT_EXECUTED"
+  },
+  "nextGoal": "Trusted vision-host controller operating across brush/preview/diff, Godot screen capture and repeatable controlled visual scoring; no false independent approval"
+}

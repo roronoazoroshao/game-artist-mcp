@@ -4,10 +4,12 @@ import {lstat,open,rename,rm,mkdir,mkdtemp,readFile,writeFile} from 'node:fs/pro
 import {join} from 'node:path';
 import pngjs from 'pngjs';
 import {assertAssetId} from '../mcp/store.mjs';
+import {inspectAiPng} from './png-intake.mjs';
 
 const {PNG}=pngjs;
 const MAX_STATE=512*1024,MAX_SIDE=256,MAX_REVISIONS=96,MAX_OPS=256;
 const MAX_BRUSHES=64,MAX_DABS=850,MAX_BRUSH_WORK=600000;
+const MAX_IMPORT_PNG_BYTES=96*1024,MAX_IMPORTS=2;
 const ID=/^[a-z][a-z0-9_]{0,31}$/;
 const HEX=/^#[0-9a-fA-F]{6}$/;
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -89,6 +91,22 @@ function applyOps(layers,ops,w,h,budget){
  if(!Array.isArray(ops)||ops.length<1||ops.length>12)fail('batch op count');
  for(const op of ops){
   if(!obj(op))fail('invalid paint operation');
+  if(op.type==='layer.import_png'){
+   exact(op,['type','layerId','pngBase64','sourceSha256','sourceLabel','rightsVerified']);
+   if(budget.imports>=MAX_IMPORTS)fail('import quota exhausted');
+   if(typeof op.layerId!=='string'||!ID.test(op.layerId)||layers.length>=8||
+      layers.some(l=>l.id===op.layerId)||op.rightsVerified!==false)
+     fail('invalid imported layer or unverified-rights contract');
+   if(typeof op.sourceLabel!=='string'||!/^[a-zA-Z0-9][ a-zA-Z0-9_.-]{0,47}$/.test(op.sourceLabel))
+     fail('invalid source label');
+   const bytes=decodeImport(op.pngBase64,w,h);
+   if(sha(bytes)!==op.sourceSha256)fail('source digest mismatch');
+   const pixels=PNG.sync.read(bytes,{checkCRC:true});
+   const layer=newLayer(op.layerId,w,h);
+   layer.data.set(pixels.data);
+   layers.push(layer);budget.imports++;
+   continue;
+  }
   if(op.type==='layer.create'){
    exact(op,['type','layerId']);
    if(typeof op.layerId!=='string'||!ID.test(op.layerId)||layers.length>=8||layers.some(l=>l.id===op.layerId))fail('duplicate/invalid layer or budget');
@@ -122,7 +140,7 @@ function applyOps(layers,ops,w,h,budget){
 function evaluated(p,revision=p.revision,depth=0){
  if(!Number.isSafeInteger(revision)||revision<0||revision>p.revision||depth>8)fail('invalid historical revision');
  let layers=[newLayer('base',p.width,p.height)];
- const budget={work:0,brushes:0};
+ const budget={work:0,brushes:0,imports:0};
  for(let i=0;i<revision;i++){
   const entry=p.history[i];
   if(!obj(entry)||!Array.isArray(entry.operations)||entry.operations.length<1)fail('history entry');
@@ -149,6 +167,60 @@ function raster(p,revision=p.revision){
   }
  }
  return data;
+}
+/** Accept only bounded, canonical, first-party-supplied base64 PNG; no URL or file path.
+ * The source label is a user claim, never a verified copyright assertion. */
+function decodeImport(imageBase64,width,height){
+ if(typeof imageBase64!=='string'||imageBase64.length<32||
+    imageBase64.length>Math.ceil(MAX_IMPORT_PNG_BYTES/3)*4||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(imageBase64))
+  fail('noncanonical or oversized base64 source');
+ const bytes=Buffer.from(imageBase64,'base64');
+ if(bytes.length>MAX_IMPORT_PNG_BYTES||bytes.toString('base64')!==imageBase64)
+  fail('noncanonical source PNG encoding');
+ let metadata;
+ try{metadata=inspectAiPng(bytes);}catch{fail('unsafe PNG header, chunk, or CRC');}
+ if(metadata.width!==width||metadata.height!==height)fail('PNG geometry must match canvas');
+ return bytes;
+}
+export function renderPaintDiff(baseline,candidate,{size=64}={}){
+ if(![64,128].includes(size))fail('invalid diff size');
+ const metrics=analyzePaintDifference(baseline,candidate,{size});
+ const old=PNG.sync.read(renderPaint(baseline,{size}).png).data;
+ const cur=PNG.sync.read(renderPaint(candidate,{size}).png).data;
+ const mask=new PNG({width:size,height:size});
+ for(let i=0;i<old.length;i+=4){
+  const delta=Math.max(...[0,1,2,3].map(k=>Math.abs(old[i+k]-cur[i+k])));
+  if(delta!==0){
+   mask.data[i]=255;mask.data[i+1]=Math.max(0,255-delta);
+   mask.data[i+2]=0;mask.data[i+3]=255;
+  }else{
+   mask.data[i]=32;mask.data[i+1]=32;mask.data[i+2]=40;mask.data[i+3]=32;
+  }
+ }
+ const png=PNG.sync.write(mask);
+ return {status:'TECHNICAL_DIFF_ONLY',png,sha256:sha(png),size,
+  changedPixels:metrics.changedPixels,baselineSha256:metrics.baselineSha256,
+  candidateSha256:metrics.candidateSha256,artisticReview:'UNSCORED',exportAllowed:false};
+}
+/** A bounded objective stopping rule for an externally orchestrated visual critic.
+ * It never calls an LLM, evaluates beauty, or grants Artistic GO. */
+export function evaluatePaintProgress(baseline,candidate,{size=64,minCoverage=0,maxCoverage=1,
+ minChangedPixels=1,maxIterations=3}={}){
+ if(![64,128].includes(size)||!finite(minCoverage,0,1)||!finite(maxCoverage,0,1)||
+    minCoverage>maxCoverage||!Number.isSafeInteger(minChangedPixels)||minChangedPixels<0||
+    minChangedPixels>size*size||!Number.isSafeInteger(maxIterations)||maxIterations<1||maxIterations>8||
+    !Number.isSafeInteger(baseline.revision)||!Number.isSafeInteger(candidate.revision)||
+    candidate.revision<baseline.revision)
+  fail('untrusted objective critic rubric');
+ const metrics=analyzePaintDifference(baseline,candidate,{size});
+ const target=renderPaint(candidate,{size});
+ const coverage=target.metrics.coverage;
+ const satisfied=coverage>=minCoverage&&coverage<=maxCoverage&&metrics.changedPixels>=minChangedPixels;
+ const iteration=candidate.revision-baseline.revision;
+ return Object.freeze({result:satisfied?'OBJECTIVE_TARGET_MET':iteration>=maxIterations?'RETRY_BUDGET_EXHAUSTED':'REVISION_REQUIRED',
+   metrics:{...metrics,candidateCoverage:coverage},iteration,maxIterations,
+   humanOrAiVisualInspectionRequired:true,artisticReview:'UNSCORED',rightsVerified:false,exportAllowed:false});
 }
 export function renderPaint(project,{revision=project.revision,size=null}={}){
  const p=assertProject(project),raw=raster(p,revision);
@@ -238,6 +310,15 @@ export class PaintWorkspace{
    return next;
   });
  }
+ async importPng(assetId,{expectedRevision,layerId,imageBase64,sourceLabel}={}){
+  const current=await this.load(assetId);
+  if(expectedRevision!==current.revision)throw Error('revision conflict: expected '+current.revision);
+  const bytes=decodeImport(imageBase64,current.width,current.height);
+  return this.apply(assetId,{expectedRevision,operations:[{
+   type:'layer.import_png',layerId,pngBase64:imageBase64,
+   sourceSha256:sha(bytes),sourceLabel,rightsVerified:false
+  }]});
+ }
  async restore(assetId,{expectedRevision,targetRevision}={}){
   return this.store.withAssetWriteLock(assetId,async()=>{
    const p=await this.load(assetId);
@@ -260,11 +341,16 @@ export class PaintWorkspace{
    const st=await lstat(root);
    if(!st.isDirectory()||st.isSymbolicLink())fail('unsafe export directory');
    const key=sha(Buffer.from(sha256+'|'+p.revision));
+   const importedSources=p.history.flatMap(entry=>entry.operations)
+    .filter(op=>op.type==='layer.import_png')
+    .map(op=>({layerId:op.layerId,sourceSha256:op.sourceSha256,
+      sourceLabel:op.sourceLabel,rightsVerified:false}));
    const target=join(root,key),files={
     'project.godot':'config_version=5\n\n[application]\nrun/main_scene="res://main.tscn"\n',
     'main.tscn':'[gd_scene load_steps=2 format=3]\n\n[ext_resource type="Texture2D" path="res://art.png" id="1_art"]\n\n[node name="PaintPreview" type="Node2D"]\n\n[node name="Sprite2D" type="Sprite2D" parent="."]\ntexture = ExtResource("1_art")\n',
     'art.png':png,
-    'evidence.json':JSON.stringify({assetId,revision:p.revision,pngSha256:sha256,artisticReview:'UNSCORED',rightsVerified:false,exportAllowed:false})+'\n'
+    'evidence.json':JSON.stringify({assetId,revision:p.revision,pngSha256:sha256,
+     importedSources,artisticReview:'UNSCORED',rightsVerified:false,exportAllowed:false})+'\n'
    };
    const staging=await mkdtemp(join(root,'.stage-'));
    try{
