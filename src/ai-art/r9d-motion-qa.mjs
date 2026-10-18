@@ -84,7 +84,7 @@ export function auditR9dMotionScreenshots({frames,sourceSha256}={}){
 }
 
 
-const R9D06_TIMES=Object.freeze([0,1,69,70,95,124,125,180,375,750,1250,1875,1945,1999]);
+const R9D06_TIMES=Object.freeze([0,1,69,70,95,105,124,125,180,375,750,1250,1875,1945,1999]);
 const SHOT=(time,size)=>'r9d-t-'+String(time).padStart(4,'0')+'-'+size+'.png';
 const EXACT_FRAMING=JSON.stringify({
  512:'FULL_SCENE',128:'300x300_FIXED_ITEM_CROP',64:'300x300_FIXED_ITEM_CROP'
