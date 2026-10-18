@@ -263,14 +263,15 @@ jobs:
           test -s examples/jade-spirit-stone/generated/jade-spirit-stone.png
           test -s examples/jade-spirit-stone/generated/report.json
 
-      - name: R9d-07 isolate fade and underlight with three real-Godot A/B capture variants
+      - name: R9d-07 isolate fade and underlight with four real-Godot A/B capture variants
         run: |
           set -euo pipefail
-          for profile in FADE_ONLY LIGHT_ONLY SOFT_60HZ; do
+          for profile in FADE_ONLY LIGHT_ONLY SOFT_60HZ SMOOTH_FULL_55MS; do
             case "$profile" in
               FADE_ONLY) directory=r9d-07-ablation-fade-godot ;;
               LIGHT_ONLY) directory=r9d-07-ablation-light-godot ;;
               SOFT_60HZ) directory=r9d-07-ablation-soft-godot ;;
+              SMOOTH_FULL_55MS) directory=r9d-07-ablation-full-godot ;;
             esac
             R9D_RENDER_VARIANT="R9D07_$profile" node scripts/r9d-real-godot-demo.mjs
             path="examples/spirit-lantern/generated/$directory"
@@ -300,6 +301,7 @@ jobs:
             examples/spirit-lantern/generated/r9d-07-ablation-fade-godot/
             examples/spirit-lantern/generated/r9d-07-ablation-light-godot/
             examples/spirit-lantern/generated/r9d-07-ablation-soft-godot/
+            examples/spirit-lantern/generated/r9d-07-ablation-full-godot/
           if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
