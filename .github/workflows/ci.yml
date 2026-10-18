@@ -232,6 +232,9 @@ jobs:
             if grep -E "SCRIPT ERROR|Parse Error|ERROR:" "$path/import.log" "$path/temporal-capture.log"; then exit 1; fi
           done
           node scripts/r9d-07-ablation-check.mjs
+          node scripts/r9d-07-ablation-contact-sheet.mjs
+          test -s examples/spirit-lantern/generated/r9d-godot/r9d-07-ablation-contact-64.png
+          test -s examples/spirit-lantern/generated/r9d-godot/r9d-07-ablation-contact-128.png
           grep -q '"artisticReview": "UNSCORED"' examples/spirit-lantern/generated/r9d-godot/r9d-07-ablation-comparison.json
           grep -q '"exportAllowed": false' examples/spirit-lantern/generated/r9d-godot/r9d-07-ablation-comparison.json
 
