@@ -1,6 +1,6 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
-import {auditR9d07DenseTemporalFrames} from '../src/ai-art/r9d-07-temporal-qa.mjs';
+import {auditR9d07DenseTemporalFrames,assertR9d07TemporalStability} from '../src/ai-art/r9d-07-temporal-qa.mjs';
 const base=resolve(process.argv[2]??'examples/spirit-lantern/generated/r9d-06-baseline-godot');
 const polished=resolve(process.argv[3]??'examples/spirit-lantern/generated/r9d-godot');
 const a=JSON.parse(await readFile(join(base,'r9d-evidence.json'),'utf8'));
@@ -28,8 +28,9 @@ const report=auditR9d07DenseTemporalFrames({
   engineVersion:process.env.GODOT_VERSION??'4.7.2-stable'
  }
 });
+const temporalGate=assertR9d07TemporalStability({baseline:report.variants.baseline,candidate:report.variants.candidate});
 await writeFile(join(polished,'r9d-07-temporal-dense-review.json'),
- JSON.stringify({...report,artifactSource:'REAL_GODOT_XVFB_FRAMEBUFFERS',
+ JSON.stringify({...report,temporalGate,artifactSource:'REAL_GODOT_XVFB_FRAMEBUFFERS',
   visualArtAcceptance:'PENDING_HUMAN_60HZ_AND_120HZ_MOVEMENT_REVIEW',
   monitorFramePacing:'NOT_MEASURED',
   imageSource:'ORIGINAL_FIRE_FLY_8_PNG_SHA_FROZEN',
