@@ -23,7 +23,10 @@ test('R9d-07 narrows the two-visible-poses portion within original 55ms transiti
   assert.ok(Math.abs(p.primary.alpha+p.secondary.alpha-1)<1e-6);
  }
  assert.ok(mix(.095).secondary.alpha<.32,'early overlap must be substantially below R9d-06 linear crossfade');
- assert.ok(mix(.105).secondary.alpha>.98,'late overlap must be substantially above R9d-06 linear crossfade');
+ assert.ok(mix(.105).secondary.alpha>.80&&mix(.105).secondary.alpha<.96,
+  'a 120Hz frame should sample an intermediate fade, not an almost instantaneous jump');
+ assert.ok(mix(.090).secondary.alpha>.03&&mix(.090).secondary.alpha<.15,
+  'fade must begin early enough to expose an intermediate 120Hz sample');
  assert.ok(mix(.085).secondary.alpha<.02);
  assert.equal(mix(2).primary.pose,'flame_a');
 });
