@@ -1,12 +1,12 @@
 import {readFile,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {auditR9d07DenseTemporalFrames} from '../src/ai-art/r9d-07-temporal-qa.mjs';
-const base=resolve(process.argv[2]??'examples/spirit-lantern/generated/r9d-05-baseline-godot');
+const base=resolve(process.argv[2]??'examples/spirit-lantern/generated/r9d-06-baseline-godot');
 const polished=resolve(process.argv[3]??'examples/spirit-lantern/generated/r9d-godot');
 const a=JSON.parse(await readFile(join(base,'r9d-evidence.json'),'utf8'));
 const b=JSON.parse(await readFile(join(polished,'r9d-evidence.json'),'utf8'));
 const SHA='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
-if(a.presentationVariant!=='R9D05_BASELINE'||b.presentationVariant!=='R9D07_POLISHED'||
+if(a.presentationVariant!=='R9D06_BASELINE'||b.presentationVariant!=='R9D07_POLISHED'||
  a.sourceOriSha256!==SHA||b.sourceOriSha256!==SHA||
  a.artisticReview!=='UNSCORED'||b.artisticReview!=='UNSCORED'||
  a.exportAllowed!==false||b.exportAllowed!==false||
