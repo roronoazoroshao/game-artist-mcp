@@ -6,7 +6,7 @@ The `src/ai-art/temporal-frame-diff.mjs` utility is an isolated, asset-agnostic 
 
 - `compareDecodedFrames(before, after, {channelThreshold:16})`: count each RGBA pixel whose maximum per-channel absolute delta exceeds the inclusive threshold; also report the largest channel difference.
 - `summarizeFrameSequence(frames, {channelThreshold:16})`: count adjacent-frame changes, median, 95th-percentile, max, mean and final-to-first seam; no video decoding, I/O or timing side effects.
-- Accept already-decoded `{width,height,data:Uint8Array}` RGBA frames only. A 2048px maximum per side and 1000-frame maximum limit bound synchronous work. Reject mismatched geometry, corrupt byte counts, malformed options and unsafe thresholds.
+- Accept already-decoded `{width,height,data:Uint8Array}` RGBA frames only. A 2048px maximum per side, 1000-frame maximum and 32-million total decoded-pixel work budget bound synchronous work. Explicit null/invalid threshold input fails closed. Reject mismatched geometry, corrupt byte counts, malformed options and unsafe thresholds.
 - Test inputs are synthetic `Uint8Array` images generated in code. **No Adobe/Firefly pixels, image/ORA files, source-provider signatures, provenance tokens, R9d hard-coded content hashes, rights evidence or exports** are introduced in this PR.
 - `artisticReview:'UNSCORED'`, `commercialRightsCleared:false`, `exportAllowed:false`, `monitorFramePacingVerified:false`; pixel counts cannot establish professional animation quality or physical 60/120Hz playback.
 
