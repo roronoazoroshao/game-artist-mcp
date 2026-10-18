@@ -47,7 +47,7 @@ test('R9d-07 P1 isolated ablations split crossfade from underlight without touch
 test('R9d-07 softer transition is complementary, finite and consistent at 60Hz on C to A',()=>{
  const sequence=compiled.manifest.frameSequence.frames;
  const soft=t=>sampleR9dFlameMix({sequence,timeSeconds:t,fadeProfile:'SOFT_60HZ'});
- const normal=t=>sampleR9dFlameMix({sequence,timeSeconds:t});
+ const normal=t=>sampleR9dFlameMix({sequence,timeSeconds:t,fadeProfile:'BOUNDED_13MS'});
  for(const t of [0,0.07,.083333,.091667,.100,.108333,.116667,.124999,1.945,1.958333,1.975,1.991667,1.999,2]){
   const mix=soft(t);
   assert.ok(mix.primary.alpha>=0&&mix.primary.alpha<=1);
