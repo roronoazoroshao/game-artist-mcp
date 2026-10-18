@@ -213,6 +213,28 @@ jobs:
           grep -q '"artisticReview": "UNSCORED"' "$POLISH/r9d-07-temporal-dense-review.json"
           grep -q '"exportAllowed": false' "$POLISH/r9d-07-temporal-dense-review.json"
 
+      - name: R9d-07 isolate fade and underlight with three real-Godot A/B capture variants
+        run: |
+          set -euo pipefail
+          for profile in FADE_ONLY LIGHT_ONLY SOFT_60HZ; do
+            case "$profile" in
+              FADE_ONLY) directory=r9d-07-ablation-fade-godot ;;
+              LIGHT_ONLY) directory=r9d-07-ablation-light-godot ;;
+              SOFT_60HZ) directory=r9d-07-ablation-soft-godot ;;
+            esac
+            R9D_RENDER_VARIANT="R9D07_$profile" node scripts/r9d-real-godot-demo.mjs
+            path="examples/spirit-lantern/generated/$directory"
+            "${GODOT_BIN}" --headless --path "$path" --editor --quit 2>&1 | tee "$path/import.log"
+            LIBGL_ALWAYS_SOFTWARE=1 timeout 240s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path "$path" --scene res://r9d-07-temporal-capture.tscn 2>&1 | tee "$path/temporal-capture.log"
+            grep -q "R9D07_REAL_GODOT_DENSE_120HZ_SEEK_60HZ_SUBSET_CAPTURE_OK" "$path/temporal-capture.log"
+            test "$(find "$path/temporal" -maxdepth 1 -name 'tick-????-64.png' | wc -l)" -eq 240
+            test "$(find "$path/temporal" -maxdepth 1 -name 'tick-????-128.png' | wc -l)" -eq 120
+            if grep -E "SCRIPT ERROR|Parse Error|ERROR:" "$path/import.log" "$path/temporal-capture.log"; then exit 1; fi
+          done
+          node scripts/r9d-07-ablation-check.mjs
+          grep -q '"artisticReview": "UNSCORED"' examples/spirit-lantern/generated/r9d-godot/r9d-07-ablation-comparison.json
+          grep -q '"exportAllowed": false' examples/spirit-lantern/generated/r9d-godot/r9d-07-ablation-comparison.json
+
       - name: Capture R8 real Godot light-on/off and assert local environment response
         run: |
           LIBGL_ALWAYS_SOFTWARE=1 timeout 90s xvfb-run -a --server-args="-screen 0 1024x768x24" "${GODOT_BIN}" --audio-driver Dummy --rendering-driver opengl3 --path examples/spirit-lantern/generated/phase3-godot --scene res://showcase.tscn -- --capture-r8-light-probe 2>&1 | tee examples/spirit-lantern/generated/r8-light-run.log
@@ -272,6 +294,9 @@ jobs:
             examples/spirit-lantern/generated/r9d-godot/
             examples/spirit-lantern/generated/r9d-06-baseline/
             examples/spirit-lantern/generated/r9d-06-baseline-godot/
+            examples/spirit-lantern/generated/r9d-07-ablation-fade-godot/
+            examples/spirit-lantern/generated/r9d-07-ablation-light-godot/
+            examples/spirit-lantern/generated/r9d-07-ablation-soft-godot/
           if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
