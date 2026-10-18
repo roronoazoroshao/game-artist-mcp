@@ -2,12 +2,12 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {auditR9d06TransitionComparison} from '../src/ai-art/r9d-motion-qa.mjs';
 
-const base=resolve(process.argv[2]??'examples/spirit-lantern/generated/r9d-05-baseline-godot');
+const base=resolve(process.argv[2]??'examples/spirit-lantern/generated/r9d-06-baseline-godot');
 const candidate=resolve(process.argv[3]??'examples/spirit-lantern/generated/r9d-godot');
 const manifest=async dir=>JSON.parse(await readFile(join(dir,'r9d-evidence.json'),'utf8'));
 const [before,after]=await Promise.all([manifest(base),manifest(candidate)]);
 const SRC='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
-if(before.presentationVariant!=='R9D05_BASELINE'||after.presentationVariant!=='R9D07_POLISHED'||
+if(before.presentationVariant!=='R9D06_BASELINE'||after.presentationVariant!=='R9D07_POLISHED'||
  before.sourceOriSha256!==SRC||after.sourceOriSha256!==SRC||
  JSON.stringify(before.sourcePngSha256s)!==JSON.stringify(after.sourcePngSha256s)||
  before.exportAllowed!==false||after.exportAllowed!==false||
