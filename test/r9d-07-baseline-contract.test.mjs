@@ -22,12 +22,12 @@ test('R9d-07 comparison recreates immutable R9d-06 hybrid rather than R9d-05 or 
  assert.equal(baseline.master.oraSha256,polished.master.oraSha256);
  assert.equal(baseline.atlas.atlasSha256,polished.atlas.atlasSha256);
  assert.equal(polish.method,'R9D06_HYBRID_SOURCE_PRESERVING_TWO_SPRITE_FADE');
- assert.equal((before.match(/tracks\\/\\d+\\/type = "value"/g)||[]).length,16);
- assert.equal((after.match(/tracks\\/\\d+\\/type = "value"/g)||[]).length,17);
- assert.doesNotMatch(before,/body\\/CavityUnderlight:modulate/);
- assert.match(after,/body\\/CavityUnderlight:modulate/);
- assert.match(before,/body\\/flame\\/SpriteBlend2D:modulate/);
- assert.match(before,/z_index = 6/);
+ assert.equal(before.split('/type = "value"').length-1,16);
+ assert.equal(after.split('/type = "value"').length-1,17);
+ assert.ok(!before.includes('body/CavityUnderlight:modulate'));
+ assert.ok(after.includes('body/CavityUnderlight:modulate'));
+ assert.ok(before.includes('body/flame/SpriteBlend2D:modulate'));
+ assert.ok(before.includes('z_index = 6'));
  assert.equal(baseline.evidence.exportAllowed,false);
  assert.equal(polished.evidence.exportAllowed,false);
 });
