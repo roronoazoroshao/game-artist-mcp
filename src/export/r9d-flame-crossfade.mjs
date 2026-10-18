@@ -25,7 +25,7 @@ const validPoseSequence=s=>Array.isArray(s)&&s.length===N&&s.join('|')===AUTHORE
 
 /** Alternate which sprite owns the visible pose, so updates always occur on
  * the HIDDEN sprite at each 125ms boundary. This avoids opacity reset flashes. */
-export function sampleR9dFlameMix({sequence,timeSeconds,fadeProfile='BOUNDED_13MS'}={}){
+export function sampleR9dFlameMix({sequence,timeSeconds,fadeProfile='SMOOTH_FULL_55MS'}={}){
  if(!validPoseSequence(sequence)||!Number.isFinite(timeSeconds)||
     timeSeconds<0||timeSeconds>2||!Object.hasOwn(PROFILE_BOUNDS,fadeProfile))fail('invalid flame schedule or time');
  const t=timeSeconds===2?0:timeSeconds;
@@ -125,7 +125,10 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
     (r9d06Baseline&&ablation!==null))fail('invalid baseline or ablation mode');
  const linearFade=r9d06Baseline||ablation==='LIGHT_ONLY';
  const softFade=ablation==='SOFT_60HZ';
- const fullFade=ablation==='SMOOTH_FULL_55MS';
+ // R9d-07 chosen by real Godot five-way A/B: bounded 13ms = P95 30px,
+ // full 55ms smoothstep = P95 16px at 64px, frozen R9d-06 = P95 10px.
+ // Keep remaining artistic ghosting risk UNSCORED.
+ const fullFade=!r9d06Baseline&&(ablation===null||ablation==='SMOOTH_FULL_55MS');
  const syncUnderlight=!r9d06Baseline&&ablation!=='FADE_ONLY';
  validate({scene,atlas,rig,presentation,durationSeconds});
  const mark='[sub_resource type="Animation" id="Animation_idle"]';
