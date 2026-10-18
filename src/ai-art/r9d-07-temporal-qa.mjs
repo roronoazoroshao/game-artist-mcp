@@ -75,7 +75,7 @@ export function auditR9d07DenseTemporalFrames({baselineFrames,candidateFrames,me
   JSON.stringify(metadata.cropRect)!=='[106,75,300,300]'||
   JSON.stringify(metadata.sizes)!=='[64,128]')
   fail('untrusted capture contract/source');
- const baseline=auditVariant(baselineFrames,'R9D05_BASELINE');
+ const baseline=auditVariant(baselineFrames,'R9D06_BASELINE');
  const candidate=auditVariant(candidateFrames,'R9D07_POLISHED');
  return Object.freeze({
   status:'DENSE_TEMPORAL_TECHNICAL_METRICS_UNSCORED',
