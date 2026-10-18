@@ -110,6 +110,12 @@ jobs:
           chmod +x "${GODOT_BIN}"
           "${GODOT_BIN}" --version
 
+      - name: Exercise native AI painting through pinned Godot 4
+        env:
+          GODOT_BIN: /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+        run: |
+          node scripts/artist-paint-godot-smoke.mjs
+
       - name: Verify generated Godot project headlessly
         run: |
           "${GODOT_BIN}" --headless --path examples/spirit-lantern/generated/godot --editor --quit 2>&1 | tee examples/spirit-lantern/generated/godot-import.log

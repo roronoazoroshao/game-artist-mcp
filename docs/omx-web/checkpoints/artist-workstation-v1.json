@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "task": "AI_ARTIST_WORKSTATION_PAINT_V1",
+  "repository": "roronoazoroshao/game-artist-mcp",
+  "baseSha": "6ba1bcc90c9eceb0e4d08f39db0c0c07b38f5e4e",
+  "branch": "feat/artist-workstation-paint-v1",
+  "pullRequest": 45,
+  "implementation": {
+    "paintBrushLayersMasks": "PASS_LOCAL",
+    "mcp18Tools": "PASS_LOCAL",
+    "mcpVisualPreviewAndCompare": "PASS_LOCAL",
+    "rollbackAndOptimisticLocking": "PASS_LOCAL",
+    "staticGodotSpriteExport": "PASS_LOCAL",
+    "godot4Runtime": "PASS_LOCAL",
+    "importExternalRaster": "NOT_IMPLEMENTED",
+    "nativeCharacterRigAnimation": "NOT_IMPLEMENTED",
+    "automaticAestheticAcceptance": "NOT_IMPLEMENTED",
+    "commercialRightsVerification": "UNVERIFIED"
+  },
+  "localEvidence": {
+    "nodeTestsPassed": 266,
+    "nodeTestsSkipped": 3,
+    "nodeTestsFailed": 0,
+    "mcpToolCount": 18,
+    "godotStatus": "REAL_GODOT_STATIC_PAINT_PASS",
+    "securityRegression": "immutable Godot export package tamper must reject"
+  },
+  "releaseGates": {
+    "finalExactHeadCi": "PENDING_RECHECK_AFTER_THIS_COMMIT",
+    "externalIndependentReview": "NOT_CLAIMED",
+    "productionArt": "BLOCKED",
+    "merge": "NOT_AUTHORIZED_OR_EXECUTED"
+  },
+  "nextStory": "Bring versioned raster PNG import, scoped edit/mask brush and visual critique controller through separate TDD and Godot scene quality gates"
+}

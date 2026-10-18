@@ -62,6 +62,10 @@ POC-005B is merged: opt-in material-aware Art IR, deterministic gradient/hand-di
 
 **Hard limits:** Material-aware Godot export is currently unsupported (`UNSUPPORTED_GODOT_APPEARANCE`), even though the legacy Spirit Lantern passes headless Godot. Green CI proves technical behavior, not aesthetic quality, autonomy or production art readiness.
 
+## Native AI Artist Workstation — Paint V1 (technical prototype)
+
+The optional `paint_*` tool family lets an MCP-capable vision host paint original RGBA strokes, mask/layer them, inspect 64/128px previews, compare historical revisions, roll back and generate a static Godot Sprite2D package. All decisions remain agent-directed and technical; no human-review or rights-clearance claims are inferred. See [Paint V1 workflow and limits](docs/workstation/PAINT_V1.md).
+
 ## Local development
 
 Requirements:

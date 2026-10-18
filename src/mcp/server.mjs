@@ -19,6 +19,7 @@ import { buildGodotV2Project } from "../export/godot-cutout-v2.mjs";
 import { publishGodotPackage } from "../export/atomic-package.mjs";
 import { renderCutoutPreview } from "../cutout/preview.mjs";
 import { AssetStore } from "./store.mjs";
+import {PaintWorkspace,renderPaint,analyzePaintDifference} from "../ai-art/paint-workstation.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
 
@@ -37,6 +38,7 @@ function parseWorkspace(argv) {
 
 const workspace = parseWorkspace(process.argv.slice(2));
 const store = new AssetStore(workspace);
+const painter = new PaintWorkspace(store);
 await store.init();
 
 function rendererAvailable() {
@@ -123,6 +125,30 @@ async function writeLegacyExportFile(path, bytes) {
 }
 
 const tools = [
+  {
+    name:"paint_open",description:"Create or resume a versioned native RGBA painting for an existing <=256px game asset.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"}},required:["asset_id"],additionalProperties:false}
+  },
+  {
+    name:"paint_apply",description:"Apply 1-12 deterministic brush/layer instructions under optimistic revision control. stroke.draw requires RGB hex, radius .5..24, opacity 0..1 and pressure points [x,y,pressure]. Supports layer.create, layer.settings (opacity, visible, rectangular mask), stroke.draw and stroke.erase.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_revision:{type:"integer",minimum:0},operations:{type:"array",minItems:1,maxItems:12,items:{type:"object"}}},required:["asset_id","expected_revision","operations"],additionalProperties:false}
+  },
+  {
+    name:"paint_preview",description:"Render exact current or historical brush layers to an image block for AI visual inspection; not an autonomous quality judgment.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},revision:{type:"integer",minimum:0},size:{enum:[64,128]}},required:["asset_id"],additionalProperties:false}
+  },
+  {
+    name:"paint_compare",description:"Return objective changed-pixel/coverage metrics between two historical paint revisions, not artistic scoring.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},baseline_revision:{type:"integer",minimum:0},candidate_revision:{type:"integer",minimum:0},size:{enum:[64,128]}},required:["asset_id","baseline_revision","candidate_revision"],additionalProperties:false}
+  },
+  {
+    name:"paint_restore",description:"Non-destructively revert to a previous paint revision as a new revision; historical edits remain intact.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_revision:{type:"integer",minimum:0},target_revision:{type:"integer",minimum:0}},required:["asset_id","expected_revision","target_revision"],additionalProperties:false}
+  },
+  {
+    name:"paint_export",description:"Publish immutable static Godot4 Sprite2D project + RGBA art.png and rights-UNVERIFIED evidence. Not animated rig and not commercial approval.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_revision:{type:"integer",minimum:0}},required:["asset_id","expected_revision"],additionalProperties:false}
+  },
   {
     name: "health",
     description: "Return Game Artist MCP health and deterministic renderer readiness.",
@@ -275,6 +301,38 @@ const tools = [
 
 async function callTool(name, args) {
   switch (name) {
+    case "paint_open":{
+      const p=await painter.open(args.asset_id);
+      return textResult({asset_id:args.asset_id,revision:p.revision,canvas:[p.width,p.height],
+        artisticReview:"UNSCORED",commercialRightsCleared:false,exportAllowed:false});
+    }
+    case "paint_apply":{
+      const p=await painter.apply(args.asset_id,{expectedRevision:args.expected_revision,operations:args.operations});
+      return textResult({asset_id:args.asset_id,revision:p.revision,operationCount:p.history.flatMap(h=>h.operations).length,
+        artisticReview:"UNSCORED",exportAllowed:false});
+    }
+    case "paint_preview":{
+      const p=await painter.load(args.asset_id);
+      const {png,sha256,width,height,metrics,revision}=renderPaint(p,{revision:args.revision??p.revision,size:args.size??null});
+      const meta={asset_id:args.asset_id,revision,sha256,width,height,metrics,mime_type:"image/png",
+        artisticReview:"UNSCORED",exportAllowed:false};
+      return {content:[{type:"text",text:JSON.stringify(meta)},{type:"image",data:png.toString("base64"),mimeType:"image/png"}],structuredContent:meta};
+    }
+    case "paint_compare":{
+      const p=await painter.load(args.asset_id),a=args.baseline_revision,b=args.candidate_revision;
+      if(!Number.isSafeInteger(a)||!Number.isSafeInteger(b)||a<0||b<0||a>p.revision||b>p.revision)
+        throw Error("PAINT_REJECTED: invalid historical comparison");
+      const rev=r=>({...p,revision:r,history:p.history.slice(0,r)});
+      return textResult(analyzePaintDifference(rev(a),rev(b),{size:args.size??64}));
+    }
+    case "paint_restore":{
+      const p=await painter.restore(args.asset_id,{expectedRevision:args.expected_revision,targetRevision:args.target_revision});
+      return textResult({asset_id:args.asset_id,revision:p.revision,restoredFrom:args.target_revision,
+        artisticReview:"UNSCORED",exportAllowed:false});
+    }
+    case "paint_export":{
+      return textResult(await painter.exportGodot(args.asset_id,{expectedRevision:args.expected_revision}));
+    }
     case "health":
       return textResult({
         ok: true,
