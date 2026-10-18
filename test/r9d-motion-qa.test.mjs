@@ -57,7 +57,7 @@ test('R9d-05 review thumbnails cannot present a 10px-wide full-scene reduction a
 });
 
 import {auditR9d06TransitionComparison} from '../src/ai-art/r9d-motion-qa.mjs';
-const SEAMS=[0,1,69,70,95,124,125,180,375,750,1250,1875,1945,1999];
+const SEAMS=[0,1,69,70,95,105,124,125,180,375,750,1250,1875,1945,1999];
 const META={sourceSha256:'a'.repeat(64),engineVersion:'4.7.2-stable',
  camera:[512,512],crop:[106,75,300,300],
  framesByScale:{512:'FULL_SCENE',128:'300x300_FIXED_ITEM_CROP',64:'300x300_FIXED_ITEM_CROP'},
