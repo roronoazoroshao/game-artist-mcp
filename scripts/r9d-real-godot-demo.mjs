@@ -46,6 +46,14 @@ files.set('r9d-motion-capture.tscn',[
  '[node name="Capture" type="Node2D"]','script = ExtResource("Capture")','',
  '[node name="SpiritLantern" parent="." instance=ExtResource("Lantern")]',
  'position = Vector2(128, 64)',''].join('\n'));
+files.set('r9d-07-temporal-capture.gd',await readFile(join(root,'scripts/r9d-07-temporal-capture.gd'),'utf8'));
+files.set('r9d-07-temporal-capture.tscn',[
+ '[gd_scene load_steps=3 format=3]','',
+ '[ext_resource type="PackedScene" path="res://assets/spirit_lantern/spirit_lantern.tscn" id="Lantern"]',
+ '[ext_resource type="Script" path="res://r9d-07-temporal-capture.gd" id="Capture"]','',
+ '[node name="Capture" type="Node2D"]','script = ExtResource("Capture")','',
+ '[node name="SpiritLantern" parent="." instance=ExtResource("Lantern")]',
+ 'position = Vector2(128, 64)',''].join('\n'));
 files.set('r9d-evidence.json',JSON.stringify({
  origin:'R9D_REAL_ADOBE_PAINTED_COMPONENTS_CANDIDATE',paintedByAI:true,
  presentationVariant:baseline?'R9D05_BASELINE':'R9D07_POLISHED',
