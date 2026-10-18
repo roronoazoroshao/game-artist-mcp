@@ -270,7 +270,16 @@ export class PaintWorkspace{
    try{
     for(const [name,data]of Object.entries(files)){const h=await open(join(staging,name),'wx',0o600);try{await h.writeFile(data);await h.sync()}finally{await h.close()}}
     try{await rename(staging,target)}
-    catch(e){if(e.code!=='EEXIST'&&e.code!=='ENOTEMPTY')throw e;const old=await readSafe(join(target,'art.png'),4*1024*1024);if(sha(old)!==sha256)fail('immutable export mismatch')}
+    catch(e){
+     if(e.code!=='EEXIST'&&e.code!=='ENOTEMPTY')throw e;
+     const directory=await lstat(target);
+     if(!directory.isDirectory()||directory.isSymbolicLink())fail('unsafe existing export package');
+     for(const [name,data]of Object.entries(files)){
+      const previous=await readSafe(join(target,name),4*1024*1024);
+      const desired=Buffer.isBuffer(data)?data:Buffer.from(data);
+      if(!previous.equals(desired))fail('immutable export mismatch');
+     }
+    }
    }finally{await rm(staging,{recursive:true,force:true})}
    return {revision:p.revision,packageSha256:key,pngSha256:sha256,project:'assets/'+assetId+'/paint-exports/'+key,artisticReview:'UNSCORED',rightsVerified:false,exportAllowed:false};
   });

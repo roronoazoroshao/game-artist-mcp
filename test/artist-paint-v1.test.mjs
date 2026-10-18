@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtemp,readFile,rm,symlink} from 'node:fs/promises';
+import {mkdtemp,readFile,writeFile,rm,symlink} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import pngjs from 'pngjs';
@@ -85,6 +85,8 @@ test('paint export is immutable, rejects stale revisions and unsafe export path'
  const a=await paint.exportGodot('new_asset',{expectedRevision:0});
  const b=await paint.exportGodot('new_asset',{expectedRevision:0});
  assert.deepEqual(a,b);
+ await writeFile(join(root,a.project,'main.tscn'),'tampered animation code');
+ await assert.rejects(paint.exportGodot('new_asset',{expectedRevision:0}),/immutable export mismatch/);
  assert.equal(a.artisticReview,'UNSCORED');
  assert.equal(a.exportAllowed,false);
  await paint.apply('new_asset',{expectedRevision:0,operations:[{type:'layer.create',layerId:'new'}]});
