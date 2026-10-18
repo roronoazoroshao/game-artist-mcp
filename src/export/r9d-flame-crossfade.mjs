@@ -114,7 +114,8 @@ function validate({scene,atlas,rig,presentation,durationSeconds}){
     fail('untrusted pose presentation correction');
  }
 }
-export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSeconds=2}={}){
+export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSeconds=2,r9d06Baseline=false}={}){
+ if(typeof r9d06Baseline!=='boolean')fail('invalid baseline mode');
  validate({scene,atlas,rig,presentation,durationSeconds});
  const mark='[sub_resource type="Animation" id="Animation_idle"]';
  const after='[sub_resource type="AnimationLibrary" id="AnimationLibrary_main"]';
@@ -176,11 +177,17 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
    ['secondary',1-primaryAtStart,1-primaryAtEnd]]){
     if(i===0)opacityKeys[name].push({t,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,a)});
     opacityKeys[name].push({t:hold,value:color(coeff(phaseKeys[name].at(-1).pose).intensity,a)});
-    for(const progress of [.38,.44,.5,.56,.62,1]){
-     const tKey=round(hold+progress*FADE);
-     const w=fadeWeight(progress);
-     opacityKeys[name].push({t:tKey,value:color(
-      coeff(phaseKeys[name].at(-1).pose).intensity,a+(b-a)*w)});
+    if(r9d06Baseline){
+     // Frozen R9d-06: original 55ms linear crossfade.
+     opacityKeys[name].push({t:end,value:color(
+      coeff(phaseKeys[name].at(-1).pose).intensity,b)});
+    }else{
+     for(const progress of [.38,.44,.5,.56,.62,1]){
+      const tKey=round(hold+progress*FADE);
+      const w=fadeWeight(progress);
+      opacityKeys[name].push({t:tKey,value:color(
+       coeff(phaseKeys[name].at(-1).pose).intensity,a+(b-a)*w)});
+     }
     }
   }
  }
@@ -193,7 +200,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  for(const [name,node] of [['primary','body/flame/Sprite2D'],['secondary','body/flame/SpriteBlend2D']]){
   tracks.push({path:node+':modulate',discrete:false,keys:opacityKeys[name]});
  }
- tracks.push({path:'body/CavityUnderlight:modulate',discrete:false,keys:underlightKeys});
+ if(!r9d06Baseline)tracks.push({path:'body/CavityUnderlight:modulate',discrete:false,keys:underlightKeys});
  // Exact preservation of every unrelated track, including body motion, swing,
  // current SpiritLight and any non-flame transform.
  const rewritten=prefix+segments.slice(0,10).join('')+
@@ -204,7 +211,7 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
   'position = '+v2(coeff(sequence[1]).correctedSpriteOffset)+'\n'+
   'modulate = Color(1, 1, 1, 0)\n';
  const out=fragment+secondary;
- if((out.match(/tracks\/\d+\/type = "value"/g)||[]).length!==17||
+ if((out.match(/tracks\/\d+\/type = "value"/g)||[]).length!==(r9d06Baseline?16:17)||
     (out.match(/\[node name="SpriteBlend2D"/g)||[]).length!==1)
    fail('animation scene/resource count failure');
  const positions={};
@@ -212,8 +219,9 @@ export function transformR9dFlameScene({scene,atlas,rig,presentation,durationSec
  return Object.freeze({
   scene:out,trackEvidence:Object.freeze({
    phaseCount:N,transitionMs:55,durationSeconds:2,
-   overlapConstrainedMs:round(FADE*(OVERLAP_END-OVERLAP_START)*1000),
-   ghostEasing:'BOUNDED_SMOOTHSTEP_38_62',
+   overlapConstrainedMs:r9d06Baseline?55:round(FADE*(OVERLAP_END-OVERLAP_START)*1000),
+   ghostEasing:r9d06Baseline?'R9D06_LINEAR_55MS':'BOUNDED_SMOOTHSTEP_38_62',
+   underlightSyncEnabled:!r9d06Baseline,
    underlightTrack:Object.freeze({
     source:'body/flame/SpiritLight:energy',
     path:'body/CavityUnderlight:modulate',
