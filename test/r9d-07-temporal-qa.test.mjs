@@ -8,7 +8,7 @@ const config={sourceOraSha256:SHA,sampleRateHz:120,durationSeconds:2,
  cropRect:[106,75,300,300],sizes:[64,128],engineVersion:'4.7.2-stable'};
 function paint(size,tick,staticFrames=false){
  const image=new PNG({width:size,height:size,colorType:6});
- const phase=staticFrames?0:tick%8;
+ const phase=staticFrames?0:tick%24;
  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
   const q=4*(y*size+x);
   const bright=x>size*.2+phase&&x<size*.7+phase&&y>=size*.1&&y<=size*.95;
