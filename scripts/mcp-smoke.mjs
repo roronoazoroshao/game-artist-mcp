@@ -71,6 +71,12 @@ try {
   const listed = await call(2, "tools/list");
   const names = listed.result.tools.map((tool) => tool.name);
   assert.deepEqual(names, [
+    "paint_open",
+    "paint_apply",
+    "paint_preview",
+    "paint_compare",
+    "paint_restore",
+    "paint_export",
     "health",
     "asset_create",
     "asset_get",
@@ -236,6 +242,40 @@ try {
   );
   assert.deepEqual(stateAfterStyle, state);
 
+  // Real MCP creation -> brush edit -> PNG observation -> comparison -> rollback -> Godot.
+  const paintInit=await call(30,"tools/call",{name:"paint_open",arguments:{asset_id:"smoke_stone"}});
+  assert.equal(paintInit.result.isError,undefined);
+  const paint=await call(31,"tools/call",{name:"paint_apply",arguments:{
+    asset_id:"smoke_stone",expected_revision:0,operations:[
+      {type:"layer.create",layerId:"spirit"},
+      {type:"stroke.draw",layerId:"spirit",color:"#33ddcc",radius:9,opacity:1,
+        points:[[35,42,1],[91,42,.7]]}
+    ]
+  }});
+  assert.equal(paint.result.isError,undefined,JSON.stringify(paint));
+  const paintImage=await call(32,"tools/call",{name:"paint_preview",arguments:{asset_id:"smoke_stone",size:64}});
+  assert.equal(paintImage.result.isError,undefined);
+  const painted=paintImage.result.content.find(x=>x.type==="image");
+  assert.ok(painted&&Buffer.from(painted.data,"base64").length>100);
+  const comparison=await call(33,"tools/call",{name:"paint_compare",arguments:{
+    asset_id:"smoke_stone",baseline_revision:0,candidate_revision:1,size:64}});
+  assert.ok(JSON.parse(comparison.result.content[0].text).changedPixels>0);
+  const exportedPaint=await call(34,"tools/call",{name:"paint_export",arguments:{asset_id:"smoke_stone",expected_revision:1}});
+  assert.equal(exportedPaint.result.isError,undefined,JSON.stringify(exportedPaint));
+  const exportResult=JSON.parse(exportedPaint.result.content[0].text);
+  for(const f of ["art.png","main.tscn","project.godot"]){
+    assert.ok((await stat(join(workspace,exportResult.project,f))).size>0);
+  }
+  const reverted=await call(35,"tools/call",{name:"paint_restore",arguments:{asset_id:"smoke_stone",expected_revision:1,target_revision:0}});
+  assert.equal(reverted.result.isError,undefined);
+  const afterRestore=await call(36,"tools/call",{name:"paint_compare",arguments:{
+    asset_id:"smoke_stone",baseline_revision:0,candidate_revision:2}});
+  assert.equal(JSON.parse(afterRestore.result.content[0].text).changedPixels,0);
+  const unchangedVector=JSON.parse((await call(37,"tools/call",{
+    name:"asset_get",arguments:{asset_id:"smoke_stone"}})).result.content[0].text);
+  assert.equal(unchangedVector.revision,state.revision);
+  assert.deepEqual(unchangedVector.document,state.document);
+  assert.deepEqual(JSON.parse(await readFile(join(workspace,"assets","smoke_stone","state.json"),"utf8")),state);
   console.log(JSON.stringify({
     ok: true,
     tools: names.length,
