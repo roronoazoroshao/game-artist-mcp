@@ -1,24 +1,12 @@
 import {createHash} from 'node:crypto';
 import pngjs from 'pngjs';
+import {compareDecodedFrames} from './temporal-frame-diff.mjs';
 const {PNG}=pngjs;
 const fail=why=>{throw Error('R9D07_TEMPORAL_REJECTED: '+why)};
 const SHA='f32027d47af63512244d84da2de33c8e344992661ba2ea7f9177ca4d1dba2361';
 const filename=(tick,size)=>'tick-'+String(tick).padStart(4,'0')+'-'+size+'.png';
 const num=(a,b)=>Number((a/b).toFixed(6));
 const pct=(sorted,q)=>sorted[Math.floor(q*(sorted.length-1))];
-function countDifferent(a,b){
- if(!a||!b||a.data.length!==b.data.length)fail('unmatched framebuffer dimensions');
- let count=0;let max=0;
- for(let i=0;i<a.data.length;i+=4){
-  const d=Math.max(Math.abs(a.data[i]-b.data[i]),
-   Math.abs(a.data[i+1]-b.data[i+1]),
-   Math.abs(a.data[i+2]-b.data[i+2]),
-   Math.abs(a.data[i+3]-b.data[i+3]));
-  if(d>16)count++;
-  if(d>max)max=d;
- }
- return {changedPixels:count,maxChannelDelta:max};
-}
 function auditVariant(frames,label){
  if(!(frames instanceof Map)||frames.size!==360)
   fail('missing/extra real screenshot frame in '+label);
@@ -41,10 +29,10 @@ function auditVariant(frames,label){
  const aggregate=array=>{
   const jumps=[];
   for(let i=1;i<array.length;i++){
-   const p=countDifferent(array[i-1],array[i]);
+   const p=compareDecodedFrames(array[i-1],array[i]);
    jumps.push(p.changedPixels);
   }
-  const seam=countDifferent(array.at(-1),array[0]).changedPixels;
+  const seam=compareDecodedFrames(array.at(-1),array[0]).changedPixels;
   const sorted=[...jumps].sort((a,b)=>a-b);
   return {jumps,p95Jump:pct(sorted,.95),
    medianJump:pct(sorted,.5),maxJump:sorted.at(-1),
