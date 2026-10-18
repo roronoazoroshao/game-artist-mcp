@@ -23,7 +23,7 @@ test('R9d-07 P1 isolated ablations split crossfade from underlight without touch
   assert.equal(p.master.oraSha256,SHA);
   assert.equal(p.atlas.regions.length,9);
   assert.equal(p.evidence.exportAllowed,false);
-  assert.equal((scene(p).match(/\\[node name="SpiritLight"/g)||[]).length,1);
+  assert.equal((scene(p).match(/\[node name="SpiritLight"/g)||[]).length,1);
   assert.match(scene(p),/z_index = 6/);
   assert.equal(meta(p).artisticReview,'UNSCORED');
   assert.equal(meta(p).commercialRightsCleared,false);
@@ -31,9 +31,9 @@ test('R9d-07 P1 isolated ablations split crossfade from underlight without touch
  assert.equal(meta(fade).ablation,'FADE_ONLY');
  assert.equal(meta(light).ablation,'LIGHT_ONLY');
  assert.equal(meta(soft).ablation,'SOFT_60HZ');
- assert.equal((scene(fade).match(/NodePath\\("body\\/CavityUnderlight:modulate"\\)/g)||[]).length,0);
- assert.equal((scene(light).match(/NodePath\\("body\\/CavityUnderlight:modulate"\\)/g)||[]).length,1);
- assert.equal((scene(soft).match(/NodePath\\("body\\/CavityUnderlight:modulate"\\)/g)||[]).length,1);
+ assert.equal((scene(fade).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,0);
+ assert.equal((scene(light).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,1);
+ assert.equal((scene(soft).match(/NodePath\("body\/CavityUnderlight:modulate"\)/g)||[]).length,1);
  assert.equal(meta(light).ghostEasing,'R9D06_LINEAR_55MS');
  assert.ok(meta(soft).overlapConstrainedMs>=28,'enough time for 60Hz intermediate frames');
  assert.equal(meta(fade).underlightTrack,null);
