@@ -11,9 +11,9 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const sources=join(root,'examples/spirit-lantern/r9d/parts/sources');
 const baseline=process.env.R9D_RENDER_VARIANT==='R9D05_BASELINE';
 const r9d06Baseline=process.env.R9D_RENDER_VARIANT==='R9D06_BASELINE';
-const ABLATIONS=Object.freeze({R9D07_FADE_ONLY:'FADE_ONLY',R9D07_LIGHT_ONLY:'LIGHT_ONLY',R9D07_SOFT_60HZ:'SOFT_60HZ'});
+const ABLATIONS=Object.freeze({R9D07_FADE_ONLY:'FADE_ONLY',R9D07_LIGHT_ONLY:'LIGHT_ONLY',R9D07_SOFT_60HZ:'SOFT_60HZ',R9D07_SMOOTH_FULL_55MS:'SMOOTH_FULL_55MS'});
 const ablation=ABLATIONS[process.env.R9D_RENDER_VARIANT]??null;
-const ablationDirs=Object.freeze({FADE_ONLY:'r9d-07-ablation-fade-godot',LIGHT_ONLY:'r9d-07-ablation-light-godot',SOFT_60HZ:'r9d-07-ablation-soft-godot'});
+const ablationDirs=Object.freeze({FADE_ONLY:'r9d-07-ablation-fade-godot',LIGHT_ONLY:'r9d-07-ablation-light-godot',SOFT_60HZ:'r9d-07-ablation-soft-godot',SMOOTH_FULL_55MS:'r9d-07-ablation-full-godot'});
 if(process.env.R9D_RENDER_VARIANT!==undefined&&
    !['R9D05_BASELINE','R9D06_BASELINE','R9D07_POLISHED',...Object.keys(ABLATIONS)].includes(process.env.R9D_RENDER_VARIANT))
  throw Error('R9D_RENDER_VARIANT_REJECTED');
