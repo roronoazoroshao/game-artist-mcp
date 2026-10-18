@@ -87,8 +87,8 @@ func verify_animation() -> void:
         if time == 0.095 and secondary.modulate.a > 0.34:
             fail_gate("ghost overlap near early midpoint is still too wide")
             return
-        if time == 0.105 and secondary.modulate.a < 0.97:
-            fail_gate("late ghost overlap remains visible")
+        if time == 0.105 and (secondary.modulate.a < 0.80 or secondary.modulate.a > 0.96):
+            fail_gate("transition snaps rather than showing intermediate 120Hz fade")
             return
     # Compare authored SpiritLight key positions with the actual derived
     # animated CavityUnderlight modulate keys. No secondary PointLight2D.
