@@ -9,7 +9,8 @@ const variants=[
  ['R9D07_POLISHED','r9d-godot'],
  ['R9D07_FADE_ONLY','r9d-07-ablation-fade-godot'],
  ['R9D07_LIGHT_ONLY','r9d-07-ablation-light-godot'],
- ['R9D07_SOFT_60HZ','r9d-07-ablation-soft-godot']
+ ['R9D07_SOFT_60HZ','r9d-07-ablation-soft-godot'],
+ ['R9D07_SMOOTH_FULL_55MS','r9d-07-ablation-full-godot']
 ];
 const frames={64:[0,8,9,10,11,12,13,14,15,233,234,235,236,237,238,239],
  128:[0,8,10,12,14,16,232,234,236,238]};
