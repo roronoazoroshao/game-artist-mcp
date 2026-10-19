@@ -76,6 +76,8 @@ The optional `paint_*` tool family lets an MCP-capable vision host paint origina
 
 **V6 private remote MCP bridge and playable-scene animation QA:** \`npm run mcp:remote\` exposes a stateless, Bearer-authenticated HTTP endpoint **on localhost only** with 21 scoped art tools, ready for an explicitly authorized HTTPS/Tunnel connection. The full stdio server retains 31 tools. \`art_game_capture\` emits real 512px Godot idle-animation frames; \`art_animation_audit\` measures timeline deltas; \`art_quality_review_packet\` prepares honest UNSCORED review criteria. A deployed endpoint does **not** automatically install a ChatGPT plugin or enable write actions on accounts without permission. See [direct MCP connection guide](docs/workstation/CHATGPT_DIRECT_MCP_V6.md) and [art-review evidence](docs/workstation/ART_DIRECTION_V6.md).
 
+**V7 scoped ChatGPT access (stacked branch):** gateway supports a distinct optional read-only token with 10 accurately classified read-only tools and a separate write token; server-enforced authorization, bounded request rate and expensive Godot capture budget, and metadata-only audit events. This improves safety but **does not grant unavailable ChatGPT plan entitlements or automatically connect an account**. See [V7 security/access plan](docs/omx-web/plans/artist-workstation-v7-scoped-access.md).
+
 ## Local development
 
 Requirements:

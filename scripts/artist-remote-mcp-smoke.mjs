@@ -7,9 +7,11 @@ import {spawn} from 'node:child_process';
 import assert from 'node:assert/strict';
 const root=await mkdtemp(join(tmpdir(),'game-artist-remote-mcp-'));
 const bearer=randomBytes(32).toString('base64url');
+const readOnlyBearer=randomBytes(32).toString('base64url');
 const server=spawn(process.execPath,['src/mcp/remote-server.mjs','--workspace',root],{
  cwd:process.cwd(),env:{...process.env,GAME_ARTIST_REMOTE_BIND:'127.0.0.1',
- GAME_ARTIST_REMOTE_PORT:'0',GAME_ARTIST_REMOTE_BEARER_TOKEN:bearer},stdio:['ignore','ignore','pipe']
+ GAME_ARTIST_REMOTE_PORT:'0',GAME_ARTIST_REMOTE_BEARER_TOKEN:bearer,
+ GAME_ARTIST_REMOTE_READONLY_TOKEN:readOnlyBearer},stdio:['ignore','ignore','pipe']
 });
 let stderr='';
 try{
@@ -25,9 +27,9 @@ try{
  assert.equal(listening.hasTLS,false);
  const endpoint='http://127.0.0.1:'+listening.port+'/mcp';
  let id=0;
- const rpc=async(method,params={})=>{
+ const rpc=async(method,params={},asBearer=bearer)=>{
   const res=await fetch(endpoint,{
-   method:'POST',headers:{authorization:'Bearer '+bearer,accept:'application/json, text/event-stream',
+   method:'POST',headers:{authorization:'Bearer '+asBearer,accept:'application/json, text/event-stream',
     'content-type':'application/json'},
    body:JSON.stringify({jsonrpc:'2.0',id:++id,method,params}),
    signal:AbortSignal.timeout(50000)
@@ -42,6 +44,19 @@ try{
  assert.equal(init.serverInfo.name,'game-artist-remote-mcp');
  const listed=await rpc('tools/list');
  const names=listed.tools.map(t=>t.name);
+ const readonly=await rpc('tools/list',{},readOnlyBearer);
+ const readable=readonly.tools.map(t=>t.name);
+ assert.equal(readable.length,10);
+ assert.ok(readable.includes('art_game_capture'));
+ assert.ok(readable.includes('paint_preview'));
+ assert.ok(!readable.includes('paint_apply'));
+ assert.ok(!readable.includes('artist_session_reinspect'));
+ const forbidden=await fetch(endpoint,{method:'POST',headers:{
+  authorization:'Bearer '+readOnlyBearer,accept:'application/json, text/event-stream',
+  'content-type':'application/json'},body:JSON.stringify({
+  jsonrpc:'2.0',id:999,method:'tools/call',params:{name:'paint_apply',arguments:{asset_id:'forbidden'}}})});
+ assert.equal((await forbidden.json()).error.code,-32602);
+
  assert.ok(names.includes('art_quality_review_packet'));
  assert.ok(names.includes('art_game_capture'));
  assert.ok(names.includes('art_animation_audit'));
@@ -83,7 +98,8 @@ try{
   body:JSON.stringify({jsonrpc:'2.0',id:123,method:'tools/list'})});
  assert.equal(unauthorized.status,401);
  console.log(JSON.stringify({status:'REMOTE_MCP_HTTP_PROTOCOL_PASS',toolCount:names.length,
-  previewViaHttp:true,godotVision:actualVision,unauthorizedRejected:true,
+  previewViaHttp:true,readOnlyToolCount:readable.length,readOnlyWriteRejected:true,
+  godotVision:actualVision,unauthorizedRejected:true,
   externalTLSConnected:false,chatgptUserAppConfigured:false}));
 }finally{
  server.kill('SIGTERM');
