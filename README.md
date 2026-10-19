@@ -68,6 +68,8 @@ The optional `paint_*` tool family lets an MCP-capable vision host paint origina
 
 **V2 raster import and visual-feedback tools (stacked PR):** `paint_import_png`, `paint_diff_preview` and `paint_evaluate` allow a host to bring a bounded, source-hashed PNG into an editable layer, observe changed pixels, and use an objective retry budget. This is **not** an autonomous art-director model or artistic approval. See [R2 guide](docs/workstation/PAINT_V2.md).
 
+**V3 Godot-frame observation (stacked development branch):** two additional MCP tools, `paint_scene_observe` and `paint_scene_compare`, capture genuine Xvfb/OpenGL Godot staging-scene pixels at 64/128/512px and compare revisions for AI inspection. This is not capture from the user's complete game, a model-powered autonomous critic, or human art approval. See [V3 design and limitations](docs/omx-web/plans/artist-workstation-v3-godot-observe.md).
+
 ## Local development
 
 Requirements:
