@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "task": "AI_ARTIST_WORKSTATION_V5_CHATGPT_WEB_RESUME",
+  "repository": "roronoazoroshao/game-artist-mcp",
+  "basePR": 49,
+  "baseHead": "e0b92a9bc11f264431dce3839f8e297c18830701",
+  "branch": "feat/artist-workstation-v5-chatgpt-resume",
+  "capabilities": {
+    "sameScreenshotAcrossChatGPTConversations": "PASS_LOCAL",
+    "realGodotFramebufferThroughMcp": "PASS_LOCAL",
+    "externalModelChosenPaintAction": "PASS_INTERACTIVE_CHATGPT_WEB_DEMO",
+    "atomicallyPinnedScreenshotStorage": "PASS_LOCAL",
+    "validatedSnapshotSymlinkCorruptionAndStaleRevision": "PASS_LOCAL",
+    "backendAutonomousModelDaemon": "NOT_IMPLEMENTED",
+    "directNativeChatGPTPluginToolRegistration": "UNVERIFIED",
+    "productionArtQuality": "UNVERIFIED"
+  },
+  "evidence": {
+    "testsV4AndV5": 16,
+    "protocolMcpTools": 28,
+    "actualGodotProcessRestart": "PASS_LOCAL",
+    "chatgptVisualDemoChangedFramebufferPixels": 3067,
+    "fullSuite": "293_PASS_7_SKIP_0_FAIL",
+    "githubCi": "PENDING_EXACT_HEAD"
+  },
+  "gates": {
+    "rightsVerified": false,
+    "artisticReview": "UNSCORED",
+    "exportAllowed": false,
+    "merge": "NOT_EXECUTED"
+  }
+}

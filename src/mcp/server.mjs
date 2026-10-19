@@ -144,6 +144,12 @@ const tools = [
       required:["asset_id","expected_version"],additionalProperties:false}
   },
   {
+    name:"artist_session_reinspect",
+    description:"ChatGPT Web cross-turn resume: retrieve the EXACT content-hashed saved Godot PNG from a pending AI critique session without re-rendering or advancing revision. Fails closed if screenshot or source changed.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_version:{type:"integer",minimum:0}},
+      required:["asset_id","expected_version"],additionalProperties:false}
+  },
+  {
     name:"artist_session_decide",
     description:"Submit a *real external AI vision host's* critique bound to the latest Godot screenshot SHA. Choose REVISE with native brush operations, REVERT to original session revision, or FINISH pending real art review. Bounded <=3 iterations, fail-closed.",
     inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_version:{type:"integer",minimum:0},
@@ -378,6 +384,12 @@ async function callTool(name, args) {
     }
     case "artist_session_observe":{
       const out=await visionSession.observe(args.asset_id,{expectedVersion:args.expected_version});
+      const {png,...meta}=out;
+      return {content:[{type:"text",text:JSON.stringify(meta)},
+        {type:"image",data:png.toString("base64"),mimeType:"image/png"}],structuredContent:meta};
+    }
+    case "artist_session_reinspect":{
+      const out=await visionSession.reinspect(args.asset_id,{expectedVersion:args.expected_version});
       const {png,...meta}=out;
       return {content:[{type:"text",text:JSON.stringify(meta)},
         {type:"image",data:png.toString("base64"),mimeType:"image/png"}],structuredContent:meta};

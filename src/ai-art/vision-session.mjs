@@ -1,10 +1,10 @@
 import {constants} from 'node:fs';
-import {lstat,open,rename,rm} from 'node:fs/promises';
+import {lstat,open,rename,rm,mkdir,link} from 'node:fs/promises';
 import {createHash,randomBytes} from 'node:crypto';
 import {join} from 'node:path';
 import {renderPaint} from './paint-workstation.mjs';
 
-const MAX_BYTES=65536, SHA=/^[a-f0-9]{64}$/;
+const MAX_BYTES=65536, MAX_IMAGE_BYTES=2*1024*1024, SHA=/^[a-f0-9]{64}$/;
 const fail=m=>{throw Error('VISION_SESSION_REJECTED: '+m)};
 const own=(x,names)=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).every(k=>names.includes(k));
 const finiteString=(v,min,max)=>typeof v==='string'&&v.trim().length>=min&&v.length<=max&&!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(v);
@@ -26,6 +26,56 @@ export class ArtistVisionSession {
     this.paint=paint;this.observer=observer;
   }
   file(assetId){return join(this.paint.store.assetDir(assetId),'vision-session.json')}
+  snapshotDir(assetId){return join(this.paint.store.assetDir(assetId),'vision-observations')}
+  snapshotFile(assetId,sha){
+    if(typeof sha!=='string'||!SHA.test(sha))fail('invalid pinned observation digest');
+    return join(this.snapshotDir(assetId),sha+'.png');
+  }
+  async readCapture(assetId,sha){
+    const path=this.snapshotFile(assetId,sha);
+    let fh;
+    try{
+      const dir=await lstat(this.snapshotDir(assetId));
+      if(!dir.isDirectory()||dir.isSymbolicLink())fail('unsafe screenshot directory');
+      const st=await lstat(path);
+      if(!st.isFile()||st.isSymbolicLink()||st.size<80||st.size>MAX_IMAGE_BYTES)
+        fail('unsafe or oversized screenshot');
+      fh=await open(path,constants.O_RDONLY|constants.O_NOFOLLOW);
+      const stat=await fh.stat();
+      if(!stat.isFile()||stat.size<80||stat.size>MAX_IMAGE_BYTES)fail('invalid image snapshot size');
+      const bytes=await fh.readFile();
+      if(bytes.length!==stat.size||hashBytes(bytes)!==sha)fail('observation snapshot was altered');
+      return bytes;
+    }catch(e){
+      if(e?.message?.startsWith('VISION_SESSION_REJECTED:'))throw e;
+      fail('previously attested Godot frame is not available');
+    }finally{if(fh)await fh.close()}
+  }
+  async preserveCapture(assetId,result){
+    const dir=this.snapshotDir(assetId),path=this.snapshotFile(assetId,result.sha256);
+    try{await mkdir(dir,{mode:0o700})}
+    catch(e){if(e.code!=='EEXIST')throw e}
+    const st=await lstat(dir);
+    if(!st.isDirectory()||st.isSymbolicLink())fail('untrusted snapshot parent');
+    if(result.png.length<80||result.png.length>MAX_IMAGE_BYTES||
+       hashBytes(result.png)!==result.sha256)fail('invalid screenshot digest or size');
+    // Publish by hard-linking a fully flushed temp file, never expose a
+    // partially written content-addressed screenshot after process failure.
+    const staged=join(dir,'.capture-'+randomBytes(12).toString('hex')+'.tmp');
+    try{
+      const fh=await open(staged,'wx',0o600);
+      try{await fh.writeFile(result.png);await fh.sync()}finally{await fh.close()}
+      try{await link(staged,path)}
+      catch(e){
+        if(e.code!=='EEXIST')throw e;
+        const previous=await this.readCapture(assetId,result.sha256);
+        if(!previous.equals(result.png))fail('collision or corrupted screenshot');
+      }
+      // Sync directory metadata before advancing the durable session journal.
+      const parent=await open(dir,constants.O_RDONLY|constants.O_DIRECTORY);
+      try{await parent.sync()}finally{await parent.close()}
+    }finally{await rm(staged,{force:true})}
+  }
   async load(assetId){
     await this.paint.load(assetId); // validates all workspace parents
     const path=this.file(assetId);
@@ -149,6 +199,7 @@ export class ArtistVisionSession {
       const actual=await this.paint.load(assetId);
       if(current.version!==state.version||current.phase!=='NEEDS_OBSERVATION'||
          actual.revision!==state.paintRevision)fail('capture became stale');
+      await this.preserveCapture(assetId,result);
       const x={...current,version:current.version+1,phase:'AWAITING_CRITIQUE',
         observation:{sha256:result.sha256,sourcePaintSha256:result.sourcePaintSha256,
          revision:result.revision,environment:result.environment,size:result.size},
@@ -156,6 +207,25 @@ export class ArtistVisionSession {
       await this.save(assetId,x);return fields(x);
     });
     return {...next,png:result.png,observationSha256:result.sha256,sourcePaintSha256:result.sourcePaintSha256};
+  }
+  async reinspect(assetId,{expectedVersion}={}){
+    if(!Number.isSafeInteger(expectedVersion)||expectedVersion<0)
+      fail('reinspect requires pinned session version');
+    return this.paint.store.withAssetWriteLock(assetId,async()=>{
+      const state=await this.reconcileLocked(assetId);
+      const p=await this.paint.load(assetId);
+      if(state.version!==expectedVersion||state.phase!=='AWAITING_CRITIQUE'||
+         !state.observation||!SHA.test(state.observation.sha256??'')||
+         !SHA.test(state.observation.sourcePaintSha256??'')||
+         state.observation.revision!==state.paintRevision||
+         p.revision!==state.paintRevision||
+         renderPaint(p).sha256!==state.observation.sourcePaintSha256)
+        fail('stale or missing checkpointed image');
+      const png=await this.readCapture(assetId,state.observation.sha256);
+      return {...fields(state),png,observationSha256:state.observation.sha256,
+        sourcePaintSha256:state.observation.sourcePaintSha256,
+        evidenceMode:'EXACT_STORED_GODOT_PNG_NO_RECAPTURE'};
+    });
   }
   async decide(assetId,request={}){
     if(!own(request,['expectedVersion','observationSha256','decision','critique','operations'])||
