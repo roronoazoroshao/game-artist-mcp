@@ -6,7 +6,11 @@ const THUMB_STAGE: Script = preload("res://thumbnail_stage.gd")
 var seconds: float = 0.0
 
 func _ready() -> void:
-    if OS.get_cmdline_user_args().has("--capture-native"):
+    if OS.get_cmdline_user_args().has("--capture-light-ab"):
+        call_deferred("_capture_light_ab")
+    elif OS.get_cmdline_user_args().has("--capture-motion"):
+        call_deferred("_capture_motion")
+    elif OS.get_cmdline_user_args().has("--capture-native"):
         call_deferred("_capture_native")
 
 func _process(delta: float) -> void:
@@ -51,6 +55,63 @@ func _draw() -> void:
         draw_circle(q, 1.7, Color("#d0b67c"))
     # Foreground edge/shadow visible below flame; no opaque billboard.
     draw_line(Vector2(0,sz.y-21),Vector2(sz.x,sz.y-21),Color(0.12,0.20,0.26,0.55),2.0)
+
+func _capture_light_ab() -> void:
+    # Same authored phase for both frames; only actual Godot PointLight2D visibility changes.
+    var light:PointLight2D=fire.get_node_or_null("SpiritLight") as PointLight2D
+    if light==null:
+        push_error("Missing true Godot PointLight2D")
+        get_tree().quit(1)
+        return
+    fire.set("time_override",0.78)
+    var target:String="res://captures"
+    var err:Error=DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(target))
+    if err!=OK:
+        get_tree().quit(1)
+        return
+    for index in range(2):
+        light.visible=index==0
+        fire.queue_redraw()
+        await get_tree().process_frame
+        await RenderingServer.frame_post_draw
+        var im:Image=get_viewport().get_texture().get_image()
+        if im.is_empty() or im.get_size()!=Vector2i(960,540):
+            get_tree().quit(1)
+            return
+        err=im.save_png(target + ("/light-on.png" if index==0 else "/light-off.png"))
+        if err!=OK:
+            get_tree().quit(1)
+            return
+    light.visible=true
+    print("LINH_HOA_LIGHT_AB_NATIVE_FRAMEBUFFER_OK")
+    get_tree().quit(0)
+
+func _capture_motion() -> void:
+    # Uniform 24-frame temporal capture, authored shader phase pinned to real Godot framebuffer.
+    var out:String="res://captures/motion-temp"
+    var err:Error=DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out))
+    if err!=OK:
+        push_error("Motion frame directory inaccessible")
+        get_tree().quit(1)
+        return
+    for index in range(24):
+        var timestamp:float=float(index)/18.0
+        fire.set("time_override",timestamp)
+        fire.queue_redraw()
+        await get_tree().process_frame
+        await RenderingServer.frame_post_draw
+        var framebuffer:Image=get_viewport().get_texture().get_image()
+        if framebuffer.is_empty() or framebuffer.get_size()!=Vector2i(960,540):
+            push_error("Motion Godot framebuffer invalid")
+            get_tree().quit(1)
+            return
+        err=framebuffer.save_png(out + "/motion-%02d.png" % index)
+        if err!=OK:
+            push_error("Motion Godot framebuffer save failed")
+            get_tree().quit(1)
+            return
+    print("LINH_HOA_MOTION_24_NATIVE_FRAMES_OK")
+    get_tree().quit(0)
 
 func _capture_native() -> void:
     var dir: String = "res://captures"

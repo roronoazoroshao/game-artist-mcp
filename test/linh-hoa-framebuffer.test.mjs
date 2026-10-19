@@ -42,6 +42,15 @@ test('Actual game framebuffer image dimensions and timeline are present',async()
     assert.ok(distinctColors(image)>100);
   }
 });
+test('Native Godot PointLight2D affects surrounding world geometry (on/off ablation)',async()=>{
+  const lit=await readPng('light-on.png');
+  const unlit=await readPng('light-off.png');
+  assert.equal(lit.width,960);
+  assert.equal(unlit.height,540);
+  // Region includes the visible altar and stone floor; not merely the flame.
+  assert.ok(motionPixels(lit,unlit,[240,240,720,510])>10000,
+    'real in-engine lighting affects the altar and surrounding courtyard');
+});
 test('Frames really differ inside the flame region over time',async()=>{
   const images=await Promise.all([0,1,2,3].map(i=>readPng('game-'+String(i).padStart(2,'0')+'.png')));
   for(let i=0;i<3;i++)assert.ok(motionPixels(images[i],images[i+1],[400,140,560,410])>300,'timeline frame changed visibly');
