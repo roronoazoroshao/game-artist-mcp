@@ -115,7 +115,7 @@ jobs:
           GODOT_BIN: /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
         run: |
           node scripts/artist-paint-godot-smoke.mjs
-      - name: Capture real Godot staging framebuffer through Xvfb (not beauty GO)
+      - name: Capture real Godot frames and exercise V4 bounded vision-session protocol (not beauty GO)
         env:
           GODOT_BIN: /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
           GAME_ARTIST_RUN_REAL_GODOT: "1"

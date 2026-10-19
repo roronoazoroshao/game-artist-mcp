@@ -21,6 +21,7 @@ import { renderCutoutPreview } from "../cutout/preview.mjs";
 import { AssetStore } from "./store.mjs";
 import {PaintWorkspace,renderPaint,analyzePaintDifference,renderPaintDiff,evaluatePaintProgress} from "../ai-art/paint-workstation.mjs";
 import {GodotPaintObserver} from "../ai-art/godot-paint-observer.mjs";
+import {ArtistVisionSession} from "../ai-art/vision-session.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
 
@@ -41,6 +42,7 @@ const workspace = parseWorkspace(process.argv.slice(2));
 const store = new AssetStore(workspace);
 const painter = new PaintWorkspace(store);
 const sceneObserver = new GodotPaintObserver({paint:painter});
+const visionSession = new ArtistVisionSession({paint:painter,observer:sceneObserver});
 await store.init();
 
 function rendererAvailable() {
@@ -127,6 +129,35 @@ async function writeLegacyExportFile(path, bytes) {
 }
 
 const tools = [
+  {
+    name:"artist_session_begin",
+    description:"Start one persistent, bounded revision-aware external AI visual critique session for an existing painted asset. Requires a user-owned art brief and fixed Godot staging scene; does not invoke a hidden model.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},brief:{type:"string",minLength:10,maxLength:500},
+      max_iterations:{type:"integer",minimum:1,maximum:3},size:{enum:[64,128,512]},
+      environment:{enum:["twilight","moonlight"]}},
+      required:["asset_id","brief","max_iterations","size","environment"],additionalProperties:false}
+  },
+  {
+    name:"artist_session_observe",
+    description:"Render the real Godot framebuffer from the current session checkpoint and return screenshot image to an external vision-capable model. Pins an observation SHA256 for the next decision.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_version:{type:"integer",minimum:0}},
+      required:["asset_id","expected_version"],additionalProperties:false}
+  },
+  {
+    name:"artist_session_decide",
+    description:"Submit a *real external AI vision host's* critique bound to the latest Godot screenshot SHA. Choose REVISE with native brush operations, REVERT to original session revision, or FINISH pending real art review. Bounded <=3 iterations, fail-closed.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},expected_version:{type:"integer",minimum:0},
+      observation_sha256:{type:"string",pattern:"^[0-9a-f]{64}$"},
+      decision:{enum:["REVISE","REVERT","FINISH"]},critique:{type:"string",minLength:10,maxLength:600},
+      operations:{type:"array",minItems:1,maxItems:12,items:{type:"object"}}},
+      required:["asset_id","expected_version","observation_sha256","decision","critique"],additionalProperties:false}
+  },
+  {
+    name:"artist_session_status",
+    description:"Read fail-closed persistent vision-session version, step and current revision; reconcile interrupted committed paint steps. Never reports artistic approval or rights clearance.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"}},
+      required:["asset_id"],additionalProperties:false}
+  },
   {
     name:"paint_scene_observe",
     description:"Capture an actual Xvfb/OpenGL Godot framebuffer screenshot of a painted revision inside a controlled art-staging scene. Two approved lighting environments, 64/128/512px. This is NOT a full target-game scene or human beauty review.",
@@ -341,6 +372,24 @@ const tools = [
 
 async function callTool(name, args) {
   switch (name) {
+    case "artist_session_begin":{
+      return textResult(await visionSession.begin(args.asset_id,{
+        brief:args.brief,size:args.size,environment:args.environment,maxIterations:args.max_iterations}));
+    }
+    case "artist_session_observe":{
+      const out=await visionSession.observe(args.asset_id,{expectedVersion:args.expected_version});
+      const {png,...meta}=out;
+      return {content:[{type:"text",text:JSON.stringify(meta)},
+        {type:"image",data:png.toString("base64"),mimeType:"image/png"}],structuredContent:meta};
+    }
+    case "artist_session_decide":{
+      return textResult(await visionSession.decide(args.asset_id,{
+        expectedVersion:args.expected_version,observationSha256:args.observation_sha256,
+        decision:args.decision,critique:args.critique,operations:args.operations}));
+    }
+    case "artist_session_status":{
+      return textResult(await visionSession.status(args.asset_id));
+    }
     case "paint_scene_observe":{
       const out=await sceneObserver.observe(args.asset_id,{revision:args.revision,size:args.size,
         environment:args.environment});
