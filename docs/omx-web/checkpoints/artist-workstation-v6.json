@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "task": "GAME_ARTIST_V6_DIRECT_MCP_AND_PLAYABLE_SCENE",
+  "repo": "roronoazoroshao/game-artist-mcp",
+  "basePR": 50,
+  "baseHead": "35aa31968d66434284c411873061c87e63eb622f",
+  "branch": "feat/artist-workstation-v6-remote-mcp",
+  "implementation": {
+    "statelessHttpMcpGateway": "PASS_LOCAL",
+    "bearerAuthentication": "PASS_LOCAL",
+    "remoteToolDiscoveryCount": 21,
+    "stdioToolCount": 31,
+    "realHttpGodotObserve": "PASS_LOCAL",
+    "fixedPlayableGameSceneCapture": "PASS_LOCAL",
+    "fourAnimationSamples": "PASS_LOCAL",
+    "technicalMotionRubric": "PASS_LOCAL",
+    "chatgptAccountDirectConnection": "NOT_CONFIGURED",
+    "publicHTTPS": "NOT_DEPLOYED",
+    "externalTargetGodotGame": "NOT_CONNECTED"
+  },
+  "gates": {
+    "productionArt": "UNSCORED",
+    "rightsVerified": false,
+    "exportAllowed": false,
+    "exactHeadCI": "PENDING",
+    "merge": "NOT_EXECUTED"
+  },
+  "evidence": {
+    "nodeFullSuite": "301_PASS_10_SKIP_0_FAIL",
+    "realGameGodotTest": "5_PASS_0_FAIL",
+    "remoteMcpHttpGodot": "21_TOOLS_PASS",
+    "securityHttpUnit": "6_PASS",
+    "sourceReplay": "GODOT_REAL_FRAMEBUFFER_PASS"
+  }
+}

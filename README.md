@@ -74,6 +74,8 @@ The optional `paint_*` tool family lets an MCP-capable vision host paint origina
 
 **V5 ChatGPT Web resume:** the new artist_session_reinspect MCP tool returns the exact SHA-pinned, atomically preserved PNG from a prior Godot observation. This supports ChatGPT vision critique across interrupted or new conversations, without quietly rerendering a different frame. It does not create a background AI daemon. See [ChatGPT Web operator guide](docs/workstation/CHATGPT_WEB_OPERATOR.md).
 
+**V6 private remote MCP bridge and playable-scene animation QA:** \`npm run mcp:remote\` exposes a stateless, Bearer-authenticated HTTP endpoint **on localhost only** with 21 scoped art tools, ready for an explicitly authorized HTTPS/Tunnel connection. The full stdio server retains 31 tools. \`art_game_capture\` emits real 512px Godot idle-animation frames; \`art_animation_audit\` measures timeline deltas; \`art_quality_review_packet\` prepares honest UNSCORED review criteria. A deployed endpoint does **not** automatically install a ChatGPT plugin or enable write actions on accounts without permission. See [direct MCP connection guide](docs/workstation/CHATGPT_DIRECT_MCP_V6.md) and [art-review evidence](docs/workstation/ART_DIRECTION_V6.md).
+
 ## Local development
 
 Requirements:
