@@ -73,6 +73,7 @@ try {
   assert.deepEqual(names, [
     "artist_session_begin",
     "artist_session_observe",
+    "artist_session_reinspect",
     "artist_session_decide",
     "artist_session_status",
     "paint_scene_observe",
@@ -326,6 +327,15 @@ try {
     assert.equal(sessionShot.result.isError,undefined,JSON.stringify(sessionShot).slice(0,500));
     assert.ok(sessionShot.result.content.some(x=>x.type==="image"));
     const sha=JSON.parse(sessionShot.result.content[0].text).observationSha256;
+    const redisplayed=await call(56,"tools/call",{name:"artist_session_reinspect",arguments:{
+      asset_id:"smoke_stone",expected_version:1
+    }});
+    assert.equal(redisplayed.result.isError,undefined,JSON.stringify(redisplayed).slice(0,500));
+    assert.equal(JSON.parse(redisplayed.result.content[0].text).observationSha256,sha);
+    assert.equal(redisplayed.result.content.find(x=>x.type==="image")?.data,
+      sessionShot.result.content.find(x=>x.type==="image")?.data);
+    assert.equal(JSON.parse(redisplayed.result.content[0].text).evidenceMode,
+      "EXACT_STORED_GODOT_PNG_NO_RECAPTURE");
     const chosen=await call(52,"tools/call",{name:"artist_session_decide",arguments:{
       asset_id:"smoke_stone",expected_version:1,observation_sha256:sha,decision:"REVISE",
       critique:"Protocol fixture needs a lighter secondary edge on the lantern",

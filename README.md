@@ -72,6 +72,8 @@ The optional `paint_*` tool family lets an MCP-capable vision host paint origina
 
 **V4 vision-host decision sessions (stacked development branch):** \`artist_session_begin\`, \`artist_session_observe\`, \`artist_session_decide\` and \`artist_session_status\` provide a bounded persisted Godot observation → externally authored vision critique → editable paint correction → reobserve/rollback flow. An MCP vision host must actually interpret the Godot screenshot; the server does not invoke an AI model or claim a beauty verdict. [V4 plan and recovery contract](docs/omx-web/plans/artist-workstation-v4-vision-session.md).
 
+**V5 ChatGPT Web resume:** the new artist_session_reinspect MCP tool returns the exact SHA-pinned, atomically preserved PNG from a prior Godot observation. This supports ChatGPT vision critique across interrupted or new conversations, without quietly rerendering a different frame. It does not create a background AI daemon. See [ChatGPT Web operator guide](docs/workstation/CHATGPT_WEB_OPERATOR.md).
+
 ## Local development
 
 Requirements:
