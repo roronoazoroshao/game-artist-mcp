@@ -122,6 +122,9 @@ jobs:
         run: |
           node --test test/artist-godot-observer.test.mjs
           npm run smoke:mcp
+      - name: Verify scoped remote read/write authorization and rate limits
+        run: node --test test/artist-remote-mcp-v7-access.test.mjs
+
       - name: Verify authenticated remote MCP protocol and 21 scoped tools
         run: npm run smoke:mcp:remote
 

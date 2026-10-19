@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "goal": "GAME_ARTIST_V7_SCOPED_AUTHENTICATION_AND_CHATGPT_CONNECTION",
+  "repository": "roronoazoroshao/game-artist-mcp",
+  "parent": {
+    "pullRequest": 51,
+    "sha": "fe84bcc552aaff6ad42edff0d334ac34d44880b6"
+  },
+  "branch": "feat/artist-workstation-v7-scoped-access",
+  "transportEvidence": {
+    "httpsPublicAuthMissing": 401,
+    "httpsPublicValidToken": 200,
+    "toolsDiscovered": 21,
+    "cloudflareTunnelActive": true
+  },
+  "authorization": {
+    "fullWriterToken": "TESTED",
+    "optionalReaderToken": "LOCAL_TESTED",
+    "readOnlyTools": 10,
+    "writeDeniedWithReader": true,
+    "totalToolCallsPerMinute": 120,
+    "heavyCallsPerMinute": 8,
+    "processConcurrency": 2
+  },
+  "coreSource": {
+    "sameModelChatGptVision": true,
+    "autonomousBackgroundDaemon": false
+  },
+  "releaseGates": {
+    "nativeChatgptAppWriteTest": "NOT_OBSERVED",
+    "accountPermissions": "UNVERIFIED",
+    "exactHeadCI": "PENDING",
+    "humanArtApproval": "PENDING",
+    "commercialRightsVerified": false,
+    "merged": false
+  },
+  "localEvidence": {
+    "nodeTestsPassed": 307,
+    "nodeTestsSkipped": 10,
+    "nodeTestsFailed": 0,
+    "remoteHttpRealGodot": "PASS",
+    "authPermissionTests": "12_PASS",
+    "readerWriteRejected": true
+  }
+}
