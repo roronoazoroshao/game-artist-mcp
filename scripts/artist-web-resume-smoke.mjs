@@ -4,6 +4,7 @@
 import {mkdtemp,rm} from 'node:fs/promises';
 import {spawnSync} from 'node:child_process';
 import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {AssetStore} from '../src/mcp/store.mjs';
