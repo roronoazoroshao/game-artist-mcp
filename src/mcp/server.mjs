@@ -20,6 +20,7 @@ import { publishGodotPackage } from "../export/atomic-package.mjs";
 import { renderCutoutPreview } from "../cutout/preview.mjs";
 import { AssetStore } from "./store.mjs";
 import {PaintWorkspace,renderPaint,analyzePaintDifference,renderPaintDiff,evaluatePaintProgress} from "../ai-art/paint-workstation.mjs";
+import {GodotPaintObserver} from "../ai-art/godot-paint-observer.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
 
@@ -39,6 +40,7 @@ function parseWorkspace(argv) {
 const workspace = parseWorkspace(process.argv.slice(2));
 const store = new AssetStore(workspace);
 const painter = new PaintWorkspace(store);
+const sceneObserver = new GodotPaintObserver({paint:painter});
 await store.init();
 
 function rendererAvailable() {
@@ -125,6 +127,21 @@ async function writeLegacyExportFile(path, bytes) {
 }
 
 const tools = [
+  {
+    name:"paint_scene_observe",
+    description:"Capture an actual Xvfb/OpenGL Godot framebuffer screenshot of a painted revision inside a controlled art-staging scene. Two approved lighting environments, 64/128/512px. This is NOT a full target-game scene or human beauty review.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},revision:{type:"integer",minimum:0},
+      size:{enum:[64,128,512]},environment:{enum:["twilight","moonlight"]}},
+      required:["asset_id","revision","size","environment"],additionalProperties:false}
+  },
+  {
+    name:"paint_scene_compare",
+    description:"Compare actual Godot framebuffer pixels between two paint revisions in the SAME controlled environment. Emits only objective changed-pixel metrics, never Artistic GO.",
+    inputSchema:{type:"object",properties:{asset_id:{type:"string"},baseline_revision:{type:"integer",minimum:0},
+      candidate_revision:{type:"integer",minimum:0},size:{enum:[64,128,512]},
+      environment:{enum:["twilight","moonlight"]}},
+      required:["asset_id","baseline_revision","candidate_revision","size","environment"],additionalProperties:false}
+  },
   {
     name:"paint_import_png",
     description:"Import user-provided authored RGBA PNG bytes into a separate editable layer, source hash pinned but copyright UNVERIFIED. PNG is exact-canvas-size noninterlaced RGBA, <=96KiB encoded, canonical base64. No URL/file path.",
@@ -324,6 +341,18 @@ const tools = [
 
 async function callTool(name, args) {
   switch (name) {
+    case "paint_scene_observe":{
+      const out=await sceneObserver.observe(args.asset_id,{revision:args.revision,size:args.size,
+        environment:args.environment});
+      const {png,...meta}=out;
+      return {content:[{type:"text",text:JSON.stringify(meta)},
+        {type:"image",data:png.toString("base64"),mimeType:"image/png"}],structuredContent:meta};
+    }
+    case "paint_scene_compare":{
+      return textResult(await sceneObserver.compare(args.asset_id,{
+        baselineRevision:args.baseline_revision,candidateRevision:args.candidate_revision,
+        size:args.size,environment:args.environment}));
+    }
     case "paint_import_png":{
       const p=await painter.importPng(args.asset_id,{expectedRevision:args.expected_revision,
        layerId:args.layer_id,imageBase64:args.image_base64,sourceLabel:args.source_label});

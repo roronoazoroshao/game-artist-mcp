@@ -44,7 +44,7 @@ function call(id, method, params = undefined) {
     const timeout = setTimeout(() => {
       pending.delete(id);
       reject(new Error(`timeout waiting for MCP response ${id}; stderr=${stderr}`));
-    }, 10_000);
+    }, process.env.GAME_ARTIST_RUN_REAL_GODOT==="1" ? 40000 : 10000);
     pending.set(id, {
       resolve: (value) => {
         clearTimeout(timeout);
@@ -71,6 +71,8 @@ try {
   const listed = await call(2, "tools/list");
   const names = listed.result.tools.map((tool) => tool.name);
   assert.deepEqual(names, [
+    "paint_scene_observe",
+    "paint_scene_compare",
     "paint_import_png",
     "paint_diff_preview",
     "paint_evaluate",
@@ -292,6 +294,20 @@ try {
   assert.equal(evaluated.result.isError,undefined);
   assert.equal(JSON.parse(evaluated.result.content[0].text).result,"OBJECTIVE_TARGET_MET");
   assert.equal(JSON.parse(evaluated.result.content[0].text).artisticReview,"UNSCORED");
+  if(process.env.GAME_ARTIST_RUN_REAL_GODOT==="1"){
+    const shot=await call(45,"tools/call",{name:"paint_scene_observe",arguments:{
+      asset_id:"smoke_stone",revision:3,size:128,environment:"twilight"
+    }});
+    assert.equal(shot.result.isError,undefined,JSON.stringify(shot).slice(0,550));
+    assert.ok(shot.result.content.find(c=>c.type==="image"),"must expose actual Godot PNG");
+    assert.equal(JSON.parse(shot.result.content[0].text).engine,"REAL_GODOT_FRAMEBUFFER");
+    const measured=await call(46,"tools/call",{name:"paint_scene_compare",arguments:{
+      asset_id:"smoke_stone",baseline_revision:2,candidate_revision:3,size:64,environment:"moonlight"
+    }});
+    assert.equal(measured.result.isError,undefined,JSON.stringify(measured).slice(0,600));
+    assert.equal(JSON.parse(measured.result.content[0].text).source,"GODOT_REAL_FRAMEBUFFER");
+    assert.ok(JSON.parse(measured.result.content[0].text).changedPixels>0);
+  }
   const unchangedVector=JSON.parse((await call(37,"tools/call",{
     name:"asset_get",arguments:{asset_id:"smoke_stone"}})).result.content[0].text);
   assert.equal(unchangedVector.revision,state.revision);

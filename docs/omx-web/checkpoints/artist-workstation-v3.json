@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "task": "GAME_ARTIST_WORKSTATION_V3_GODOT_OBSERVE",
+  "repo": "roronoazoroshao/game-artist-mcp",
+  "basePR": 47,
+  "baseHead": "ec4cafe1c06826b4f7158ca345ea5ba9e5e56b61",
+  "branch": "feat/artist-workstation-v3-godot-observe",
+  "goalStates": {
+    "actualGodotFramebufferCapture": "PASS_LOCAL",
+    "actualMcpImageContent": "PASS_LOCAL",
+    "twoStagingEnvironmentCaptures": "PASS_LOCAL",
+    "changeDetectionBetweenRevisions": "PASS_LOCAL",
+    "safeTimeoutAndCleanup": "PASS_LOCAL",
+    "realGameSceneEvaluation": "NOT_IMPLEMENTED",
+    "autonomousVisionCriticController": "NOT_IMPLEMENTED",
+    "commercialArtworkRights": "UNVERIFIED"
+  },
+  "testEvidence": {
+    "realGodot6": "PASS_LOCAL",
+    "mcp23": "PASS_LOCAL",
+    "fullSuite": "277_PASS_7_SKIP_0_FAIL",
+    "exactHeadCi": "PENDING_GITHUB"
+  },
+  "gates": {
+    "merge": "NOT_EXECUTED",
+    "artisticRelease": "BLOCKED",
+    "productionExportAllowed": false
+  },
+  "next": "Model-hosted autonomous bounded visual critique controller with non-fictional scoring, real target scene sandbox and full user review workflow"
+}
