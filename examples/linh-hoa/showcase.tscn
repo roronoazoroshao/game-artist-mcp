@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://showcase.gd" id="1"]
+[ext_resource type="PackedScene" path="res://linh_hoa.tscn" id="2"]
+
+[node name="LinhHoaShowcase" type="Node2D"]
+script = ExtResource("1")
+
+[node name="LinhHoa" parent="." instance=ExtResource("2")]
+position = Vector2(480, 375)
+scale = Vector2(1.18, 1.18)
