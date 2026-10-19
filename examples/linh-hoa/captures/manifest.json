@@ -1,8 +1,8 @@
 {
-  "version": 2,
-  "generatedBy": "Godot 4.4.1 / actual OpenGL framebuffer / Xvfb",
+  "version": 4,
+  "source": "real Godot framebuffer; no synthetic substitutions",
   "engine": "4.4.1.stable.official.49a5bc7b6",
-  "renderer": "OpenGL Mesa llvmpipe",
+  "renderer": "OpenGL Mesa llvmpipe under Xvfb",
   "scene": "res://showcase.tscn",
   "sceneTimesSeconds": [
     0,
@@ -11,46 +11,69 @@
     1.21
   ],
   "samples": {
-    "64": "Godot SubViewport 64x64",
-    "128": "Godot SubViewport 128x128",
-    "game": "960x540 root framebuffer"
+    "64": "native Godot SubViewport 64x64",
+    "128": "native Godot SubViewport 128x128",
+    "game": "960x540 real scene framebuffer"
   },
   "motion": {
     "samples": 24,
     "sampleRateHz": 18,
     "actualFramebuffer": true,
-    "changedPixelMin": 2717,
-    "changedPixelMax": 3134,
-    "cropAtPreviewResolution": [
+    "flameCropAtPreviewResolution": [
       196,
       64,
       284,
       209
+    ],
+    "changedPixelMin": 2320,
+    "changedPixelMax": 2873
+  },
+  "baselineV3": {
+    "provenance": "preserved uncommitted V3 worktree; re-captured in isolated V4 workspace",
+    "frameSha256": "a2fee1a4e77e45843d89d7e7395f25caeebeee44b57f588dd320fec1967d082f"
+  },
+  "materialAB": {
+    "sameAuthoredPhaseSeconds": 0.78,
+    "realLightEnergyDriven": true,
+    "litResponsePixels": 2046,
+    "unlitDifferencePixels": 0,
+    "skyDifferencePixels": 0,
+    "region": [
+      170,
+      220,
+      790,
+      520
     ]
   },
   "lightAB": {
-    "actualPointLight2D": true,
     "sameAuthoredPhaseSeconds": 0.78,
+    "truePointLight2D": true,
     "worldRegion": [
       240,
       240,
       720,
       510
     ],
-    "pixelChangeCountThreshold5": 29551
+    "pixelChangeCountThreshold5": 16334,
+    "backgroundPixelChangeCountThreshold5": 0
   },
-  "preview": "24-frame temporal replay from actual Godot framebuffer, LANCZOS resized to 480x270 for GIF. GIF alone does not establish 60 FPS smoothness.",
+  "preview": "Pillow reassembled 24 true Godot frames at 480x270, not a runtime FPS measurement",
   "artisticReview": "UNSCORED",
   "rightsVerified": false,
   "exportAllowed": false,
   "imagesSha256": {
-    "game-00.png": "42e7cc42be82480c580a5e78f7c5933b4a0f88d73cd131669b158d3eaad46a70",
-    "game-01.png": "55c678ce574ee71b70f5b78400a967d28b21085ecd6463dbc54f45b677bd1c2d",
-    "game-02.png": "479b768813d57d687ba2eeaad947bbbba1db68379ed7be820854a2774b8d08a8",
-    "game-03.png": "8e9ac200fd4511e396392550424a091fa4b0610e1c7171b3f7fb26ec08b8ee9f",
-    "light-off.png": "34ecc8b353b8aff407452c61aed772163e301547100473d274dbcc7d7047b2db",
-    "light-on.png": "479b768813d57d687ba2eeaad947bbbba1db68379ed7be820854a2774b8d08a8",
-    "native-128.png": "253270c385b8e4226212cb83724d9ee4e5f1e2bf84a75b2d862a95395111c7dd",
-    "native-64.png": "3daf905c2ae1c8df9959fd0dedeea419805b24aef7ffe82d0f3ca0e74499b0ed"
+    "default-dark.png": "238efdae6258619f920c2a67dd032932e7422cfb7342284b310a5f82b88456e2",
+    "default-lit.png": "d561f1630df067c4801c72faa9f88f248c95199bd87bfa6aa64612996a0c2e2f",
+    "game-00.png": "0914f38365c7f5ff114d067e59aabd39b7da2afb1b26c646a3d12a90bd341509",
+    "game-01.png": "3bf0b1629c69d8f7be27c101ff5c18a5c6d194a5df743af7dcb762ec55f9fcc9",
+    "game-02.png": "b6f93504083e7df7ffff443add0415f64e7c68bd7064a73188a7805cfcdf3224",
+    "game-03.png": "cc9ebe17676f1b5225a6ba0eac55263ab8bb7c0771e3875dd816ef6d64e89fb7",
+    "light-off.png": "c15ed15d90cec9ca4f2817865160e6b249848f02be9fe630525adba05af6583d",
+    "light-on.png": "b6d879ec5a5e96b0e1f51eaf4cd7a0187cabbd085b75d8104b2a19eb778cca29",
+    "material-dark.png": "238efdae6258619f920c2a67dd032932e7422cfb7342284b310a5f82b88456e2",
+    "material-lit.png": "b6d879ec5a5e96b0e1f51eaf4cd7a0187cabbd085b75d8104b2a19eb778cca29",
+    "native-128.png": "0e8f41741a6debfe2dafba06b49c44dbee916d9552cfc723378bfdb2eeeaf00e",
+    "native-64.png": "997f4d071ae599b27ffcc59a412aefada56b39dcc2b813b8dbf82d61238847a8",
+    "v3-v4-comparison.png": "77a70f7a6f63e1b9d027a90114cf16731d1db1c91f18ae77ab15d6d66f1e26b2"
   }
 }

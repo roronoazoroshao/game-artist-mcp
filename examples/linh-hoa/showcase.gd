@@ -4,9 +4,14 @@ const FIRE_SCENE: PackedScene = preload("res://linh_hoa.tscn")
 const THUMB_STAGE: Script = preload("res://thumbnail_stage.gd")
 @onready var fire: Node2D = $LinhHoa
 var seconds: float = 0.0
+@export var reactive_stone:bool=true
 
 func _ready() -> void:
-    if OS.get_cmdline_user_args().has("--capture-light-ab"):
+    # Basalt receives the main Light2D (mask 1); jade inlays receive a
+    # localized native jade bounce light (mask 2). No ineffective shader overlay.
+    if OS.get_cmdline_user_args().has("--capture-material-ab"):
+        call_deferred("_capture_material_ab")
+    elif OS.get_cmdline_user_args().has("--capture-light-ab"):
         call_deferred("_capture_light_ab")
     elif OS.get_cmdline_user_args().has("--capture-motion"):
         call_deferred("_capture_motion")
@@ -19,7 +24,7 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
     var sz: Vector2 = get_viewport_rect().size
-    draw_rect(Rect2(Vector2.ZERO, sz), Color("#101b2b"))
+    # Backdrop child shader paints the full viewport beneath this geometry.
     # Hand-authored isometric garden: 2:1 diamond floor plane and slate steps.
     var c: Vector2 = Vector2(sz.x * 0.5, sz.y * 0.68)
     var width: float = minf(sz.x * 0.34, 310.0)
@@ -35,9 +40,19 @@ func _draw() -> void:
     var altar: Vector2 = c + Vector2(0, 12)
     var crown := PackedVector2Array([altar + Vector2(0,-42),altar + Vector2(110,-5),altar + Vector2(110,10),altar + Vector2(0,48),altar + Vector2(-110,10),altar + Vector2(-110,-5)])
     var front := PackedVector2Array([altar + Vector2(-110,10),altar + Vector2(0,48),altar + Vector2(110,10),altar + Vector2(110,30),altar + Vector2(0,68),altar + Vector2(-110,30)])
-    draw_colored_polygon(front, Color("#152332"))
-    draw_colored_polygon(crown, Color("#304450"))
-    draw_polyline(PackedVector2Array([crown[0],crown[1],crown[2],crown[3],crown[4],crown[5],crown[0]]), Color("#5e8887"), 1.8, true)
+    var lamp:PointLight2D=fire.get_node_or_null("SpiritLight") as PointLight2D
+    var bounce:float=clampf(lamp.energy,0.0,1.1) if lamp!=null and lamp.visible and reactive_stone else 0.0
+    # Existing basalt topology only: matte side wall, illuminated top surface.
+    # Vertex-colored fan models light falloff over stone, driven by true Light2D energy.
+    draw_colored_polygon(front,Color(0.083+0.004*bounce,0.137+0.010*bounce,0.196+0.012*bounce))
+    var center:Vector2=altar+Vector2(0,4)
+    var face_mid:Color=Color(0.190+0.018*bounce,0.267+0.070*bounce,0.314+0.064*bounce)
+    var face_edge:Color=Color(0.190+0.003*bounce,0.267+0.012*bounce,0.314+0.011*bounce)
+    for k in range(crown.size()):
+        var next:int=(k+1)%crown.size()
+        draw_polygon(PackedVector2Array([center,crown[k],crown[next]]),
+            PackedColorArray([face_mid,face_edge,face_edge]))
+    draw_polyline(PackedVector2Array([crown[0],crown[1],crown[2],crown[3],crown[4],crown[5],crown[0]]), Color(0.37+0.05*bounce,0.53+0.07*bounce,0.53+0.06*bounce), 1.8, true)
     for j in [-1, 1]:
         var x: float = float(j) * 216.0
         var foot: Vector2 = c + Vector2(x,-10)
@@ -56,14 +71,64 @@ func _draw() -> void:
     # Foreground edge/shadow visible below flame; no opaque billboard.
     draw_line(Vector2(0,sz.y-21),Vector2(sz.x,sz.y-21),Color(0.12,0.20,0.26,0.55),2.0)
 
+func _capture_material_ab() -> void:
+    # Actual light-mask ablation: basalt response (mask 1) vs localized
+    # jade bounce (mask 2), both in Godot's Light2D composition pass.
+    var relief:Node2D=get_node_or_null("RitualGround") as Node2D
+    var light:PointLight2D=fire.get_node_or_null("SpiritLight") as PointLight2D
+    var bounce:PointLight2D=fire.get_node_or_null("JadeBounce") as PointLight2D
+    if relief==null or light==null or bounce==null:
+        push_error("Material probe requires native Light2D channels")
+        get_tree().quit(1)
+        return
+    var original_reactive:bool=bool(relief.get("reactive_jade"))
+    var original_stone:bool=reactive_stone
+    fire.set("time_override",0.78)
+    set_process(false)
+    var out:String="res://captures"
+    var err:Error=DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(out))
+    if err!=OK:
+        get_tree().quit(1)
+        return
+    for with_material in [true,false]:
+        relief.set("reactive_jade",with_material)
+        reactive_stone=with_material
+        for with_light in [true,false]:
+            light.visible=with_light
+            bounce.visible=with_material and with_light
+            fire.queue_redraw()
+            relief.queue_redraw()
+            queue_redraw()
+            await get_tree().process_frame
+            await RenderingServer.frame_post_draw
+            var frame:Image=get_viewport().get_texture().get_image()
+            if frame.is_empty() or frame.get_size()!=Vector2i(960,540):
+                push_error("Material probe invalid framebuffer")
+                get_tree().quit(1)
+                return
+            var name:String=("material" if with_material else "default")+"-"+("lit" if with_light else "dark")
+            err=frame.save_png(out+"/"+name+".png")
+            if err!=OK:
+                get_tree().quit(1)
+                return
+    light.visible=true
+    bounce.visible=true
+    relief.set("reactive_jade",original_reactive)
+    reactive_stone=original_stone
+    print("LINH_HOA_MATERIAL_2X2_REAL_FRAMEBUFFER_OK")
+    get_tree().quit(0)
+
 func _capture_light_ab() -> void:
     # Same authored phase for both frames; only actual Godot PointLight2D visibility changes.
     var light:PointLight2D=fire.get_node_or_null("SpiritLight") as PointLight2D
-    if light==null:
+    var bounce:PointLight2D=fire.get_node_or_null("JadeBounce") as PointLight2D
+    if light==null or bounce==null:
         push_error("Missing true Godot PointLight2D")
         get_tree().quit(1)
         return
     fire.set("time_override",0.78)
+    # Pin backdrop clock as well, so ON/OFF difference cannot be ambient fog motion.
+    set_process(false)
     var target:String="res://captures"
     var err:Error=DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(target))
     if err!=OK:
@@ -71,6 +136,7 @@ func _capture_light_ab() -> void:
         return
     for index in range(2):
         light.visible=index==0
+        bounce.visible=index==0
         fire.queue_redraw()
         await get_tree().process_frame
         await RenderingServer.frame_post_draw
@@ -83,6 +149,7 @@ func _capture_light_ab() -> void:
             get_tree().quit(1)
             return
     light.visible=true
+    bounce.visible=true
     print("LINH_HOA_LIGHT_AB_NATIVE_FRAMEBUFFER_OK")
     get_tree().quit(0)
 
