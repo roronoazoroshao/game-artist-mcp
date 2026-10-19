@@ -1,0 +1,56 @@
+{
+  "version": 2,
+  "generatedBy": "Godot 4.4.1 / actual OpenGL framebuffer / Xvfb",
+  "engine": "4.4.1.stable.official.49a5bc7b6",
+  "renderer": "OpenGL Mesa llvmpipe",
+  "scene": "res://showcase.tscn",
+  "sceneTimesSeconds": [
+    0,
+    0.34,
+    0.78,
+    1.21
+  ],
+  "samples": {
+    "64": "Godot SubViewport 64x64",
+    "128": "Godot SubViewport 128x128",
+    "game": "960x540 root framebuffer"
+  },
+  "motion": {
+    "samples": 24,
+    "sampleRateHz": 18,
+    "actualFramebuffer": true,
+    "changedPixelMin": 2717,
+    "changedPixelMax": 3134,
+    "cropAtPreviewResolution": [
+      196,
+      64,
+      284,
+      209
+    ]
+  },
+  "lightAB": {
+    "actualPointLight2D": true,
+    "sameAuthoredPhaseSeconds": 0.78,
+    "worldRegion": [
+      240,
+      240,
+      720,
+      510
+    ],
+    "pixelChangeCountThreshold5": 29551
+  },
+  "preview": "24-frame temporal replay from actual Godot framebuffer, LANCZOS resized to 480x270 for GIF. GIF alone does not establish 60 FPS smoothness.",
+  "artisticReview": "UNSCORED",
+  "rightsVerified": false,
+  "exportAllowed": false,
+  "imagesSha256": {
+    "game-00.png": "42e7cc42be82480c580a5e78f7c5933b4a0f88d73cd131669b158d3eaad46a70",
+    "game-01.png": "55c678ce574ee71b70f5b78400a967d28b21085ecd6463dbc54f45b677bd1c2d",
+    "game-02.png": "479b768813d57d687ba2eeaad947bbbba1db68379ed7be820854a2774b8d08a8",
+    "game-03.png": "8e9ac200fd4511e396392550424a091fa4b0610e1c7171b3f7fb26ec08b8ee9f",
+    "light-off.png": "34ecc8b353b8aff407452c61aed772163e301547100473d274dbcc7d7047b2db",
+    "light-on.png": "479b768813d57d687ba2eeaad947bbbba1db68379ed7be820854a2774b8d08a8",
+    "native-128.png": "253270c385b8e4226212cb83724d9ee4e5f1e2bf84a75b2d862a95395111c7dd",
+    "native-64.png": "3daf905c2ae1c8df9959fd0dedeea419805b24aef7ffe82d0f3ca0e74499b0ed"
+  }
+}
