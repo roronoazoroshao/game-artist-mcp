@@ -51,6 +51,20 @@ test('Native Godot PointLight2D affects surrounding world geometry (on/off ablat
   assert.ok(motionPixels(lit,unlit,[240,240,720,510])>10000,
     'real in-engine lighting affects the altar and surrounding courtyard');
 });
+test('Stone and jade respond to active light, not an unconditional colored overlay',async()=>{
+  const lit=await readPng('material-lit.png');
+  const litPlain=await readPng('default-lit.png');
+  const dark=await readPng('material-dark.png');
+  const darkPlain=await readPng('default-dark.png');
+  const region=[170,220,790,520];
+  assert.equal(lit.width,960);
+  assert.ok(motionPixels(lit,litPlain,region)>400,
+    'a visible area of existing altar and jade material reacts when light is on');
+  assert.ok(motionPixels(dark,darkPlain,region)<20,
+    'reflectance stays dormant when the actual light source is disabled');
+  assert.ok(motionPixels(lit,litPlain,[0,0,160,160])<20,
+    'material treatment remains local to the altar, not the sky');
+});
 test('Frames really differ inside the flame region over time',async()=>{
   const images=await Promise.all([0,1,2,3].map(i=>readPng('game-'+String(i).padStart(2,'0')+'.png')));
   for(let i=0;i<3;i++)assert.ok(motionPixels(images[i],images[i+1],[400,140,560,410])>300,'timeline frame changed visibly');

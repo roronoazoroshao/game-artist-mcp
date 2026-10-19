@@ -4,6 +4,7 @@ extends Node2D
 @export var time_bias: float = 0.0
 @export var hue_bias: float = 0.0
 @export var heat: float = 1.0
+@export var plume_variant: float = 0.0
 var ink: ShaderMaterial
 
 func _ready() -> void:
@@ -12,6 +13,7 @@ func _ready() -> void:
     ink.set_shader_parameter("phase_bias", time_bias)
     ink.set_shader_parameter("hue_bias", hue_bias)
     ink.set_shader_parameter("heat", heat)
+    ink.set_shader_parameter("plume_variant", plume_variant)
     material = ink
 
 func _process(_delta: float) -> void:
