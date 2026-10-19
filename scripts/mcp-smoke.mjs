@@ -71,6 +71,9 @@ try {
   const listed = await call(2, "tools/list");
   const names = listed.result.tools.map((tool) => tool.name);
   assert.deepEqual(names, [
+    "art_quality_review_packet",
+    "art_game_capture",
+    "art_animation_audit",
     "artist_session_begin",
     "artist_session_observe",
     "artist_session_reinspect",

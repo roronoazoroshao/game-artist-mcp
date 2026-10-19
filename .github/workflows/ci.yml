@@ -122,6 +122,9 @@ jobs:
         run: |
           node --test test/artist-godot-observer.test.mjs
           npm run smoke:mcp
+      - name: Verify authenticated remote MCP protocol and 21 scoped tools
+        run: npm run smoke:mcp:remote
+
       - name: Restore exact Godot screenshot across ChatGPT host process restarts
         env:
           GODOT_BIN: /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
@@ -136,6 +139,20 @@ jobs:
 
       - name: Generate Phase 3 actual preview and Godot project
         run: npm run poc:phase3
+
+      - name: Verify trusted game scene animation, four actual Godot frames and honest art rubric
+        env:
+          GODOT_BIN: /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          GAME_ARTIST_RUN_REAL_GODOT: "1"
+        run: |
+          node --test test/artist-game-showcase-v6.test.mjs
+
+      - name: Verify painting and vision through authenticated HTTP MCP in real Godot
+        env:
+          GODOT_BIN: /tmp/godot/Godot_v4.7.2-stable_linux.x86_64
+          GAME_ARTIST_RUN_REAL_GODOT: "1"
+        run: |
+          node scripts/artist-remote-mcp-smoke.mjs
 
       - name: Verify Phase 3 animated atlas in pinned Godot
         run: |

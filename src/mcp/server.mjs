@@ -2,6 +2,7 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import { lstat, mkdir, mkdtemp, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import { randomBytes } from "node:crypto";
+import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -22,6 +23,7 @@ import { AssetStore } from "./store.mjs";
 import {PaintWorkspace,renderPaint,analyzePaintDifference,renderPaintDiff,evaluatePaintProgress} from "../ai-art/paint-workstation.mjs";
 import {GodotPaintObserver} from "../ai-art/godot-paint-observer.mjs";
 import {ArtistVisionSession} from "../ai-art/vision-session.mjs";
+import {captureTrustedGameShowcase,auditTrustedAnimation,createArtReviewPacket} from "../ai-art/game-showcase.mjs";
 import { checkRenderBudget, assertPngFileSize } from "./render-budget.mjs";
 import { parseUniqueKeysJsonLine } from "./strict-json.mjs";
 
@@ -128,7 +130,23 @@ async function writeLegacyExportFile(path, bytes) {
   }
 }
 
-const tools = [
+export const tools = [
+  {
+    name:"art_quality_review_packet",
+    description:"Grounded art-direction assessment packet from real Godot playable game idle animation frames: time-stamped hashes, motion statistics, five explicit subjective review criteria UNSCORED until vision/human review. Does not certify production art.",
+    inputSchema:{type:"object",properties:{},additionalProperties:false}
+  },
+  {
+    name:"art_game_capture",
+    description:"Capture real Godot framebuffer from the repository's fixed playable spirit-lantern game scene with idle animation at 0, .375, .875 or 1.375 seconds. Does not accept arbitrary game paths; 512px scene is technically verified but art UNSCORED.",
+    inputSchema:{type:"object",properties:{frame:{type:"integer",minimum:0,maximum:3}},
+      required:["frame"],additionalProperties:false}
+  },
+  {
+    name:"art_animation_audit",
+    description:"Technical analysis of four REAL Godot idle animation frames from the trusted playable game scene: PNG SHA, changed pixels, luminance delta. Not quality of movement/beauty sign-off.",
+    inputSchema:{type:"object",properties:{},additionalProperties:false}
+  },
   {
     name:"artist_session_begin",
     description:"Start one persistent, bounded revision-aware external AI visual critique session for an existing painted asset. Requires a user-owned art brief and fixed Godot staging scene; does not invoke a hidden model.",
@@ -376,8 +394,20 @@ const tools = [
   }
 ];
 
-async function callTool(name, args) {
+export async function callTool(name, args) {
   switch (name) {
+    case "art_quality_review_packet":{
+      return textResult(await createArtReviewPacket(args));
+    }
+    case "art_game_capture":{
+      const out=await captureTrustedGameShowcase({frame:args.frame});
+      const {png,...meta}=out;
+      return {content:[{type:"text",text:JSON.stringify(meta)},
+        {type:"image",data:png.toString("base64"),mimeType:"image/png"}],structuredContent:meta};
+    }
+    case "art_animation_audit":{
+      return textResult(await auditTrustedAnimation(args));
+    }
     case "artist_session_begin":{
       return textResult(await visionSession.begin(args.asset_id,{
         brief:args.brief,size:args.size,environment:args.environment,maxIterations:args.max_iterations}));
@@ -722,6 +752,7 @@ async function handle(message) {
   send({ jsonrpc: "2.0", id, error: { code: -32601, message: "Method not found." } });
 }
 
+if(process.argv[1] && resolve(process.argv[1])===fileURLToPath(import.meta.url)){
 let buffer = "";
 let chain = Promise.resolve();
 process.stdin.setEncoding("utf8");
@@ -749,3 +780,4 @@ process.stdin.on("data", (chunk) => {
   }
 });
 process.stdin.resume();
+}
