@@ -298,8 +298,7 @@ export class PaintWorkspace{
    await writeAtomic(this.path(assetId),p,{create:true});return p;
   });
  }
- async apply(assetId,{expectedRevision,operations}={}){
-  return this.store.withAssetWriteLock(assetId,async()=>{
+ async applyLocked(assetId,{expectedRevision,operations}={}){
    const p=await this.load(assetId);
    if(expectedRevision!==p.revision)throw Error('revision conflict: expected '+p.revision);
    if(p.revision>=MAX_REVISIONS)fail('revision budget');
@@ -308,7 +307,9 @@ export class PaintWorkspace{
    evaluated(next);
    await writeAtomic(this.path(assetId),next);
    return next;
-  });
+ }
+ async apply(assetId,request={}){
+   return this.store.withAssetWriteLock(assetId,()=>this.applyLocked(assetId,request));
  }
  async importPng(assetId,{expectedRevision,layerId,imageBase64,sourceLabel}={}){
   const current=await this.load(assetId);
@@ -319,8 +320,7 @@ export class PaintWorkspace{
    sourceSha256:sha(bytes),sourceLabel,rightsVerified:false
   }]});
  }
- async restore(assetId,{expectedRevision,targetRevision}={}){
-  return this.store.withAssetWriteLock(assetId,async()=>{
+ async restoreLocked(assetId,{expectedRevision,targetRevision}={}){
    const p=await this.load(assetId);
    if(expectedRevision!==p.revision)throw Error('revision conflict: expected '+p.revision);
    if(!Number.isSafeInteger(targetRevision)||targetRevision<0||targetRevision>=p.revision||p.revision>=MAX_REVISIONS)
@@ -329,7 +329,9 @@ export class PaintWorkspace{
    evaluated(next);
    await writeAtomic(this.path(assetId),next);
    return next;
-  });
+ }
+ async restore(assetId,request={}){
+   return this.store.withAssetWriteLock(assetId,()=>this.restoreLocked(assetId,request));
  }
  async exportGodot(assetId,{expectedRevision}={}){
   return this.store.withAssetWriteLock(assetId,async()=>{

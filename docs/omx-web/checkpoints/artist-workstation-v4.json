@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "task": "AI_ARTIST_WORKSTATION_V4_VISION_HOST",
+  "repo": "roronoazoroshao/game-artist-mcp",
+  "branch": "feat/artist-workstation-v4-vision-session",
+  "stackedOn": {
+    "pullRequest": 48,
+    "baseSha": "fb9f677ab5b419596aa8d2b390f501fe4d3ab7cb"
+  },
+  "implemented": {
+    "persistentBriefBoundSession": "PASS_LOCAL",
+    "realGodotObservationShaBinding": "PASS_LOCAL",
+    "userOrAiAuthoredCritiqueDecision": "PASS_LOCAL",
+    "boundedPaintOperations": "PASS_LOCAL",
+    "safeRestore": "PASS_LOCAL",
+    "interruptRecovery": "PASS_LOCAL",
+    "externalVisionModelInvocation": "NOT_IMPLEMENTED",
+    "realTargetGameCapture": "NOT_IMPLEMENTED",
+    "productionArtQuality": "UNVERIFIED"
+  },
+  "tests": {
+    "v4Unit": 11,
+    "realMcpTools": 27,
+    "fullSuite": "288_PASS_7_SKIP_0_FAIL",
+    "ci": "PENDING_GITHUB",
+    "realGodotTests": 6
+  },
+  "gates": {
+    "technicalMerge": "NOT_EXECUTED",
+    "commercialExportAllowed": false,
+    "rightsVerified": false,
+    "artisticReview": "UNSCORED"
+  }
+}

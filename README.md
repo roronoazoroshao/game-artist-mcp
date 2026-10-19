@@ -70,6 +70,8 @@ The optional `paint_*` tool family lets an MCP-capable vision host paint origina
 
 **V3 Godot-frame observation (stacked development branch):** two additional MCP tools, `paint_scene_observe` and `paint_scene_compare`, capture genuine Xvfb/OpenGL Godot staging-scene pixels at 64/128/512px and compare revisions for AI inspection. This is not capture from the user's complete game, a model-powered autonomous critic, or human art approval. See [V3 design and limitations](docs/omx-web/plans/artist-workstation-v3-godot-observe.md).
 
+**V4 vision-host decision sessions (stacked development branch):** \`artist_session_begin\`, \`artist_session_observe\`, \`artist_session_decide\` and \`artist_session_status\` provide a bounded persisted Godot observation → externally authored vision critique → editable paint correction → reobserve/rollback flow. An MCP vision host must actually interpret the Godot screenshot; the server does not invoke an AI model or claim a beauty verdict. [V4 plan and recovery contract](docs/omx-web/plans/artist-workstation-v4-vision-session.md).
+
 ## Local development
 
 Requirements:

@@ -71,6 +71,10 @@ try {
   const listed = await call(2, "tools/list");
   const names = listed.result.tools.map((tool) => tool.name);
   assert.deepEqual(names, [
+    "artist_session_begin",
+    "artist_session_observe",
+    "artist_session_decide",
+    "artist_session_status",
     "paint_scene_observe",
     "paint_scene_compare",
     "paint_import_png",
@@ -307,6 +311,43 @@ try {
     assert.equal(measured.result.isError,undefined,JSON.stringify(measured).slice(0,600));
     assert.equal(JSON.parse(measured.result.content[0].text).source,"GODOT_REAL_FRAMEBUFFER");
     assert.ok(JSON.parse(measured.result.content[0].text).changedPixels>0);
+  }
+  if(process.env.GAME_ARTIST_RUN_REAL_GODOT==="1"){
+    // A protocol smoke driver, NOT an actual aesthetic AI assessor. Critique is
+    // prewritten and always marked UNSCORED; test only transport/state/rollback.
+    const sessionStart=await call(50,"tools/call",{name:"artist_session_begin",arguments:{
+      asset_id:"smoke_stone",brief:"Enhance the legibility of spirit light",max_iterations:1,
+      size:64,environment:"twilight"
+    }});
+    assert.equal(sessionStart.result.isError,undefined,JSON.stringify(sessionStart).slice(0,500));
+    const sessionShot=await call(51,"tools/call",{name:"artist_session_observe",arguments:{
+      asset_id:"smoke_stone",expected_version:0
+    }});
+    assert.equal(sessionShot.result.isError,undefined,JSON.stringify(sessionShot).slice(0,500));
+    assert.ok(sessionShot.result.content.some(x=>x.type==="image"));
+    const sha=JSON.parse(sessionShot.result.content[0].text).observationSha256;
+    const chosen=await call(52,"tools/call",{name:"artist_session_decide",arguments:{
+      asset_id:"smoke_stone",expected_version:1,observation_sha256:sha,decision:"REVISE",
+      critique:"Protocol fixture needs a lighter secondary edge on the lantern",
+      operations:[{type:"stroke.draw",layerId:"reference",color:"#bdeeff",radius:3,opacity:.5,
+       points:[[16,16,1],[36,36,.5]]}]
+    }});
+    assert.equal(chosen.result.isError,undefined,JSON.stringify(chosen).slice(0,500));
+    assert.equal(JSON.parse(chosen.result.content[0].text).iteration,1);
+    const more=await call(53,"tools/call",{name:"artist_session_observe",arguments:{
+      asset_id:"smoke_stone",expected_version:2
+    }});
+    assert.equal(more.result.isError,undefined,JSON.stringify(more).slice(0,500));
+    const finalSha=JSON.parse(more.result.content[0].text).observationSha256;
+    const done=await call(54,"tools/call",{name:"artist_session_decide",arguments:{
+      asset_id:"smoke_stone",expected_version:3,observation_sha256:finalSha,decision:"FINISH",
+      critique:"Ready for external art examination, no aesthetic approval declared"
+    }});
+    assert.equal(done.result.isError,undefined,JSON.stringify(done).slice(0,500));
+    assert.equal(JSON.parse(done.result.content[0].text).phase,"REVIEW_PENDING");
+    const status=await call(55,"tools/call",{name:"artist_session_status",arguments:{asset_id:"smoke_stone"}});
+    assert.equal(status.result.isError,undefined);
+    assert.equal(JSON.parse(status.result.content[0].text).exportAllowed,false);
   }
   const unchangedVector=JSON.parse((await call(37,"tools/call",{
     name:"asset_get",arguments:{asset_id:"smoke_stone"}})).result.content[0].text);
